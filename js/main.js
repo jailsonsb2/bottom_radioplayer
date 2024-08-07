@@ -847,6 +847,9 @@
 
         // Escuta o clique no controle (barra de volume)
         rangeWrapper.addEventListener("mousedown", (event) => {
+          if (event.target === rangeThumb) {
+            return; // Ignora o clique se ocorreu no thumb
+          }
           const rangeRect = range.getBoundingClientRect();
           const clickY = event.clientY - rangeRect.top; // Posição vertical do mouse
           let percent = (clickY / range.offsetHeight) * 100; // Calcula a porcentagem vertical
@@ -871,9 +874,9 @@
 
       // Move o thumb verticalmente e atualiza o volume
       function handleThumbDrag(event) {
-        const rangeRect = range.getBoundingClientRect();
+        const rangeRect = rangeWrapper.getBoundingClientRect(); // Use rangeWrapper em vez de range
         const clickY = event.clientY - rangeRect.top;
-        let percent = (clickY / range.offsetHeight) * 100;
+        let percent = (clickY / rangeWrapper.offsetHeight) * 100; // Use rangeWrapper.offsetHeight
         percent = 100 - percent; // Inverte a porcentagem
         percent = Math.max(0, Math.min(100, percent));
         const value = Math.round((range.max - range.min) * (percent / 100)) + parseInt(range.min);
