@@ -1,0 +1,33 @@
+/* Aregue todo su codigo personalizado aquí */
+
+.player-button {
+
+    font-weight: 700;
+    
+}
+
+.app-player .player-button-alt {
+    padding: .2vw .80vw;
+  
+}
+
+.app-player .player {
+    padding: .3vw;
+}
+
+.color-text {
+    color: rgb(255 255 255 / 62%);
+    font-weight: 400;
+}
+
+#app-player .player-program-badge {
+
+    font-weight: 800;
+   background-color: #fa1100;
+}
+
+#app-player .player-button {
+
+    font-weight: 600;
+   
+}
