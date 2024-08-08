@@ -22,7 +22,7 @@
                                 <!-- Data -->
                                 <div class="player-cover-title uppercase fw-700 flex column">
                                     <div class="player-song-name">
-                                        <span class="player-program-badge"><i></i></span>
+                                        <!-- <span class="player-program-badge"><i></i></span> -->
                                         <span class="color-title fw-700 song-name song-title station-name">Song</span>
                                     </div>
                                     <span class="color-title fs-8 song-artist station-description truncate">Artist</span>
