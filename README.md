@@ -1,4 +1,4 @@
-## HTML5 Radio Player for Website Footers
+## HTML5 Single / Multi Radio Player for Website Footers
 
 ### Description
 
@@ -25,13 +25,13 @@ This HTML5 radio player offers a complete and customizable solution for integrat
    - Download or clone this repository.
 
 2. **Configure your radio stations:**
-   - Open the `js/config.js` file.
+   - Open the `config.js` file.
    - Edit the `window.streams.stations` variable and replace the example stations with your own.
    - For each station, fill in the information: name, hash, description, URLs for logo, album art, background cover, audio stream URL, social links, app links, etc.
    - **Important:** Make sure that the paths for images (`logo`, `album`, `cover`) are correct, considering the location of the `config.js` file on your website.
 
 3. **Integrate the player into your page:**
-   - Copy the HTML code from the `player.html` file and paste it into the desired location on your page, usually in the footer.
+   - Copy the HTML code from the `index.html` file and paste it into the desired location on your page, usually in the footer.
 
 ### Advanced Customization
 
