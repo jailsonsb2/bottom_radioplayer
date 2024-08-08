@@ -4,6 +4,7 @@
   // --- [CONFIGURAÇÕES] -----------------------------------------------
 
   const API_KEY_LYRICS = "1637b78dc3b129e6843ed674489a92d0";
+  //const API_URL = "https://twj.es/radio_info/?radio_url=";
   const API_URL = "https://api-v2.streamafrica.net/icyv2?url=";
   const TIME_TO_REFRESH = window?.streams?.timeRefresh || 10000;
 
@@ -471,34 +472,6 @@
       playerTv.appendChild($button);
   }
 
-  function createProgram(program) {
-      if (!program) return;
-      if (program.time) {
-          const $div = document.createElement("div");
-          const $span = document.createElement("span");
-          $div.classList.add("player-program-time-container");
-          $span.classList.add("player-program-badge");
-          $span.textContent = "On Air";
-          $div.appendChild($span);
-          const $time = document.createElement("span");
-          $time.classList.add("player-program-time");
-          $time.textContent = program.time;
-          $div.appendChild($time);
-          playerProgram.appendChild($div);
-      }
-      if (program.name) {
-          const $name = document.createElement("span");
-          $name.classList.add("player-program-name");
-          $name.textContent = program.name;
-          playerProgram.appendChild($name);
-      }
-      if (program.description) {
-          const $description = document.createElement("span");
-          $description.classList.add("player-program-description");
-          $description.textContent = program.description;
-          playerProgram.appendChild($description);
-      }
-  }
 
   function createSocialItem(url, icon) {
       const $a = document.createElement("a");
@@ -506,15 +479,6 @@
       $a.href = url;
       $a.target = "_blank";
       $a.innerHTML = icons[icon];
-      return $a;
-  }
-
-  function createAppsItem(url, name) {
-      const $a = document.createElement("a");
-      $a.classList.add("player-apps-item");
-      $a.href = url;
-      $a.target = "_blank";
-      $a.innerHTML = `<img src="assets/app/${name}.svg" alt="${name}" height="48" width="${name === "ios" ? "143" : "163"}">`;
       return $a;
   }
 
