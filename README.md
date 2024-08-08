@@ -17,7 +17,7 @@ This HTML5 radio player offers a complete and customizable solution for integrat
 
 ### Demo Screenshots
 
-![Demo Screenshot](https://i.imgur.com/bZYdeTp)
+![Demo Screenshot](https://i.imgur.com/bZYdeTp.png)
 
 ### Installation and Configuration
 
