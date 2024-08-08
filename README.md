@@ -45,7 +45,9 @@ This HTML5 radio player offers a complete and customizable solution for integrat
 - If you have any questions or issues, please open an issue in the GitHub repository.
 - Contributions are welcome! Feel free to submit pull requests with improvements, bug fixes, or new features.
 
----
+## Acknowledgements:
+
+I would like to thank Fabian Monrroy Gonzalez for generously sharing a part of his code, which has been instrumental in the development of this project.
 
 
 
