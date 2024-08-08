@@ -15,9 +15,9 @@ This HTML5 radio player offers a complete and customizable solution for integrat
 - **Links to mobile applications** (Android and iOS).
 - **Integration with music information APIs** to display real-time track data.
 
-### Demo
+### Demo Screenshots
 
-[Insert link to a live demo of the player, if available]
+![Demo Screenshot](https://imgur.com/bZYdeTp)
 
 ### Installation and Configuration
 
