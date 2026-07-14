@@ -4,7 +4,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Minha Rádio — Ao vivo</title>
+    <title>Minha Rádio — Sobre</title>
     <script>
         // Aplica o tema salvo antes do primeiro paint (evita flash)
         (function () {
@@ -21,10 +21,10 @@
         <div class="site-header-inner">
             <a class="site-brand" href="index.html"><span class="site-brand-dot"></span> Minha Rádio</a>
             <nav class="site-nav">
-                <a href="#noticias">Notícias</a>
-                <a href="#videos">Vídeos</a>
-                <a href="#programacao">Programação</a>
-                <a href="#equipe">Equipe</a>
+                <a href="index.html#noticias">Notícias</a>
+                <a href="index.html#videos">Vídeos</a>
+                <a href="index.html#programacao">Programação</a>
+                <a href="index.html#equipe">Equipe</a>
                 <a href="pagina2.html">Sobre</a>
             </nav>
             <button type="button" id="theme-toggle" class="theme-toggle" aria-label="Alternar tema claro/escuro"></button>
@@ -33,32 +33,31 @@
 
     <div class="site-container">
 
-        <section class="hero-slider" id="site-hero"></section>
-
-        <section class="site-section" id="noticias">
-            <h2 class="site-section-title">Últimas notícias</h2>
-            <div class="news-grid" id="site-news"></div>
+        <section class="hero">
+            <span class="hero-badge"><span class="site-brand-dot"></span> Sobre nós</span>
+            <h1>Uma rádio que não para 🎶</h1>
+            <p>
+                Você navegou para outra página e a música continuou tocando — o player é um
+                componente que intercepta a navegação interna e troca só o conteúdo da página,
+                mantendo o áudio vivo.
+            </p>
         </section>
 
-        <section class="site-section" id="videos">
-            <h2 class="site-section-title">Vídeos em destaque</h2>
-            <div class="videos-grid" id="site-videos"></div>
-        </section>
-
-        <section class="site-section" id="programacao">
-            <h2 class="site-section-title">Programação da semana</h2>
-            <div id="site-schedule"></div>
-        </section>
-
-        <section class="site-section" id="equipe">
-            <h2 class="site-section-title">Nossa equipe</h2>
-            <div class="team-grid" id="site-team"></div>
+        <section class="site-section">
+            <h2 class="site-section-title">Nossa história</h2>
+            <p style="line-height: 1.8; color: rgba(238,241,245,.7); max-width: 720px;">
+                No ar desde 2024, a Minha Rádio nasceu para levar música sem parar para todo
+                lugar. Hoje somos multi-estação, com programação ao vivo, aplicativo próprio e
+                uma comunidade de ouvintes que cresce a cada dia. Este site é a demonstração do
+                componente <strong>bottom_radioplayer</strong> — o player fixo no rodapé funciona
+                em qualquer página com apenas duas linhas de código.
+            </p>
         </section>
 
         <footer class="site-footer">
             <span id="site-footer-text"></span>
             <div id="site-social" class="footer-social"></div>
-            <span><a href="pagina2.html">Sobre a rádio</a></span>
+            <span><a href="index.html">Voltar ao início</a></span>
         </footer>
 
     </div>

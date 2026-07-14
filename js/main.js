@@ -3,8 +3,9 @@
 
   // --- [CONFIGURAÇÕES] -----------------------------------------------
 
-  const API_KEY_LYRICS = "1637b78dc3b129e6843ed674489a92d0";
-  const API_URL = "https://twj.es/?url=";
+  // Endpoint de consulta única (cache compartilhado de 5s no Redis,
+  // responde em milissegundos e já entrega albumArt pronto)
+  const API_URL = "https://api.twj.es/?url=";
   const TIME_TO_REFRESH = window?.streams?.timeRefresh || 10000;
 
   // --- [CONSTANTES E VARIÁVEIS] --------------------------------------
@@ -48,6 +49,8 @@
   let currentStation;
   let activeButton;
   let currentSongPlaying;
+  let lastAlbumArt = "";
+  let lastLyricsKey = "";
   let timeoutId;
 
   const audio = new Audio();
@@ -83,12 +86,60 @@
 
   // --- [FUNÇÕES DE REPRODUÇÃO DE ÁUDIO] ----------------------------
 
+  // Reconexão automática (rede instável). Começa true: antes da primeira
+  // reprodução real não há o que reconectar (ex.: stream fora do ar no
+  // carregamento não deve gerar loop de tentativas).
+  let isIntentionalPause = true;
+  let reconnectAttempts = 0;
+  let reconnectTimeout = null;
+  let fadeInterval = null;
+
+  // Fade suave no volume ao dar play/pause, para evitar o "estalo" de áudio
+  function fadeOut(callback) {
+      if (fadeInterval) clearInterval(fadeInterval);
+      let currentVol = audio.volume;
+      const step = currentVol / 15;
+
+      fadeInterval = setInterval(() => {
+          currentVol -= step;
+          if (currentVol <= 0.05) {
+              audio.volume = 0;
+              clearInterval(fadeInterval);
+              fadeInterval = null;
+              if (callback) callback();
+          } else {
+              audio.volume = currentVol;
+          }
+      }, 30);
+  }
+
+  function fadeIn() {
+      if (fadeInterval) clearInterval(fadeInterval);
+      const targetVol = parseInt(localStorage.getItem("volume") || "100", 10) / 100;
+      audio.volume = 0;
+      const step = targetVol / 15;
+
+      fadeInterval = setInterval(() => {
+          const newVol = audio.volume + step;
+          if (newVol >= targetVol) {
+              audio.volume = targetVol;
+              clearInterval(fadeInterval);
+              fadeInterval = null;
+          } else {
+              audio.volume = newVol;
+          }
+      }, 30);
+  }
+
   function handlePlayPause() {
-      console.log('Botão Play/Pause clicado!');
       if (audio.paused) {
+          isIntentionalPause = false;
+          fadeIn();
           play(audio);
       } else {
-          pause(audio);
+          isIntentionalPause = true;
+          if (reconnectTimeout) clearTimeout(reconnectTimeout);
+          fadeOut(() => pause(audio));
       }
   }
 
@@ -97,20 +148,12 @@
           audio.src = newSource;
       }
 
-      // Adiciona evento 'canplay' para garantir que o áudio pode ser reproduzido
-      audio.addEventListener("canplay", () => {
-          audio.play();
-          playButton.innerHTML = icons.pause;
-          playButton.classList.add("is-active");
-          document.body.classList.add("is-playing");
-      });
+      audio.play().catch((e) => console.log("Aguardando interação...", e));
 
       if (!hasVisualizer) {
           visualizer(audio, visualizerContainer);
           hasVisualizer = true;
       }
-
-      audio.load();
   }
 
   function pause(audio) {
@@ -119,6 +162,51 @@
       playButton.classList.remove("is-active");
       document.body.classList.remove("is-playing");
   }
+
+  // Enquanto o áudio estiver em buffer, mostra o spinner girando
+  audio.addEventListener("waiting", () => {
+      playButton.innerHTML = icons.spinner;
+  });
+
+  // Áudio fluindo de verdade: troca para pause, reseta a reconexão e arma o
+  // watchdog (a partir daqui uma queda deve reconectar sozinha)
+  audio.addEventListener("playing", () => {
+      isIntentionalPause = false;
+      reconnectAttempts = 0;
+      if (reconnectTimeout) clearTimeout(reconnectTimeout);
+
+      playButton.innerHTML = icons.pause;
+      playButton.classList.add("is-active");
+      document.body.classList.add("is-playing");
+  });
+
+  function handleConnectionDrop() {
+      if (isIntentionalPause) return;
+
+      if (reconnectTimeout) clearTimeout(reconnectTimeout);
+
+      if (reconnectAttempts < 5) {
+          reconnectAttempts++;
+          playButton.innerHTML = icons.spinner;
+          const delay = reconnectAttempts * 2000;
+
+          reconnectTimeout = setTimeout(() => {
+              audio.load();
+              const playPromise = audio.play();
+              if (playPromise !== undefined) {
+                  playPromise.catch((e) => console.error("Falha ao reconectar:", e));
+              }
+          }, delay);
+      } else {
+          console.error("Muitas falhas seguidas. Parando reconexão automática.");
+          pause(audio);
+          isIntentionalPause = true;
+          reconnectAttempts = 0;
+      }
+  }
+
+  audio.addEventListener("error", handleConnectionDrop);
+  audio.addEventListener("stalled", handleConnectionDrop);
 
   // --- [VISUALIZADOR] ------------------------------------------------
 
@@ -141,6 +229,9 @@
       const canvas = initCanvas(container);
       const canvasCtx = canvas.getContext("2d");
 
+      let animationId = null;
+      let isRunning = false;
+
       const renderBars = () => {
           resizeCanvas(canvas, container);
           analyzer.getByteFrequencyData(frequencyData);
@@ -158,13 +249,52 @@
               canvasCtx.fillStyle = "white";
               canvasCtx.fillRect(x, y, barWidth + 1, barHeight);
           }
-          requestAnimationFrame(renderBars);
+          animationId = requestAnimationFrame(renderBars);
       };
-      renderBars();
 
-      // Listener del cambio de espacio en la ventana
-      window.addEventListener("resize", () => {
-          resizeCanvas(canvas, container);
+      // Em telas pequenas o bargraph fica desligado para economizar
+      // bateria/CPU do celular. matchMedia (em vez de um único check) faz
+      // isso reagir também quando a janela é redimensionada depois.
+      const mobileQuery = window.matchMedia("(max-width: 767px)");
+
+      function start() {
+          if (isRunning) return;
+          isRunning = true;
+          container.style.display = "";
+          renderBars();
+      }
+
+      function stop() {
+          isRunning = false;
+          if (animationId) {
+              cancelAnimationFrame(animationId);
+              animationId = null;
+          }
+          container.style.display = "none";
+      }
+
+      function syncWithViewport() {
+          if (mobileQuery.matches) {
+              stop();
+          } else {
+              start();
+          }
+      }
+
+      syncWithViewport();
+      if (mobileQuery.addEventListener) {
+          mobileQuery.addEventListener("change", syncWithViewport);
+      } else {
+          mobileQuery.addListener(syncWithViewport);
+      }
+
+      // Pausa o desenho quando a aba está oculta (economia de CPU)
+      document.addEventListener("visibilitychange", () => {
+          if (document.hidden) {
+              if (animationId) cancelAnimationFrame(animationId);
+          } else if (isRunning) {
+              renderBars();
+          }
       });
   };
 
@@ -217,6 +347,7 @@
   const icons = {
       play: '<svg class="i i-play" viewBox="0 0 24 24"><path d="m7 3 14 9-14 9z"></path></svg>',
       pause: '<svg class="i i-pause" viewBox="0 0 24 24"><path d="M5 4h4v16H5Zm10 0h4v16h-4Z"></path></svg>',
+      spinner: '<svg class="i i-spinner" viewBox="0 0 24 24"><path fill="currentColor" d="M12 22c5.523 0 10-4.477 10-10h-2a8 8 0 10-8 8v2z"><animateTransform attributeName="transform" type="rotate" from="0 12 12" to="360 12 12" dur="1s" repeatCount="indefinite"/></path></svg>',
       facebook: '<svg class="i i-facebook" viewBox="0 0 24 24"><path d="M17 14h-3v8h-4v-8H7v-4h3V7a5 5 0 0 1 5-5h3v4h-3q-1 0-1 1v3h4Z"></path></svg>',
       twitter: '<svg class="i i-x" viewBox="0 0 24 24"><path d="m3 21 7.5-7.5m3-3L21 3M8 3H3l13 18h5Z"></path></svg>',
       instagram: '<svg class="i i-instagram" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"></circle><rect width="20" height="20" x="2" y="2" rx="5"></rect><path d="M17.5 6.5h0"></path></svg>',
@@ -231,59 +362,37 @@
 
   // --- [FUNÇÕES DE OBTENÇÃO DE DADOS DA API] ----------------------
 
-  const getDataFromStreamAfrica = async (artist, title, defaultArt, defaultCover) => {
-      let text;
-      if (artist === null || artist === title) {
-          text = `${title} - ${title}`;
-      } else {
-          text = `${artist} - ${title}`;
-      }
-      const cacheKey = text.toLowerCase();
+  // Busca na API própria (search.php) — mesma fonte de capas do albumArt do
+  // now-playing, então o resultado é consistente e cobre catálogo (Spotify)
+  // que o iTunes sozinho não tem. Retorna null quando não encontra.
+  const getDataFromSearch = async (artist, title, defaultArt, defaultCover) => {
+      const text = artist === title ? `${title}` : `${artist} - ${title}`;
+      const cacheKey = ("search:" + text).toLowerCase();
       if (cache[cacheKey]) {
           return cache[cacheKey];
       }
-      const API_URL = `https://api-v2.streamafrica.net/musicsearch?query=${encodeURIComponent(text)}&service=spotify`;
-      const response = await fetch(API_URL);
 
-      if (title === "Radioplayer Demo" || response.status === 403) {
-          const results = {
-              title,
-              artist,
-              art: defaultArt,
-              cover: defaultCover,
-              stream_url: "#not-found",
-          };
-          cache[cacheKey] = results;
-          return results;
+      try {
+          const response = await fetch(`https://api.twj.es/search.php?query=${encodeURIComponent(text)}`);
+          if (!response.ok) return null;
+          const data = await response.json();
+
+          if (data.results && data.results.artwork) {
+              const results = {
+                  title,
+                  artist,
+                  thumbnail: data.results.artwork,
+                  art: data.results.artwork,
+                  cover: data.results.artwork,
+                  stream_url: data.results.stream_url || "#not-found",
+              };
+              cache[cacheKey] = results;
+              return results;
+          }
+          return null;
+      } catch (error) {
+          return null;
       }
-
-      const data = response.ok ? await response.json() : {};
-
-      // Modificação para acessar o objeto "results" da resposta da API
-      const stream = data.results || {};
-
-      if (Object.keys(stream).length === 0) {
-          const results = {
-              title,
-              artist,
-              art: defaultArt,
-              cover: defaultCover,
-              stream_url: "#not-found",
-          };
-          cache[cacheKey] = results;
-          return results;
-      }
-
-      const results = {
-          title: stream.title || title, // Utilizando os dados da nova resposta da API
-          artist: stream.artist || artist,
-          thumbnail: stream.artwork?.small || defaultArt, // Acessando a URL da imagem pequena
-          art: stream.artwork?.medium || defaultArt, // Acessando a URL da imagem média
-          cover: stream.artwork?.large || defaultCover, // Acessando a URL da imagem grande
-          stream_url: stream.stream || "#not-found", // Ajustado para o novo nome da propriedade "stream"
-      };
-      cache[cacheKey] = results;
-      return results;
   };
 
   const getDataFromITunes = async (artist, title, defaultArt, defaultCover) => {
@@ -291,14 +400,18 @@
       if (artist === title) {
           text = `${title}`;
       } else {
-          text = `${artist} - ${title}`;
+          // Sem o " - " literal: a busca do iTunes é por palavras-chave e o
+          // hífen solto só atrapalha o match
+          text = `${artist} ${title}`;
       }
       const cacheKey = text.toLowerCase();
       if (cache[cacheKey]) {
           return cache[cacheKey];
       }
 
-      const response = await fetch(`https://itunes.apple.com/search?limit=1&term=${encodeURIComponent(text)}`);
+      // media=music/entity=song: sem esse filtro, podcasts com nomes
+      // parecidos entravam no match e a capa vinha errada
+      const response = await fetch(`https://itunes.apple.com/search?limit=1&media=music&entity=song&term=${encodeURIComponent(text)}`);
       if (response.status === 403) {
           const results = {
               title,
@@ -335,35 +448,59 @@
       return results;
   };
 
-  async function getDataFrom({ artist, title, art, cover, server }) {
-      let dataFrom = {};
-      if (server.toLowerCase() === "spotify") {
-          dataFrom = await getDataFromStreamAfrica(artist, title, art, cover);
-      } else {
-          dataFrom = await getDataFromITunes(artist, title, art, cover);
-      }
-      return dataFrom;
+  async function getDataFrom({ artist, title, art, cover }) {
+      // search.php primeiro (cobre iTunes + Spotify), iTunes como fallback
+      const fromSearch = await getDataFromSearch(artist, title, art, cover);
+      if (fromSearch) return fromSearch;
+      return getDataFromITunes(artist, title, art, cover);
   }
 
-  // Obtener letras de canciones
-  const getLyrics = async (artist, name) => {
-      try {
-          const response = await fetch(`https://api.vagalume.com.br/search.php?apikey=${API_KEY_LYRICS}&art=${encodeURIComponent(artist)}&mus=${encodeURIComponent(name)}`);
-          const data = await response.json();
-          if (data.type === "exact" || data.type === "aprox") {
-              const lyrics = data.mus[0].text;
-              return lyrics;
-          } else {
-              return "Not found lyrics";
-          }
-      } catch (error) {
-          console.error("Error fetching lyrics:", error);
-          return "Not found lyrics";
+  // Obter letras de canções. A API do Vagalume foi descontinuada — busca em
+  // lyrics.ovh e, se não encontrar, no LRCLIB (nenhuma exige chave de API).
+  // Cacheia a própria Promise: chamadas quase simultâneas para a mesma música
+  // reaproveitam a requisição em voo em vez de martelar as APIs de novo.
+  const lyricsCache = {};
+
+  const getLyrics = (artist, name) => {
+      const cacheKey = `${artist} - ${name}`.toLowerCase();
+      if (lyricsCache[cacheKey]) {
+          return lyricsCache[cacheKey];
       }
+
+      const fetchLyrics = async () => {
+          try {
+              const response = await fetch(`https://api.lyrics.ovh/v1/${encodeURIComponent(artist)}/${encodeURIComponent(name)}`);
+              const data = await response.json();
+              if (data && data.lyrics) return data.lyrics;
+          } catch (error) {}
+
+          try {
+              const response = await fetch(`https://lrclib.net/api/get?artist_name=${encodeURIComponent(artist)}&track_name=${encodeURIComponent(name)}`);
+              if (response.ok) {
+                  const data = await response.json();
+                  const lyrics = data.plainLyrics || data.syncedLyrics;
+                  if (lyrics) return lyrics;
+              }
+          } catch (error) {}
+
+          try {
+              const response = await fetch(`https://lrclib.net/api/search?track_name=${encodeURIComponent(name)}&artist_name=${encodeURIComponent(artist)}`);
+              if (response.ok) {
+                  const results = await response.json();
+                  const hit = Array.isArray(results) && results.find((r) => r.plainLyrics || r.syncedLyrics);
+                  if (hit) return hit.plainLyrics || hit.syncedLyrics;
+              }
+          } catch (error) {}
+
+          return "Letra não disponível";
+      };
+
+      const promise = fetchLyrics();
+      lyricsCache[cacheKey] = promise;
+      return promise;
   };
 
   function normalizeTitle(api) {
-      console.log(api);
       let title;
       let artist;
 
@@ -375,9 +512,10 @@
           title = api.song;
           artist = api.artist;
       } else if (api.songtitle && api.songtitle.includes(" - ")) {
-          title = api.songtitle.split(" - ")[0];
-          artist = api.songtitle.split(" - ")[1];
-      } else if (api.now_playing) {
+          // Convenção ICY: "Artista - Título" (o split antigo estava invertido)
+          artist = api.songtitle.split(" - ")[0];
+          title = api.songtitle.substring(api.songtitle.indexOf(" - ") + 3);
+      } else if (api.now_playing && api.now_playing.song) {
           title = api.now_playing.song.title;
           artist = api.now_playing.song.artist;
       } else if (api.artist && api.title) {
@@ -399,30 +537,38 @@
   }
 
   function normalizeHistory(api) {
-      let artist;
-      let song;
-      let history = api.song_history || api.history || api.songHistory || [];
-      history = history.slice(0, 4);
+      const historyData = api.song_history || api.history || api.songHistory || [];
+
+      if (!Array.isArray(historyData)) {
+          return [];
+      }
+
+      const history = historyData.slice(0, 10);
 
       const historyNormalized = history.map((item) => {
-          if (api.song_history) {
-              artist = item.song.artist;
+          let artist = "";
+          let song = "";
+
+          if (item.song && typeof item.song === "object" && item.song.title) {
+              artist = item.song.artist || "";
               song = item.song.title;
-          } else if (api.history) {
-              artist = sanitizeText(item.artist || "");
-              song = sanitizeText(item.song || "");
-          } else if (api.songHistory) {
-              // Corrigido: Acessando as propriedades dentro do objeto 'song'
-              artist = item.song.artist;
-              song = item.song.title;
+          } else if (item.song && typeof item.song === "string") {
+              artist = item.artist || "";
+              song = item.song;
+          } else if (item.title) {
+              artist = item.artist || "";
+              song = item.title;
           }
+
+          if (!song) return null;
+
           return {
-              artist,
-              song,
+              artist: sanitizeText(artist),
+              song: sanitizeText(song),
           };
       });
 
-      return historyNormalized;
+      return historyNormalized.filter((item) => item !== null);
   }
 
   // --- [FUNÇÕES DE MANIPULAÇÃO DA INTERFACE] ------------------------
@@ -457,16 +603,30 @@
           }
           $button.classList.add("is-active");
           playerTvModal.classList.add("is-active");
-          pause(audio);
+
+          const wasPlaying = !audio.paused;
+          // Pausa INTENCIONAL: sem esta flag o watchdog de reconexão trataria
+          // a pausa como queda de rede e religaria a rádio por cima da TV
+          isIntentionalPause = true;
+          if (reconnectTimeout) clearTimeout(reconnectTimeout);
+          fadeOut(() => pause(audio));
+
           const $iframe = document.createElement("iframe");
           $iframe.src = url;
           $iframe.allowFullscreen = true;
           modalBody.appendChild($iframe);
+          // once: true — sem isso cada abertura da TV acumulava um listener
           closeButton.addEventListener("click", () => {
               $button.classList.remove("is-active");
               playerTvModal.classList.remove("is-active");
               modalBody.innerHTML = "";
-          });
+              // Retoma a rádio (no ponto ao vivo) se estava tocando antes
+              if (wasPlaying) {
+                  isIntentionalPause = false;
+                  fadeIn();
+                  play(audio, currentStation.stream_url);
+              }
+          }, { once: true });
       });
       playerTv.appendChild($button);
   }
@@ -622,10 +782,10 @@
               ],
           });
           navigator.mediaSession.setActionHandler("play", () => {
-              play();
+              play(audio);
           });
           navigator.mediaSession.setActionHandler("pause", () => {
-              pause();
+              pause(audio);
           });
       }
   }
@@ -864,7 +1024,7 @@
           }
 
           const server = currentStation.server || "itunes";
-          const jsonUri = currentStation.api || API_URL + currentStation.stream_url;
+          const jsonUri = currentStation.api || API_URL + encodeURIComponent(currentStation.stream_url);
 
           // Busca informações da API
           fetch(jsonUri)
@@ -872,28 +1032,56 @@
               .then(async (res) => {
                   // Extrai título e artista da resposta da API
                   const current = normalizeTitle(res);
-
-                  // Só atualiza se a música for diferente
                   const title = current.title;
-                  if (currentSongPlaying !== title) {
-                      currentSongPlaying = title;
-                      let artist = current.artist;
-                      const art = currentStation.album;
-                      const cover = currentStation.cover;
-                      const historyData = normalizeHistory(res); // Obtém dados do histórico
 
-                      // Verifica se título e artista são válidos antes de buscar dados adicionais
-                      if (title && artist) {
-                          const dataFrom = await getDataFrom({ artist, title, art, cover, server });
+                  // O songtitle cru é estável entre as respostas da API —
+                  // comparar também a capa evita perder o enriquecimento
+                  const songKey = res.songtitle || title;
+                  const artKey = res.albumArt || "";
+                  if (currentSongPlaying === songKey && lastAlbumArt === artKey) {
+                      return;
+                  }
+                  currentSongPlaying = songKey;
+                  lastAlbumArt = artKey;
 
-                          // Atualiza a interface do usuário
-                          currentSong(dataFrom);
-                          mediaSession(dataFrom);
-                          setLyrics(dataFrom.artist, dataFrom.title);
-                          setHistory(historyData, currentStation, server); // Define o histórico
+                  const artist = current.artist;
+                  const art = currentStation.album;
+                  const cover = currentStation.cover;
+                  const historyData = normalizeHistory(res); // Obtém dados do histórico
+
+                  // Verifica se título e artista são válidos antes de buscar dados adicionais
+                  if (title && artist) {
+                      let dataFrom;
+                      if (res.albumArt) {
+                          // A API já entrega a capa pronta no payload;
+                          // refazer a busca no search.php só atrasava a capa
+                          dataFrom = {
+                              title: res.song || title,
+                              artist: res.artist || artist,
+                              album: res.album || "",
+                              thumbnail: res.albumArt,
+                              art: res.albumArt,
+                              cover: res.albumArt.replace("600x600", "1500x1500"),
+                              stream_url: res.streamUrl || "#not-found",
+                          };
+                          cache[`${dataFrom.artist} - ${dataFrom.title}`.toLowerCase()] = dataFrom;
                       } else {
-                          console.log("Título ou artista inválidos. Pulando busca de dados adicionais.");
+                          dataFrom = await getDataFrom({ artist, title, art, cover, server });
                       }
+
+                      // Atualiza a interface do usuário
+                      currentSong(dataFrom);
+                      mediaSession(dataFrom);
+
+                      const lyricsKey = `${dataFrom.artist} - ${dataFrom.title}`.toLowerCase();
+                      if (lyricsKey !== lastLyricsKey) {
+                          lastLyricsKey = lyricsKey;
+                          setLyrics(dataFrom.artist, dataFrom.title);
+                      }
+
+                      setHistory(historyData, currentStation, server); // Define o histórico
+                  } else {
+                      console.log("Título ou artista inválidos. Pulando busca de dados adicionais.");
                   }
               })
               .catch((error) => console.error("Erro ao buscar dados da API:", error));

@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Gerador do content.js — Minha Rádio</title>
+    <script>
+        (function () {
+            var theme = localStorage.getItem("site:theme");
+            if (!theme) theme = matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark";
+            document.documentElement.dataset.theme = theme;
+        })();
+    </script>
+    <link rel="stylesheet" href="site.css">
+    <style>
+        .gen-section {
+            margin-top: 40px;
+            padding: 24px;
+            border-radius: var(--site-radius);
+            background: var(--site-surface);
+            border: 1px solid var(--site-border);
+        }
+
+        .gen-section h2 { margin: 0 0 6px; font-size: 20px; }
+        .gen-hint { margin: 0 0 18px; font-size: 13px; color: var(--site-muted); }
+
+        .gen-item {
+            position: relative;
+            display: grid;
+            gap: 10px;
+            padding: 16px;
+            margin-bottom: 14px;
+            border-radius: 14px;
+            border: 1px solid var(--site-border);
+            background: var(--site-surface);
+        }
+
+        .gen-field { display: grid; gap: 4px; }
+        .gen-field label { font-size: 11.5px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--site-muted); }
+
+        .gen-field input,
+        .gen-field select,
+        .gen-field textarea {
+            font-family: inherit;
+            font-size: 14px;
+            color: var(--site-text);
+            background: var(--site-bg);
+            border: 1px solid var(--site-border);
+            border-radius: 10px;
+            padding: 10px 12px;
+        }
+
+        .gen-field textarea { min-height: 80px; resize: vertical; }
+        .gen-field input:focus, .gen-field select:focus, .gen-field textarea:focus { outline: 2px solid var(--site-accent); outline-offset: 1px; }
+
+        .gen-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        @media (max-width: 640px) { .gen-row { grid-template-columns: 1fr; } }
+
+        .gen-remove {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            width: 30px;
+            height: 30px;
+            border: none;
+            border-radius: 50%;
+            background: rgba(255, 90, 95, 0.15);
+            color: #ff5a5f;
+            font-weight: 800;
+            cursor: pointer;
+        }
+
+        .gen-add {
+            padding: 10px 18px;
+            border-radius: 999px;
+            border: 1px dashed var(--site-border);
+            background: none;
+            color: var(--site-accent);
+            font-family: inherit;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        .gen-add:hover { background: var(--site-surface-strong); }
+
+        .gen-tabs { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
+
+        .gen-output textarea {
+            width: 100%;
+            min-height: 260px;
+            font-family: Consolas, monospace;
+            font-size: 12.5px;
+            color: var(--site-text);
+            background: var(--site-bg);
+            border: 1px solid var(--site-border);
+            border-radius: 14px;
+            padding: 14px;
+        }
+
+        .gen-actions { display: flex; gap: 12px; flex-wrap: wrap; margin: 18px 0; }
+
+        .gen-primary {
+            padding: 14px 28px;
+            border: none;
+            border-radius: 999px;
+            background: linear-gradient(135deg, var(--site-accent), #2ba7b0);
+            color: var(--site-accent-ink);
+            font-family: inherit;
+            font-size: 15px;
+            font-weight: 800;
+            cursor: pointer;
+        }
+
+        .gen-secondary {
+            padding: 14px 24px;
+            border: 1px solid var(--site-border);
+            border-radius: 999px;
+            background: var(--site-surface);
+            color: var(--site-text);
+            font-family: inherit;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        .gen-secondary:hover { background: var(--site-surface-strong); }
+    </style>
+</head>
+
+<body>
+    <header class="site-header">
+        <div class="site-header-inner">
+            <a class="site-brand" href="index.html"><span class="site-brand-dot"></span> Minha Rádio</a>
+            <span style="font-size:13px;color:var(--site-muted);font-weight:700">Gerador do content.js</span>
+            <button type="button" id="theme-toggle" class="theme-toggle" aria-label="Alternar tema claro/escuro"></button>
+        </div>
+    </header>
+
+    <div class="site-container" style="padding-bottom:64px">
+
+        <section class="hero" style="padding:48px 0 8px">
+            <h1 style="font-size:clamp(26px,4vw,38px)">Configure o conteúdo do site</h1>
+            <p>Preencha os campos abaixo (já carregados com o conteúdo atual) e clique em <strong>Gerar content.js</strong>.
+               Depois é só baixar o arquivo e substituir o <code>content.js</code> na raiz do site.</p>
+        </section>
+
+        <section class="gen-section">
+            <h2>Slides do topo</h2>
+            <p class="gen-hint">O botão pode dar play na rádio (ação "play") ou abrir um link.</p>
+            <div id="gen-slides"></div>
+            <button type="button" class="gen-add" data-add="slides">+ Adicionar slide</button>
+        </section>
+
+        <section class="gen-section">
+            <h2>Notícias</h2>
+            <p class="gen-hint">Com "conteúdo completo" preenchido, a notícia abre num modal na própria página; sem ele, o link é usado.</p>
+            <div id="gen-news"></div>
+            <button type="button" class="gen-add" data-add="news">+ Adicionar notícia</button>
+        </section>
+
+        <section class="gen-section">
+            <h2>Vídeos (YouTube)</h2>
+            <p class="gen-hint">O código do vídeo é o trecho após "v=" na URL do YouTube (ex.: kXYiU_JCYtU).</p>
+            <div id="gen-videos"></div>
+            <button type="button" class="gen-add" data-add="videos">+ Adicionar vídeo</button>
+        </section>
+
+        <section class="gen-section">
+            <h2>Programação da semana</h2>
+            <div class="gen-tabs schedule-tabs" id="gen-day-tabs"></div>
+            <div id="gen-schedule"></div>
+            <button type="button" class="gen-add" data-add="schedule">+ Adicionar programa neste dia</button>
+        </section>
+
+        <section class="gen-section">
+            <h2>Equipe</h2>
+            <div id="gen-team"></div>
+            <button type="button" class="gen-add" data-add="team">+ Adicionar integrante</button>
+        </section>
+
+        <section class="gen-section">
+            <h2>Redes sociais e rodapé</h2>
+            <p class="gen-hint">Deixe em branco as redes que não quiser exibir.</p>
+            <div class="gen-item" id="gen-social"></div>
+        </section>
+
+        <div class="gen-actions">
+            <button type="button" class="gen-primary" id="gen-generate">⚙️ Gerar content.js</button>
+            <button type="button" class="gen-secondary" id="gen-copy" hidden>📋 Copiar</button>
+            <button type="button" class="gen-secondary" id="gen-download" hidden>⬇ Baixar content.js</button>
+        </div>
+
+        <section class="gen-output" id="gen-output-wrap" hidden>
+            <textarea id="gen-output" readonly spellcheck="false"></textarea>
+        </section>
+
+    </div>
+
+    <!-- carrega o conteúdo atual para pré-preencher o formulário -->
+    <script src="content.js"></script>
+    <script>
+        (function () {
+            "use strict";
+
+            const data = JSON.parse(JSON.stringify(window.siteContent || {}));
+            data.slides = data.slides || [];
+            data.news = data.news || [];
+            data.videos = data.videos || [];
+            data.schedule = data.schedule || {};
+            data.team = data.team || [];
+            data.social = data.social || {};
+            data.footer = data.footer || { text: "" };
+
+            // --- tema (mesmo comportamento do site) ---
+            const themeToggle = document.getElementById("theme-toggle");
+            const icon = () => (document.documentElement.dataset.theme === "light" ? "🌙" : "☀️");
+            themeToggle.textContent = icon();
+            themeToggle.onclick = () => {
+                const next = document.documentElement.dataset.theme === "light" ? "dark" : "light";
+                document.documentElement.dataset.theme = next;
+                localStorage.setItem("site:theme", next);
+                themeToggle.textContent = icon();
+            };
+
+            // --- helpers de formulário ---
+            function field(label, value, onInput, type) {
+                const wrap = document.createElement("div");
+                wrap.className = "gen-field";
+                const lab = document.createElement("label");
+                lab.textContent = label;
+                wrap.appendChild(lab);
+                let input;
+                if (type === "textarea") {
+                    input = document.createElement("textarea");
+                    input.value = value || "";
+                } else if (type === "select-action") {
+                    input = document.createElement("select");
+                    [["play", "▶ Dar play na rádio"], ["link", "Abrir um link"]].forEach(([v, t]) => {
+                        const o = document.createElement("option");
+                        o.value = v; o.textContent = t;
+                        input.appendChild(o);
+                    });
+                    input.value = value || "link";
+                } else {
+                    input = document.createElement("input");
+                    input.type = "text";
+                    input.value = value || "";
+                }
+                input.addEventListener("input", () => onInput(input.value));
+                if (type === "select-action") input.addEventListener("change", () => onInput(input.value));
+                wrap.appendChild(input);
+                return wrap;
+            }
+
+            function removeButton(list, index, rerender) {
+                const btn = document.createElement("button");
+                btn.type = "button";
+                btn.className = "gen-remove";
+                btn.textContent = "✕";
+                btn.title = "Remover";
+                btn.onclick = () => { list.splice(index, 1); rerender(); };
+                return btn;
+            }
+
+            function row(...children) {
+                const r = document.createElement("div");
+                r.className = "gen-row";
+                children.forEach((c) => r.appendChild(c));
+                return r;
+            }
+
+            // --- slides ---
+            function renderSlides() {
+                const root = document.getElementById("gen-slides");
+                root.innerHTML = "";
+                data.slides.forEach((slide, i) => {
+                    slide.button = slide.button || { label: "", action: "link", url: "" };
+                    const item = document.createElement("div");
+                    item.className = "gen-item";
+                    item.appendChild(removeButton(data.slides, i, renderSlides));
+                    item.appendChild(row(
+                        field("Selo (badge)", slide.badge, (v) => slide.badge = v),
+                        field("Imagem (URL, opcional)", slide.image, (v) => slide.image = v)
+                    ));
+                    item.appendChild(field("Título", slide.title, (v) => slide.title = v));
+                    item.appendChild(field("Subtítulo", slide.subtitle, (v) => slide.subtitle = v, "textarea"));
+                    item.appendChild(row(
+                        field("Texto do botão", slide.button.label, (v) => slide.button.label = v),
+                        field("Ação do botão", slide.button.action === "play" ? "play" : "link", (v) => slide.button.action = v, "select-action")
+                    ));
+                    item.appendChild(field("URL do botão (se a ação for link)", slide.button.url, (v) => slide.button.url = v));
+                    root.appendChild(item);
+                });
+            }
+
+            // --- notícias ---
+            function renderNews() {
+                const root = document.getElementById("gen-news");
+                root.innerHTML = "";
+                data.news.forEach((n, i) => {
+                    const item = document.createElement("div");
+                    item.className = "gen-item";
+                    item.appendChild(removeButton(data.news, i, renderNews));
+                    item.appendChild(field("Título", n.title, (v) => n.title = v));
+                    item.appendChild(row(
+                        field("Data (AAAA-MM-DD)", n.date, (v) => n.date = v),
+                        field("Imagem (URL)", n.image, (v) => n.image = v)
+                    ));
+                    item.appendChild(field("Resumo (aparece no card)", n.excerpt, (v) => n.excerpt = v, "textarea"));
+                    item.appendChild(field("Conteúdo completo (abre no modal; separe parágrafos com linha em branco)", n.content, (v) => n.content = v, "textarea"));
+                    item.appendChild(field("Link externo (usado só se o conteúdo estiver vazio)", n.url, (v) => n.url = v));
+                    root.appendChild(item);
+                });
+            }
+
+            // --- vídeos ---
+            function renderVideos() {
+                const root = document.getElementById("gen-videos");
+                root.innerHTML = "";
+                data.videos.forEach((v, i) => {
+                    const item = document.createElement("div");
+                    item.className = "gen-item";
+                    item.appendChild(removeButton(data.videos, i, renderVideos));
+                    item.appendChild(row(
+                        field("Código do vídeo (YouTube)", v.id, (val) => v.id = val),
+                        field("Título", v.title, (val) => v.title = val)
+                    ));
+                    root.appendChild(item);
+                });
+            }
+
+            // --- programação ---
+            const DAYS = [["seg", "Segunda"], ["ter", "Terça"], ["qua", "Quarta"], ["qui", "Quinta"], ["sex", "Sexta"], ["sab", "Sábado"], ["dom", "Domingo"]];
+            let currentDay = "seg";
+
+            function renderDayTabs() {
+                const tabs = document.getElementById("gen-day-tabs");
+                tabs.innerHTML = "";
+                DAYS.forEach(([key, label]) => {
+                    const b = document.createElement("button");
+                    b.type = "button";
+                    b.className = "schedule-tab" + (key === currentDay ? " is-active" : "");
+                    b.textContent = label;
+                    b.onclick = () => { currentDay = key; renderDayTabs(); renderSchedule(); };
+                    tabs.appendChild(b);
+                });
+            }
+
+            function renderSchedule() {
+                const root = document.getElementById("gen-schedule");
+                root.innerHTML = "";
+                data.schedule[currentDay] = data.schedule[currentDay] || [];
+                data.schedule[currentDay].forEach((slot, i) => {
+                    const item = document.createElement("div");
+                    item.className = "gen-item";
+                    item.appendChild(removeButton(data.schedule[currentDay], i, renderSchedule));
+                    item.appendChild(row(
+                        field("Horário (HH:MM)", slot.time, (v) => slot.time = v),
+                        field("Programa", slot.name, (v) => slot.name = v)
+                    ));
+                    item.appendChild(field("Locutor / descrição", slot.host, (v) => slot.host = v));
+                    root.appendChild(item);
+                });
+            }
+
+            // --- equipe ---
+            function renderTeam() {
+                const root = document.getElementById("gen-team");
+                root.innerHTML = "";
+                data.team.forEach((m, i) => {
+                    const item = document.createElement("div");
+                    item.className = "gen-item";
+                    item.appendChild(removeButton(data.team, i, renderTeam));
+                    item.appendChild(row(
+                        field("Nome", m.name, (v) => m.name = v),
+                        field("Função", m.role, (v) => m.role = v)
+                    ));
+                    item.appendChild(field("Foto (URL)", m.photo, (v) => m.photo = v));
+                    root.appendChild(item);
+                });
+            }
+
+            // --- social + rodapé ---
+            function renderSocial() {
+                const root = document.getElementById("gen-social");
+                root.innerHTML = "";
+                ["whatsapp", "instagram", "facebook", "twitter", "youtube", "tiktok", "telegram"].forEach((key) => {
+                    root.appendChild(field(key, data.social[key], (v) => data.social[key] = v));
+                });
+                root.appendChild(field("Texto do rodapé", data.footer.text, (v) => data.footer.text = v));
+            }
+
+            // --- botões de adicionar ---
+            document.querySelectorAll("[data-add]").forEach((btn) => {
+                btn.onclick = () => {
+                    const kind = btn.dataset.add;
+                    if (kind === "slides") { data.slides.push({ badge: "", title: "", subtitle: "", image: "", button: { label: "", action: "link", url: "" } }); renderSlides(); }
+                    if (kind === "news") { data.news.push({ title: "", date: "", image: "", excerpt: "", content: "", url: "" }); renderNews(); }
+                    if (kind === "videos") { data.videos.push({ id: "", title: "" }); renderVideos(); }
+                    if (kind === "schedule") { data.schedule[currentDay] = data.schedule[currentDay] || []; data.schedule[currentDay].push({ time: "", name: "", host: "" }); renderSchedule(); }
+                    if (kind === "team") { data.team.push({ name: "", role: "", photo: "" }); renderTeam(); }
+                };
+            });
+
+            // --- geração do arquivo ---
+            function cleanData() {
+                const out = JSON.parse(JSON.stringify(data));
+                out.slides = out.slides.filter((s) => s.title);
+                out.slides.forEach((s) => {
+                    if (s.button && !s.button.label) delete s.button;
+                    else if (s.button && s.button.action === "play") delete s.button.url;
+                    else if (s.button) delete s.button.action;
+                    if (!s.image) delete s.image;
+                });
+                out.news = out.news.filter((n) => n.title);
+                out.news.forEach((n) => { if (!n.content) delete n.content; if (!n.url) delete n.url; });
+                out.videos = out.videos.filter((v) => v.id);
+                out.team = out.team.filter((m) => m.name);
+                Object.keys(out.schedule).forEach((day) => {
+                    out.schedule[day] = (out.schedule[day] || []).filter((s) => s.time && s.name);
+                    if (!out.schedule[day].length) delete out.schedule[day];
+                });
+                Object.keys(out.social).forEach((k) => { if (!out.social[k]) delete out.social[k]; });
+                return out;
+            }
+
+            const output = document.getElementById("gen-output");
+            const outputWrap = document.getElementById("gen-output-wrap");
+            const copyBtn = document.getElementById("gen-copy");
+            const downloadBtn = document.getElementById("gen-download");
+
+            document.getElementById("gen-generate").onclick = () => {
+                const header = "/* Gerado pelo gerador.html em " + new Date().toLocaleString("pt-BR") + " */\n";
+                output.value = header + "window.siteContent = " + JSON.stringify(cleanData(), null, 4) + ";\n";
+                outputWrap.hidden = false;
+                copyBtn.hidden = false;
+                downloadBtn.hidden = false;
+                output.scrollIntoView({ behavior: "smooth", block: "nearest" });
+            };
+
+            copyBtn.onclick = async () => {
+                try {
+                    await navigator.clipboard.writeText(output.value);
+                    copyBtn.textContent = "✅ Copiado!";
+                } catch (e) {
+                    output.select();
+                    document.execCommand("copy");
+                    copyBtn.textContent = "✅ Copiado!";
+                }
+                setTimeout(() => (copyBtn.textContent = "📋 Copiar"), 2000);
+            };
+
+            downloadBtn.onclick = () => {
+                const blob = new Blob([output.value], { type: "text/javascript;charset=utf-8" });
+                const a = document.createElement("a");
+                a.href = URL.createObjectURL(blob);
+                a.download = "content.js";
+                a.click();
+                URL.revokeObjectURL(a.href);
+            };
+
+            // --- primeira renderização ---
+            renderSlides();
+            renderNews();
+            renderVideos();
+            renderDayTabs();
+            renderSchedule();
+            renderTeam();
+            renderSocial();
+        })();
+    </script>
+</body>
+
+</html>

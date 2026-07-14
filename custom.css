@@ -1,18 +1,358 @@
-/* Aregue todo su codigo personalizado aquí */
+/* ============================================================
+   Skin "floating dock" — sobreposições ao css/main.min.css
+   ------------------------------------------------------------
+   Em vez da barra colada de ponta a ponta, o player vira uma
+   ILHA flutuante de vidro escuro (estilo dynamic island):
+   cantos arredondados, sombra profunda, play em gradiente do
+   accent, botões circulares só-ícone e equalizador animado.
+   O accent (clampado no JS, nunca preto/lavado) é detalhe de
+   identidade — a base escura é legível com qualquer capa.
+   ============================================================ */
 
-.player-button {
+/* --- o dock --- */
 
-    font-weight: 700;
-    
+/* sem overflow:hidden no dock — ele cortaria o dropdown de volume, que abre
+   para cima; o recorte dos cantos é feito elemento a elemento logo abaixo */
+#app-player .player {
+    inset: auto 0 18px;
+    margin: 0 auto;
+    width: min(1240px, calc(100% - 32px));
+    padding: 10px 16px;
+    border-radius: 26px;
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    box-shadow: 0 30px 80px rgba(0, 0, 0, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(24px) saturate(160%);
+    -webkit-backdrop-filter: blur(24px) saturate(160%);
+    animation: dock-in 0.6s cubic-bezier(0.2, 0.75, 0.2, 1) both;
 }
 
-.app-player .player-button-alt {
-    padding: .2vw .80vw;
-  
+/* recorta nos cantos do dock as camadas internas de fundo */
+#app-player .player::before,
+#app-player .player-cover-image {
+    border-radius: inherit;
 }
 
-.app-player .player {
-    padding: .3vw;
+#app-player .visualizer {
+    inset: auto 0 0;
+    height: 100%;
+    overflow: hidden;
+    border-radius: inherit;
+}
+
+@keyframes dock-in {
+    from { transform: translateY(140%); }
+}
+
+@media (max-width: 991px) {
+    #app-player .player {
+        inset: auto 0 12px;
+        width: calc(100% - 20px);
+        padding: 14px 16px;
+        border-radius: 24px;
+    }
+
+    /* mini player com presença: capa, título e controles maiores.
+       flex:1 + min-width:0 no bloco da esquerda: é ele que encolhe
+       (truncando o título) — sem isso os controles estouravam a borda */
+    #app-player .player-left {
+        gap: 14px;
+        flex: 1;
+        min-width: 0;
+        margin-right: 0;
+    }
+
+    #app-player .player-artwork-style {
+        max-width: 64px;
+    }
+
+    #app-player .player-cover-title {
+        width: auto;
+        flex: 1;
+        min-width: 0;
+    }
+
+    #app-player .player-song-name .song-name {
+        font-size: 16px;
+    }
+
+    #app-player .song-artist {
+        font-size: 12.5px;
+    }
+
+    /* controles saem do centro absoluto (sobrepunham o título) e ancoram
+       à direita, no fluxo, com toque maior */
+    #app-player .player-controller {
+        position: static;
+        transform: none;
+        gap: 10px;
+        margin-left: 12px;
+        flex: none;
+    }
+
+    #app-player .player-button-play {
+        padding: 1.05rem;
+        --i-size: 22px;
+    }
+
+    #app-player .player-button-backward-step,
+    #app-player .player-button-forward-step {
+        width: 40px;
+        height: 40px;
+        --i-size: 18px;
+    }
+}
+
+/* telas bem estreitas: sai o "estação anterior" para o título respirar
+   (avançar continua disponível e a lista completa fica em Estações) */
+@media (max-width: 480px) {
+    #app-player .player-button-backward-step {
+        display: none;
+    }
+}
+
+/* véu escuro constante no lugar do accent a 50% (que sumia com cor escura);
+   a capa desfocada continua visível por trás */
+#app-player .player::before {
+    background: linear-gradient(120deg, rgba(8, 10, 15, 0.6) 0%, rgba(8, 10, 15, 0.85) 100%);
+    opacity: 1;
+}
+
+/* fio de accent no topo do dock: a identidade da cor sem engolir o layout */
+#app-player .player > .player-wrapper::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent 5%, var(--accent, #4dd7e0) 50%, transparent 95%);
+    pointer-events: none;
+}
+
+/* bargraph de fundo um pouco mais presente dentro do dock */
+#app-player .visualizer {
+    opacity: 0.14;
+}
+
+/* --- capa + título --- */
+
+#app-player .player-artwork,
+#app-player .player-artwork img {
+    border-radius: 14px;
+}
+
+#app-player .player-artwork {
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent, #4dd7e0) 65%, transparent), 0 8px 22px rgba(0, 0, 0, 0.45);
+}
+
+/* nome da música com mais folga (a base cortava em 180px) */
+@media (min-width: 992px) {
+    #app-player .player-cover-title {
+        width: 300px;
+    }
+}
+
+/* equalizador animado ao lado do nome da música (só enquanto toca) */
+#app-player .player-song-name {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+body.is-playing #app-player .player-song-name::before {
+    content: "";
+    flex: none;
+    width: 15px;
+    height: 13px;
+    background:
+        linear-gradient(var(--accent, #4dd7e0), var(--accent, #4dd7e0)) left bottom / 3px 40% no-repeat,
+        linear-gradient(var(--accent, #4dd7e0), var(--accent, #4dd7e0)) center bottom / 3px 100% no-repeat,
+        linear-gradient(var(--accent, #4dd7e0), var(--accent, #4dd7e0)) right bottom / 3px 60% no-repeat;
+    animation: eq-bars 1s ease-in-out infinite alternate;
+}
+
+@keyframes eq-bars {
+    from { background-size: 3px 40%, 3px 100%, 3px 60%; }
+    to   { background-size: 3px 100%, 3px 35%, 3px 90%; }
+}
+
+/* --- transporte --- */
+
+/* play: gradiente do accent com glow — o centro de tudo */
+#app-player .player-button-play {
+    background: linear-gradient(135deg, var(--accent, #22d3ee), color-mix(in srgb, var(--accent, #22d3ee) 55%, #04141a)) !important;
+    border: 1px solid rgba(255, 255, 255, 0.35);
+    box-shadow: 0 10px 30px color-mix(in srgb, var(--accent, #22d3ee) 50%, transparent);
+    color: #fff;
+}
+
+/* anterior/próxima: círculos glass */
+#app-player .player-button-backward-step,
+#app-player .player-button-forward-step {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    background: rgba(255, 255, 255, 0.07);
+    justify-content: center;
+    transition: background 0.2s ease, color 0.2s ease;
+}
+
+#app-player .player-button-backward-step:hover,
+#app-player .player-button-forward-step:hover {
+    background: rgba(255, 255, 255, 0.16);
+    color: #fff;
+}
+
+/* --- botões da direita: círculos só-ícone (o rótulo vira dica) --- */
+
+#app-player .player-right button.player-button,
+#app-player .player-right .player-button-volume-toggle {
+    font-size: 0;           /* esconde o rótulo de texto */
+    gap: 0;
+    width: 44px;
+    height: 44px;
+    flex: none;
+    border-radius: 50%;
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    background: rgba(255, 255, 255, 0.07);
+    justify-content: center;
+    transition: background 0.2s ease, color 0.2s ease;
+}
+
+#app-player .player-right button.player-button:hover,
+#app-player .player-right .player-button-volume-toggle:hover {
+    background: rgba(255, 255, 255, 0.16);
+    color: #fff;
+}
+
+/* o wrapper do volume é um div.player-button: neutraliza, o círculo é o toggle */
+#app-player .player-right .player-button-volume {
+    width: auto;
+    height: auto;
+    border: none;
+    background: none;
+    font-size: 0;
+}
+
+/* Estações: círculo só-ícone, mesma família dos demais botões (o formato
+   em vw da base encolhia/quadrava o botão e quebrava o layout).
+   Seletor com #app-player para empatar a especificidade da base. */
+#app-player .player-button-alt {
+    width: 44px;
+    height: 44px;
+    flex: none;
+    padding: 0;
+    justify-content: center;
+    font-size: 0;               /* esconde o rótulo de texto */
+    gap: 0;
+    --i-size: 20px;
+    border-radius: 50%;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    background: rgba(255, 255, 255, 0.08) !important;
+    transition: background 0.2s ease;
+}
+
+#app-player .player-button-alt:hover {
+    background: rgba(255, 255, 255, 0.16) !important;
+}
+
+/* logo da estação vira "vinil": circular e girando enquanto toca */
+#app-player .player-station,
+#app-player .player-station img {
+    border-radius: 50%;
+}
+
+body.is-playing #app-player .player-station img {
+    animation: vinyl-spin 8s linear infinite;
+}
+
+@keyframes vinyl-spin {
+    to { transform: rotate(360deg); }
+}
+
+/* --- painéis flutuantes (histórico, estações, volume, modais) --- */
+
+.offcanvas-player {
+    inset: auto 16px 7.5rem auto;
+    max-width: min(1240px, calc(100% - 32px));
+    border-radius: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    background: rgba(11, 14, 19, 0.9);
+    backdrop-filter: blur(20px) saturate(160%);
+    -webkit-backdrop-filter: blur(20px) saturate(160%);
+    overflow: hidden;
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.5);
+}
+
+@media (min-width: 992px) {
+    .offcanvas-player {
+        inset: auto 24px calc(18px + 6.5rem) auto;
+    }
+}
+
+#app-player .dropdown {
+    background: rgba(11, 14, 19, 0.92);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-radius: 14px;
+}
+
+#app-player .modal-content {
+    background: rgba(13, 17, 23, 0.94);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-radius: 20px;
+}
+
+#app-player .player-modal {
+    background: rgba(13, 17, 23, 0.94);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 20px;
+}
+
+/* --- cards do histórico: superfície glass em vez de accent chapado --- */
+
+.history-item {
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 14px;
+    overflow: hidden;
+}
+
+.history-item::before {
+    background: rgba(255, 255, 255, 0.07);
+    opacity: 1;
+}
+
+.history-item .history-image img {
+    border-radius: 10px;
+}
+
+/* --- estações --- */
+
+.station {
+    border-radius: 14px;
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    transition: transform 0.15s ease, border-color 0.2s ease;
+}
+
+.station:hover {
+    transform: translateY(-2px);
+}
+
+.station.is-active {
+    border-color: var(--accent, #4dd7e0);
+    box-shadow: 0 0 0 1px var(--accent, #4dd7e0), 0 10px 24px rgba(0, 0, 0, 0.4);
+}
+
+/* --- textos --- */
+
+.player-button,
+#app-player .player-button {
+    font-weight: 600;
 }
 
 .color-text {
@@ -21,13 +361,6 @@
 }
 
 #app-player .player-program-badge {
-
     font-weight: 800;
-   background-color: #fa1100;
-}
-
-#app-player .player-button {
-
-    font-weight: 600;
-   
+    background-color: #fa1100;
 }
