@@ -22,7 +22,7 @@ A bottom-bar radio player that works as a **drop-in JavaScript component**: two 
 
 ### Demo Screenshots
 
-![Demo Screenshot](https://i.imgur.com/bZYdeTp.png)
+![Demo Screenshot](https://i.imgur.com/M15Qv0t.png)
 
 ### Installation and Configuration
 
