@@ -390,7 +390,13 @@
 
       function play(audio, newSource = null) {
           if (newSource) {
-              audio.src = newSource;
+              audio.src = newSource; // atribuir src já dispara o load
+          } else if (audio.paused) {
+              // Stream AO VIVO: sem o load() o navegador retoma do buffer,
+              // do ponto em que foi pausado — o ouvinte fica defasado da
+              // transmissão. O load() descarta o buffer e reconecta no
+              // ponto ao vivo (o spinner cobre o instante de reconexão).
+              audio.load();
           }
 
           audio.play().catch((e) => console.log("Aguardando interação...", e));
