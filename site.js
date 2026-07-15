@@ -275,6 +275,16 @@
                 window.RadioPlayer.play();
                 if (state === 0) videoState.resume = false;
             }
+            // Pausa MANUAL do vídeo (2) com o modo clipe ligado = o usuário
+            // escolheu o áudio: desliga o modo para a troca de música não
+            // reabrir o vídeo. Vídeo que TERMINOU (0) mantém o modo.
+            if (state === 2 && localStorage.getItem("site:clipmode") === "1") {
+                localStorage.setItem("site:clipmode", "0");
+                const clipButton = window.RadioPlayer && window.RadioPlayer.root && window.RadioPlayer.root.querySelector(".player-button-clip");
+                if (clipButton) clipButton.classList.remove("is-active");
+                videoState.lastClipId = null;
+                closeVideoDock();
+            }
         }
     }
 
