@@ -1,0 +1,15 @@
+# Bottom-Bar Radio Player (drop-in component)
+
+> HTML5 radio player fixed at the bottom of the page, delivered as a drop-in JavaScript component: two script tags inject the whole player into any page. Its signature feature is seamless navigation — internal link clicks swap only the page content, so THE AUDIO NEVER STOPS while visitors browse the site. Also: now playing with album art, history, lyrics, YouTube clip mode synchronized with the radio, persistent floating video mini-player, playback state persistence with auto-resume, and a complete configurable demo site (news, videos, schedule, team, light/dark theme). Works with Icecast, Shoutcast, Zeno.FM, Azuracast. No API key required. Pt-BR: player de rádio no rodapé que não para ao navegar.
+
+## Docs
+- [README](https://github.com/jailsonsb2/bottom_radioplayer#readme): 2-line install, seamless navigation options (data-no-seamless, seamless:false), clip mode, JavaScript API (window.RadioPlayer, radioplayer:track event)
+- [Live demo](https://jailsonsb2.github.io/bottom_radioplayer/): click play, then navigate between pages — the music keeps playing
+
+## Source
+- [GitHub repository](https://github.com/jailsonsb2/bottom_radioplayer): AGPL-3.0 (commercial license available)
+
+## Related
+- [metadados](https://github.com/jailsonsb2/metadados): the free now-playing metadata API this player uses (ICY + iTunes + YouTube clip IDs)
+- [RadioPlayer](https://github.com/jailsonsb2/RadioPlayer): full-page player for any stream
+- [Radioplayer_api](https://github.com/jailsonsb2/Radioplayer_api): multi-station player with 3 switchable layouts
