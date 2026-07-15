@@ -1312,6 +1312,11 @@
                           art: dataFrom.art,
                           cover: dataFrom.cover,
                           youtubeId: res.youtubeId || res.youtube_id || null,
+                          // posição da música (para o modo clipe abrir o vídeo
+                          // sincronizado com a rádio, não do zero)
+                          elapsed: (res.now_playing && typeof res.now_playing.elapsed === "number") ? res.now_playing.elapsed : 0,
+                          duration: (res.now_playing && res.now_playing.duration) || 0,
+                          receivedAt: Date.now(),
                       };
                       if (window.RadioPlayer) window.RadioPlayer.currentTrack = trackDetail;
                       document.dispatchEvent(new CustomEvent("radioplayer:track", { detail: trackDetail }));

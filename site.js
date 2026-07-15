@@ -325,7 +325,7 @@
         const body = dock.querySelector(".video-dock-body");
         body.innerHTML = "";
         const iframe = el("iframe");
-        iframe.src = `https://www.youtube-nocookie.com/embed/${video.id}?autoplay=1&enablejsapi=1`;
+        iframe.src = `https://www.youtube-nocookie.com/embed/${video.id}?autoplay=1&enablejsapi=1` + (video.start ? `&start=${video.start}` : "");
         iframe.allow = "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture";
         iframe.allowFullscreen = true;
         iframe.title = video.title;
@@ -354,7 +354,19 @@
     function openClip(track) {
         if (!track.youtubeId || videoState.lastClipId === track.youtubeId) return;
         videoState.lastClipId = track.youtubeId;
-        openVideoDock({ id: track.youtubeId, title: track.title + " — " + track.artist }, "clip");
+
+        // Sincroniza com a rádio: o clipe começa no ponto em que a música
+        // está (elapsed da API + tempo desde a resposta), não do zero.
+        // Aproximado por natureza: o stream tem atraso de buffer e o clipe
+        // pode ser outra versão da música.
+        let start = 0;
+        if (track.elapsed && track.receivedAt) {
+            start = Math.floor(track.elapsed + (Date.now() - track.receivedAt) / 1000);
+            if (track.duration && start >= track.duration - 5) start = 0; // já no fim: melhor do início
+            if (start < 8) start = 0; // começo da música: não vale a busca
+        }
+
+        openVideoDock({ id: track.youtubeId, title: track.title + " — " + track.artist, start }, "clip");
     }
 
     function ensureClipButton() {
