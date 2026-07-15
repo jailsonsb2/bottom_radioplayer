@@ -374,8 +374,20 @@
           }, 30);
       }
 
+      // A rádio e um vídeo do YouTube nunca tocam juntos: dar play na rádio
+      // pausa qualquer embed em reprodução (vídeos do site, modo clipe);
+      // o caminho inverso é tratado pelo watcher de mensagens do site
+      function pauseYouTubeEmbeds() {
+          document.querySelectorAll('iframe[src*="youtube"]').forEach((frame) => {
+              try {
+                  frame.contentWindow.postMessage(JSON.stringify({ event: "command", func: "pauseVideo", args: [] }), "*");
+              } catch (e) {}
+          });
+      }
+
       function handlePlayPause() {
           if (audio.paused) {
+              pauseYouTubeEmbeds();
               isIntentionalPause = false;
               localStorage.setItem("radioplayer:playing", "1");
               fadeIn();
