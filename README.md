@@ -58,6 +58,17 @@ Enabled by default. When a visitor clicks an internal link, the component fetche
 - To exclude a specific link from interception, add the `data-no-seamless` attribute to it.
 - Pages should share the same base layout/CSS; stylesheets found in the target page's `<head>` are adopted automatically.
 
+### Clip Mode (music video of the current song)
+
+If your now-playing metadata API returns a **`youtubeId`** field (or `youtube_id`) in the payload, a **"Clipe"** button automatically appears in the player (feature-detected — sites whose API doesn't send the field never see the button). With clip mode on:
+
+- the floating mini-player opens with the music video of the song that is playing (radio audio pauses, video audio takes over);
+- every song change just swaps the embed to the new clip;
+- songs without a clip close the video and fall back to the radio automatically;
+- the video keeps playing across page navigation (`data-seamless-keep`), and the preference is remembered.
+
+The component also exposes each track to the site: `window.RadioPlayer.currentTrack` and the `radioplayer:track` DOM event (`detail: { title, artist, art, cover, youtubeId }`), plus `radioplayer:ready` when the player mounts.
+
 ### Advanced Customization
 
 - **Images:** Replace the images in the `assets` folder with your own.

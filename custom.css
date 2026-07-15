@@ -226,6 +226,12 @@ body.is-playing #app-player .player-song-name::before {
     color: #fff;
 }
 
+/* modo clipe ligado: botão marcado com o accent */
+#app-player .player-button-clip.is-active {
+    color: var(--accent, #4dd7e0);
+    border-color: var(--accent, #4dd7e0);
+}
+
 /* o wrapper do volume é um div.player-button: neutraliza, o círculo é o toggle */
 #app-player .player-right .player-button-volume {
     width: auto;
@@ -307,10 +313,140 @@ body.is-playing #app-player .player-station img {
     border-radius: 20px;
 }
 
+/* --- modal de compartilhar: vidro escuro com texto legível ---
+   (a base é branca com texto #262626; ao escurecer o fundo, todas as
+   cores de texto/botões precisam vir junto) */
+
 #app-player .player-modal {
-    background: rgba(13, 17, 23, 0.94);
-    border: 1px solid rgba(255, 255, 255, 0.12);
-    border-radius: 20px;
+    background: rgba(13, 17, 23, 0.96);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 22px;
+    color: #fff;
+    padding: 1.5rem;
+    box-shadow: 0 40px 100px rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(20px) saturate(160%);
+    -webkit-backdrop-filter: blur(20px) saturate(160%);
+}
+
+#app-player .player-modal h2 {
+    color: rgba(255, 255, 255, 0.85);
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    margin: 4px 0 0;
+}
+
+#app-player .player-modal .player-title {
+    color: #fff;
+    font-size: 17px;
+    font-weight: 800;
+    margin-top: 4px;
+}
+
+#app-player .player-modal .player-text {
+    color: rgba(255, 255, 255, 0.62);
+    font-size: 13px;
+}
+
+#app-player .player-modal-image {
+    border-radius: 16px;
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.15);
+}
+
+/* botões das redes: círculos glass, visíveis sobre o vidro escuro */
+#app-player .player-modal .modal-social a {
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    color: #fff;
+    width: 48px;
+    height: 48px;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s ease, transform 0.15s ease;
+}
+
+#app-player .player-modal .modal-social a:hover {
+    background: var(--accent, rgba(255, 255, 255, 0.2));
+    transform: translateY(-2px);
+}
+
+/* fechar: dentro do cartão, no canto (fora dele ficava invisível) */
+#app-player .player-modal button[data-close] {
+    top: 14px;
+    right: 14px;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    color: rgba(255, 255, 255, 0.75);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    --i-size: 15px;
+    transition: background 0.2s ease, color 0.2s ease;
+}
+
+#app-player .player-modal button[data-close]:hover {
+    background: rgba(255, 255, 255, 0.16);
+    color: #fff;
+}
+
+/* --- TV ao vivo: tela cheia (a base a deixava como um PiP de 370px) --- */
+
+.modal-video {
+    inset: 0 !important;
+    transform: none;
+    width: 100%;
+    height: 100%;
+    max-width: none !important;
+    padding: 0;
+    border-radius: 0;
+    background: #05070a;
+    z-index: 200;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-video .modal-body-video {
+    width: 100%;
+    height: 100%;
+}
+
+.modal-video iframe {
+    width: 100%;
+    height: 100%;
+    aspect-ratio: auto;
+    border-radius: 0;
+    display: block;
+}
+
+/* fechar fixo no canto, sempre visível sobre o vídeo */
+.modal-video [data-close] {
+    position: fixed;
+    top: 16px;
+    right: 16px;
+    z-index: 210;
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    background: rgba(13, 17, 23, 0.75) !important;
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    --i-size: 18px;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    transition: background 0.2s ease;
+}
+
+.modal-video [data-close]:hover {
+    background: rgba(255, 255, 255, 0.18) !important;
 }
 
 /* --- cards do histórico: superfície glass em vez de accent chapado --- */

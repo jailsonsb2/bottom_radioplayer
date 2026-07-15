@@ -19,6 +19,21 @@
         return node;
     }
 
+    // --- marca do header (logo substitui o texto quando configurado) ------
+
+    const brand = content.brand || {};
+    document.querySelectorAll(".site-brand").forEach((brandEl) => {
+        const nameEl = brandEl.querySelector(".site-brand-name");
+        if (brand.name && nameEl) nameEl.textContent = brand.name;
+        if (brand.logo && !brandEl.querySelector(".site-brand-logo")) {
+            const img = el("img", "site-brand-logo");
+            img.src = brand.logo;
+            img.alt = brand.name || "logo";
+            brandEl.appendChild(img);
+            if (nameEl) nameEl.remove();
+        }
+    });
+
     // --- tema claro/escuro (persistido; o pré-boot no <head> evita flash) --
 
     const themeToggle = document.getElementById("theme-toggle");
@@ -230,10 +245,172 @@
     }
 
     // --- vídeos (click-to-play: thumbnail leve, iframe só ao clicar) -----
+    //
+    // Integração com a rádio: dar play num vídeo pausa a rádio; pausar (ou
+    // terminar) o vídeo retoma a rádio sozinho. Usa o protocolo postMessage
+    // do IFrame do YouTube (enablejsapi=1) — sem biblioteca externa.
+
+    // Estado global (sobrevive às trocas de página do seamless, que
+    // reexecutam este script): a rádio deve voltar quando o vídeo parar?
+    window.__videoState = window.__videoState || { resume: false, playing: new Set() };
+    const videoState = window.__videoState;
+
+    function handleYouTubeMessage(event) {
+        if (!/(^|\.)youtube(-nocookie)?\.com$/.test((() => { try { return new URL(event.origin).hostname; } catch (e) { return ""; } })())) return;
+        let data;
+        try { data = JSON.parse(event.data); } catch (e) { return; }
+        const state = data && data.info && typeof data.info.playerState === "number" ? data.info.playerState : null;
+        if (state === null) return;
+
+        const id = data.id || "yt";
+        if (state === 1) { // tocando
+            videoState.playing.add(id);
+            if (window.RadioPlayer && !window.RadioPlayer.audio.paused) {
+                videoState.resume = true;
+                window.RadioPlayer.pause();
+            }
+        } else if (state === 2 || state === 0) { // pausado ou terminou
+            videoState.playing.delete(id);
+            if (videoState.resume && videoState.playing.size === 0 && window.RadioPlayer && window.RadioPlayer.audio.paused) {
+                window.RadioPlayer.play();
+                if (state === 0) videoState.resume = false;
+            }
+        }
+    }
+
+    // substitui o listener global em vez de acumular (reexecuções)
+    if (window.__ytWatcher) window.removeEventListener("message", window.__ytWatcher);
+    window.__ytWatcher = handleYouTubeMessage;
+    window.addEventListener("message", window.__ytWatcher);
+
+    // --- modo vídeo: mini-player flutuante que sobrevive à navegação ------
+    // O dock é marcado com data-seamless-keep: a troca de página não o
+    // remove, então o vídeo continua tocando enquanto o visitante navega
+    // (mesma ideia do áudio da rádio).
+
+    function closeVideoDock() {
+        const dock = document.getElementById("video-dock");
+        if (!dock) return;
+        dock.remove();
+        videoState.playing.clear();
+        videoState.lastClipId = null;
+        if (videoState.resume && window.RadioPlayer && window.RadioPlayer.audio.paused) {
+            window.RadioPlayer.play();
+        }
+        videoState.resume = false;
+    }
+
+    function openVideoDock(video, index) {
+        let dock = document.getElementById("video-dock");
+        if (!dock) {
+            dock = el("div", "video-dock");
+            dock.id = "video-dock";
+            dock.setAttribute("data-seamless-keep", "");
+
+            const header = el("div", "video-dock-header");
+            header.appendChild(el("span", "video-dock-title"));
+            const close = el("button", "video-dock-close", "✕");
+            close.type = "button";
+            close.setAttribute("aria-label", "Fechar vídeo");
+            close.addEventListener("click", closeVideoDock);
+            header.appendChild(close);
+
+            dock.appendChild(header);
+            dock.appendChild(el("div", "video-dock-body"));
+            document.body.appendChild(dock);
+        }
+
+        dock.querySelector(".video-dock-title").textContent = video.title;
+
+        const body = dock.querySelector(".video-dock-body");
+        body.innerHTML = "";
+        const iframe = el("iframe");
+        iframe.src = `https://www.youtube-nocookie.com/embed/${video.id}?autoplay=1&enablejsapi=1`;
+        iframe.allow = "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture";
+        iframe.allowFullscreen = true;
+        iframe.title = video.title;
+        // handshake do widget: faz o player emitir os eventos de estado
+        iframe.addEventListener("load", () => {
+            const hello = JSON.stringify({ event: "listening", id: "video-" + index, channel: "widget" });
+            iframe.contentWindow.postMessage(hello, "*");
+        });
+        body.appendChild(iframe);
+
+        // pausa a rádio para não tocar por cima do vídeo
+        if (window.RadioPlayer && !window.RadioPlayer.audio.paused) {
+            videoState.resume = true;
+            window.RadioPlayer.pause();
+        }
+    }
+
+    // --- modo clipe: quando a API do now-playing entrega o youtubeId da
+    // música, um botão "Clipe" aparece no player — ligado, o mini-player
+    // mostra o clipe da música tocando e troca de embed a cada faixa.
+    // O botão só é injetado quando a API demonstra suportar o campo.
+
+    const CLIP_KEY = "site:clipmode";
+    const clipModeOn = () => localStorage.getItem(CLIP_KEY) === "1";
+
+    function openClip(track) {
+        if (!track.youtubeId || videoState.lastClipId === track.youtubeId) return;
+        videoState.lastClipId = track.youtubeId;
+        openVideoDock({ id: track.youtubeId, title: track.title + " — " + track.artist }, "clip");
+    }
+
+    function ensureClipButton() {
+        if (!window.RadioPlayer || !window.RadioPlayer.root) return;
+        const right = window.RadioPlayer.root.querySelector(".player-right");
+        if (!right || right.querySelector(".player-button-clip")) return;
+
+        const button = el("button", "player-button player-button-clip");
+        button.type = "button";
+        button.title = "Modo clipe: mostra o clipe da música que está tocando";
+        button.innerHTML = '<svg class="i" viewBox="0 0 24 24"><rect width="20" height="16" x="2" y="4" rx="3"></rect><path d="m10 9 5 3-5 3z"></path></svg>Clipe';
+        button.classList.toggle("is-active", clipModeOn());
+
+        button.addEventListener("click", () => {
+            const turningOn = !clipModeOn();
+            localStorage.setItem(CLIP_KEY, turningOn ? "1" : "0");
+            button.classList.toggle("is-active", turningOn);
+            if (turningOn) {
+                const track = window.RadioPlayer.currentTrack;
+                if (track && track.youtubeId) openClip(track);
+            } else {
+                videoState.lastClipId = null;
+                closeVideoDock();
+            }
+        });
+
+        right.insertBefore(button, right.querySelector(".player-button-history"));
+    }
+
+    function onTrackChange(event) {
+        const track = event.detail;
+        if (track.youtubeId) ensureClipButton(); // a API suporta clipes
+        if (!clipModeOn()) return;
+
+        if (track.youtubeId) {
+            openClip(track);
+        } else {
+            // música sem clipe: fecha o vídeo e volta para a rádio
+            videoState.lastClipId = null;
+            closeVideoDock();
+        }
+    }
+
+    // substitui o listener em reexecuções (navegação seamless)
+    if (window.__clipWatcher) document.removeEventListener("radioplayer:track", window.__clipWatcher);
+    window.__clipWatcher = onTrackChange;
+    document.addEventListener("radioplayer:track", window.__clipWatcher);
+
+    // reinjeta o botão se o player já conhece uma faixa com clipe
+    if (window.RadioPlayer && window.RadioPlayer.currentTrack && window.RadioPlayer.currentTrack.youtubeId) {
+        ensureClipButton();
+    }
 
     const videosGrid = document.getElementById("site-videos");
     if (videosGrid && Array.isArray(content.videos)) {
-        content.videos.forEach((video) => {
+        content.videos.forEach((video, index) => {
             const card = el("div", "video-card");
 
             const thumb = el("button", "video-thumb");
@@ -246,18 +423,7 @@
             img.loading = "lazy";
             thumb.appendChild(img);
 
-            thumb.addEventListener("click", () => {
-                const iframe = el("iframe");
-                iframe.src = `https://www.youtube-nocookie.com/embed/${video.id}?autoplay=1`;
-                iframe.allow = "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture";
-                iframe.allowFullscreen = true;
-                iframe.title = video.title;
-                thumb.replaceWith(iframe);
-                // pausa a rádio para não tocar por cima do vídeo
-                if (window.RadioPlayer && !window.RadioPlayer.audio.paused) {
-                    window.RadioPlayer.pause();
-                }
-            });
+            thumb.addEventListener("click", () => openVideoDock(video, index));
 
             card.appendChild(thumb);
             card.appendChild(el("div", "video-card-title", video.title));

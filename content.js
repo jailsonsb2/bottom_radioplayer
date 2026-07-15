@@ -7,6 +7,12 @@
    ============================================================ */
 
 window.siteContent = {
+    // Marca do site (header) — com logo, a imagem substitui o texto
+    brand: {
+        name: "Minha Rádio",
+        logo: "assets/jailson_logo.png",
+    },
+
     // Slides do topo da página — o primeiro botão pode dar play na rádio
     // (action: "play") ou abrir um link (url). image é opcional (fundo suave
     // à direita no desktop).

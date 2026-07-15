@@ -210,6 +210,7 @@
             data.team = data.team || [];
             data.social = data.social || {};
             data.footer = data.footer || { text: "" };
+            data.brand = data.brand || { name: "", logo: "" };
 
             // --- tema (mesmo comportamento do site) ---
             const themeToggle = document.getElementById("theme-toggle");
@@ -384,6 +385,10 @@
             function renderSocial() {
                 const root = document.getElementById("gen-social");
                 root.innerHTML = "";
+                root.appendChild(row(
+                    field("Nome da rádio (header)", data.brand.name, (v) => data.brand.name = v),
+                    field("Logo do header (URL — substitui o texto)", data.brand.logo, (v) => data.brand.logo = v)
+                ));
                 ["whatsapp", "instagram", "facebook", "twitter", "youtube", "tiktok", "telegram"].forEach((key) => {
                     root.appendChild(field(key, data.social[key], (v) => data.social[key] = v));
                 });

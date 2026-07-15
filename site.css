@@ -37,6 +37,29 @@
 
 * { box-sizing: border-box; }
 
+/* barra de rolagem global, coerente com o tema (claro e escuro) */
+html {
+    scrollbar-width: thin;
+    scrollbar-color: var(--site-surface-strong) transparent;
+}
+
+::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+    background: transparent;
+}
+
+::-webkit-scrollbar-track { background: transparent; }
+
+::-webkit-scrollbar-thumb {
+    background: var(--site-surface-strong);
+    border-radius: 6px;
+    border: 2px solid transparent;
+    background-clip: padding-box;
+}
+
+::-webkit-scrollbar-thumb:hover { background: var(--site-muted); }
+
 body {
     margin: 0;
     min-height: 100vh;
@@ -107,6 +130,12 @@ img { max-width: 100%; display: block; }
     display: flex;
     align-items: center;
     gap: 10px;
+}
+
+.site-brand-logo {
+    height: 38px;
+    width: auto;
+    display: block;
 }
 
 .site-brand-dot {
@@ -541,6 +570,65 @@ body.news-modal-open { overflow: hidden; }
     padding: 12px 16px 14px;
     font-size: 14px;
     font-weight: 700;
+}
+
+/* --- modo vídeo: mini-player flutuante (sobrevive à navegação) --- */
+
+.video-dock {
+    position: fixed;
+    right: 16px;
+    bottom: 122px; /* acima do dock do player */
+    z-index: 90;
+    width: min(400px, calc(100vw - 32px));
+    border-radius: 16px;
+    overflow: hidden;
+    background: rgba(13, 17, 23, 0.96);
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.55);
+    animation: video-dock-in 0.35s ease both;
+}
+
+@keyframes video-dock-in {
+    from { transform: translateY(16px); opacity: 0; }
+}
+
+.video-dock-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 10px 12px;
+    color: #fff;
+}
+
+.video-dock-title {
+    font-size: 13px;
+    font-weight: 700;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.video-dock-close {
+    flex: none;
+    width: 28px;
+    height: 28px;
+    border: none;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+    font-size: 12px;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.video-dock-close:hover { background: rgba(255, 255, 255, 0.22); }
+
+.video-dock-body iframe {
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    display: block;
+    border: 0;
 }
 
 /* --- programação --- */

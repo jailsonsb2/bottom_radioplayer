@@ -295,6 +295,7 @@
       let activeButton;
       let currentSongPlaying;
       let lastAlbumArt = "";
+      let lastYoutubeId = "";
       let lastLyricsKey = "";
       let timeoutId;
 
@@ -869,6 +870,9 @@
 
               const $iframe = document.createElement("iframe");
               $iframe.src = url;
+              // Sem o allow="autoplay" o navegador bloqueia o play automático
+              // dentro de iframes de outra origem, mesmo com ?autoplay=1 na URL
+              $iframe.allow = "autoplay; fullscreen; encrypted-media; picture-in-picture";
               $iframe.allowFullscreen = true;
               modalBody.appendChild($iframe);
               closeButton.addEventListener("click", () => {
@@ -1261,14 +1265,18 @@
                   const title = current.title;
 
                   // O songtitle cru é estável entre as respostas da API —
-                  // comparar também a capa evita perder o enriquecimento
+                  // comparar também capa e clipe evita perder enriquecimentos
+                  // que chegam atrasados (a API resolve albumArt/youtubeId de
+                  // forma assíncrona e eles aparecem em polls seguintes)
                   const songKey = res.songtitle || title;
                   const artKey = res.albumArt || "";
-                  if (currentSongPlaying === songKey && lastAlbumArt === artKey) {
+                  const ytKey = res.youtubeId || res.youtube_id || "";
+                  if (currentSongPlaying === songKey && lastAlbumArt === artKey && lastYoutubeId === ytKey) {
                       return;
                   }
                   currentSongPlaying = songKey;
                   lastAlbumArt = artKey;
+                  lastYoutubeId = ytKey;
 
                   const artist = current.artist;
                   const art = currentStation.album;
@@ -1295,6 +1303,18 @@
 
                       currentSong(dataFrom);
                       mediaSession(dataFrom);
+
+                      // Expõe a faixa atual para o site (ex.: modo clipe).
+                      // youtubeId vem da API quando ela souber o clipe da música.
+                      const trackDetail = {
+                          title: dataFrom.title,
+                          artist: dataFrom.artist,
+                          art: dataFrom.art,
+                          cover: dataFrom.cover,
+                          youtubeId: res.youtubeId || res.youtube_id || null,
+                      };
+                      if (window.RadioPlayer) window.RadioPlayer.currentTrack = trackDetail;
+                      document.dispatchEvent(new CustomEvent("radioplayer:track", { detail: trackDetail }));
 
                       const lyricsKey = `${dataFrom.artist} - ${dataFrom.title}`.toLowerCase();
                       if (lyricsKey !== lastLyricsKey) {
@@ -1364,10 +1384,13 @@
       window.RadioPlayer = {
           root,
           audio,
+          currentTrack: null,
           play: () => { isIntentionalPause = false; play(audio); },
           pause: () => { isIntentionalPause = true; pause(audio); },
           toggle: handlePlayPause,
       };
+
+      document.dispatchEvent(new CustomEvent("radioplayer:ready"));
   }
 
   // --- [NAVEGAÇÃO SEM INTERROMPER O ÁUDIO (SPA-lite)] -------------------
@@ -1413,9 +1436,11 @@
               }
           });
 
-          // Remove o conteúdo atual (tudo, menos o player)
+          // Remove o conteúdo atual (tudo, menos o player e elementos
+          // marcados com data-seamless-keep — ex.: o mini-player de vídeo,
+          // que continua tocando entre as páginas)
           [...document.body.children].forEach((el) => {
-              if (el !== root) el.remove();
+              if (el !== root && !el.hasAttribute("data-seamless-keep")) el.remove();
           });
 
           // Importa o conteúdo novo (ignorando um eventual player embutido nele)
