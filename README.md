@@ -62,7 +62,7 @@ Enabled by default. When a visitor clicks an internal link, the component fetche
 
 If your now-playing metadata API returns a **`youtubeId`** field (or `youtube_id`) in the payload, a **"Clipe"** button automatically appears in the player (feature-detected — sites whose API doesn't send the field never see the button). With clip mode on:
 
-- the floating mini-player opens with the music video of the song that is playing (radio audio pauses, video audio takes over);
+- the floating mini-player opens with the music video of the song that is playing (radio audio pauses, video audio takes over), **synchronized with the radio position** (start = elapsed from the API) instead of starting from zero;
 - every song change just swaps the embed to the new clip;
 - songs without a clip close the video and fall back to the radio automatically;
 - the video keeps playing across page navigation (`data-seamless-keep`), and the preference is remembered.
