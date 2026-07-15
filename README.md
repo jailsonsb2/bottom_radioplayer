@@ -1,8 +1,16 @@
-## HTML5 Single / Multi Radio Player for Website Footers
+# 🎵 Bottom-Bar Radio Player — The Audio Never Stops While Visitors Browse
+
+[![Live Demo](https://img.shields.io/badge/▶_Live_Demo-online-brightgreen)](https://jailsonsb2.github.io/bottom_radioplayer/)
+[![No API Key](https://img.shields.io/badge/API_key-not_required-orange)](#)
+[![Drop--in Component](https://img.shields.io/badge/component-2_script_tags-5A0FC8)](#)
+
+**[▶ Try the live demo](https://jailsonsb2.github.io/bottom_radioplayer/)** — click play, then navigate between the pages: the music never stops.
 
 ### Description
 
-A bottom-bar radio player that works as a **drop-in JavaScript component**: two script tags inject the whole player (HTML, CSS and fonts) into any page of your site. With **seamless navigation** enabled (default), clicks on internal links are intercepted and only the page content is swapped — **the audio keeps playing without any interruption while visitors browse your site**.
+A bottom-bar **HTML5 radio player** that works as a **drop-in JavaScript component**: two script tags inject the whole player (HTML, CSS and fonts) into any page of your site. With **seamless navigation** enabled (default), clicks on internal links are intercepted and only the page content is swapped — **the audio keeps playing without any interruption while visitors browse your site**.
+
+> 🇧🇷 **Player de rádio fixo no rodapé que NÃO PARA quando o visitante navega pelo site.** Duas linhas de código em cada página e pronto: música tocando agora com capa, histórico, letra, clipe do YouTube sincronizado e um site demo completo (notícias, vídeos, programação, equipe) configurável sem tocar em código.
 
 ### Key Features:
 
@@ -75,6 +83,17 @@ The component also exposes each track to the site: `window.RadioPlayer.currentTr
 - **Colors:** Customize the player's colors by editing the `css/custom.css` file.
 - **Behavior:** Adapt the player by editing `js/radioplayer.js` (the component). `js/main.js` is the legacy non-component version, kept for reference.
 - **JavaScript API:** the component exposes `window.RadioPlayer` with `play()`, `pause()`, `toggle()`, the `audio` element and the `root` DOM node.
+
+### Related Projects
+
+More free radio players from the same author:
+
+| Project | Style |
+|---|---|
+| [**RadioPlayer**](https://github.com/jailsonsb2/RadioPlayer) | Full-page player for any stream (free now-playing API, YouTube clip mode) |
+| [**Radioplayer_api**](https://github.com/jailsonsb2/Radioplayer_api) | Multi-station player with **3 switchable layouts** |
+| [**RadioPlayer-ZenoRadio**](https://github.com/jailsonsb2/RadioPlayer-ZenoRadio) | Full-page player for **Zeno.FM** streams (SSE metadata) |
+| [**metadados**](https://github.com/jailsonsb2/metadados) | The free **now playing API** (ICY metadata + iTunes + YouTube clips) |
 
 ### Support and Contributions
 
