@@ -279,7 +279,7 @@ body.is-playing #app-player .player-station img {
 
 /* --- painéis flutuantes (histórico, estações, volume, modais) --- */
 
-.offcanvas-player {
+#app-player .offcanvas-player {
     inset: auto 16px 7.5rem auto;
     max-width: min(1240px, calc(100% - 32px));
     border-radius: 20px;
@@ -292,7 +292,7 @@ body.is-playing #app-player .player-station img {
 }
 
 @media (min-width: 992px) {
-    .offcanvas-player {
+    #app-player .offcanvas-player {
         inset: auto 24px calc(18px + 6.5rem) auto;
     }
 }
@@ -396,7 +396,7 @@ body.is-playing #app-player .player-station img {
 
 /* --- TV ao vivo: tela cheia (a base a deixava como um PiP de 370px) --- */
 
-.modal-video {
+#app-player .modal-video {
     inset: 0 !important;
     transform: none;
     width: 100%;
@@ -411,12 +411,12 @@ body.is-playing #app-player .player-station img {
     justify-content: center;
 }
 
-.modal-video .modal-body-video {
+#app-player .modal-video .modal-body-video {
     width: 100%;
     height: 100%;
 }
 
-.modal-video iframe {
+#app-player .modal-video iframe {
     width: 100%;
     height: 100%;
     aspect-ratio: auto;
@@ -425,7 +425,7 @@ body.is-playing #app-player .player-station img {
 }
 
 /* fechar fixo no canto, sempre visível sobre o vídeo */
-.modal-video [data-close] {
+#app-player .modal-video [data-close] {
     position: fixed;
     top: 16px;
     right: 16px;
@@ -451,47 +451,47 @@ body.is-playing #app-player .player-station img {
 
 /* --- cards do histórico: superfície glass em vez de accent chapado --- */
 
-.history-item {
+#app-player .history-item {
     border: 1px solid rgba(255, 255, 255, 0.12);
     border-radius: 14px;
     overflow: hidden;
 }
 
-.history-item::before {
+#app-player .history-item::before {
     background: rgba(255, 255, 255, 0.07);
     opacity: 1;
 }
 
-.history-item .history-image img {
+#app-player .history-item .history-image img {
     border-radius: 10px;
 }
 
 /* --- estações --- */
 
-.station {
+#app-player .station {
     border-radius: 14px;
     overflow: hidden;
     border: 1px solid rgba(255, 255, 255, 0.12);
     transition: transform 0.15s ease, border-color 0.2s ease;
 }
 
-.station:hover {
+#app-player .station:hover {
     transform: translateY(-2px);
 }
 
-.station.is-active {
+#app-player .station.is-active {
     border-color: var(--accent, #4dd7e0);
     box-shadow: 0 0 0 1px var(--accent, #4dd7e0), 0 10px 24px rgba(0, 0, 0, 0.4);
 }
 
 /* --- textos --- */
 
-.player-button,
+#app-player .player-button,
 #app-player .player-button {
     font-weight: 600;
 }
 
-.color-text {
+#app-player .color-text {
     color: rgb(255 255 255 / 62%);
     font-weight: 400;
 }

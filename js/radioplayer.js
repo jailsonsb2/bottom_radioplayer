@@ -219,7 +219,7 @@
   function injectAssets() {
       injectStylesheet("https://fonts.googleapis.com/css2?family=Montserrat:wght@300;700&display=swap");
       injectStylesheet("https://fonts.cdnfonts.com/css/akira-expanded");
-      injectStylesheet(BASE + "css/main.min.css");
+      injectStylesheet(BASE + "css/main.css");
       injectStylesheet(BASE + "custom.css");
 
       // meta theme-color (o accent dinâmico escreve nela; cria se a página não tiver)
