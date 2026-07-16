@@ -1426,6 +1426,7 @@
       if (!SEAMLESS || !window.history || !window.DOMParser) return;
 
       const OWN_SCRIPTS = /radioplayer(\.min)?\.js|config\.js|color-thief/i;
+      const WP_ADMIN = /\/wp-admin(\/|$)|\/wp-login\.php$/i;
 
       async function loadPage(url, pushHistory) {
           let html;
@@ -1524,6 +1525,7 @@
 
           const url = new URL(link.href, location.href);
           if (url.origin !== location.origin) return; // só links internos
+          if (WP_ADMIN.test(url.pathname)) return; // wp-admin / wp-login.php: fora do layout do site
           if (url.pathname === location.pathname && url.search === location.search && url.hash) return; // âncora na mesma página
 
           event.preventDefault();

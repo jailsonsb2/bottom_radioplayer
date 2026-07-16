@@ -64,6 +64,7 @@ Enabled by default. When a visitor clicks an internal link, the component fetche
 
 - To **disable** it, set `seamless: false` in `config.js` (`window.streams.seamless = false`). Navigation then reloads normally and the player auto-resumes playback on the next page (on the first tap if the browser blocks autoplay).
 - To exclude a specific link from interception, add the `data-no-seamless` attribute to it.
+- Links to `/wp-admin/` and `wp-login.php` are always excluded automatically — WordPress's admin area isn't part of the site's front-end layout.
 - Pages should share the same base layout/CSS; stylesheets found in the target page's `<head>` are adopted automatically.
 
 ### Clip Mode (music video of the current song)
