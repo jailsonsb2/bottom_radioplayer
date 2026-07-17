@@ -1107,7 +1107,8 @@
 
       if (nextStationButton) {
           nextStationButton.addEventListener("click", () => {
-              const next = stationsList.querySelector(".is-active").nextElementSibling;
+              const active = stationsList.querySelector(".is-active");
+              const next = active.nextElementSibling || stationsList.firstElementChild;
               if (next) {
                   next.click();
               }
@@ -1116,7 +1117,8 @@
 
       if (prevStationButton) {
           prevStationButton.addEventListener("click", () => {
-              const prev = stationsList.querySelector(".is-active").previousElementSibling;
+              const active = stationsList.querySelector(".is-active");
+              const prev = active.previousElementSibling || stationsList.lastElementChild;
               if (prev) {
                   prev.click();
               }
