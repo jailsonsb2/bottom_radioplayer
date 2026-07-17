@@ -58,6 +58,10 @@ A bottom-bar **HTML5 radio player** that works as a **drop-in JavaScript compone
 
 > ⚠️ **Do not publish `gerador.html` to your production site.** It is a local admin tool — anyone with the URL could read your whole configuration and craft replacement files. Keep it on your machine (or delete it from the server after deploying).
 
+### Installing on WordPress
+
+There's a dedicated WordPress plugin, maintained in its own repository: **[jailsonsb2/bottom-radioplayer-wordpress](https://github.com/jailsonsb2/bottom-radioplayer-wordpress)**. It wraps this component with a proper wp-admin settings page (General / Stations / Appearance tabs, stations repeater with the native media picker, Clip Mode built in) — no file editing needed. It is **not published on wordpress.org**; the linked repo ships a ready-to-upload `bottom-radioplayer.zip` at its root and has the full install instructions.
+
 ### Seamless Navigation (audio never stops)
 
 Enabled by default. When a visitor clicks an internal link, the component fetches the target page, swaps the `<body>` content (keeping the player alive), updates the title/history and re-runs the new page's scripts. External links, `target="_blank"`, `download` links and anchors are left alone.
@@ -95,6 +99,7 @@ More free radio players from the same author:
 | [**Radioplayer_api**](https://github.com/jailsonsb2/Radioplayer_api) | Multi-station player with **3 switchable layouts** |
 | [**RadioPlayer-ZenoRadio**](https://github.com/jailsonsb2/RadioPlayer-ZenoRadio) | Full-page player for **Zeno.FM** streams (SSE metadata) |
 | [**metadados**](https://github.com/jailsonsb2/metadados) | The free **now playing API** (ICY metadata + iTunes + YouTube clips) |
+| [**bottom-radioplayer-wordpress**](https://github.com/jailsonsb2/bottom-radioplayer-wordpress) | **WordPress plugin** wrapper for this project — settings page, no file editing |
 
 ### Support and Contributions
 
