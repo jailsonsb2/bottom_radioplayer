@@ -40,6 +40,19 @@ window.siteContent = {
         },
     ],
 
+    // Sobre a rádio — história e contato, renderizados na home (seção
+    // "Sobre a rádio") e na página Sobre. Parágrafos separados por linha
+    // em branco (\n\n). Deixe "" para ocultar um item do contato.
+    about: {
+        history: "No ar desde 2024, a Minha Rádio nasceu para levar música sem parar para todo lugar. Hoje somos multi-estação, com programação ao vivo, aplicativo próprio e uma comunidade de ouvintes que cresce a cada dia.\n\nEste site é a demonstração do componente bottom_radioplayer — o player fixo no rodapé funciona em qualquer página com apenas duas linhas de código, e o áudio não para quando o visitante navega.",
+        contact: {
+            address: "Av. Principal, 123 — Centro, Minha Cidade",
+            phone: "+55 (00) 0000-0000",
+            whatsapp: "https://wa.me/5500000000000",
+            email: "contato@minharadio.com",
+        },
+    },
+
     // Redes sociais do site (aparecem no rodapé) — deixe "" para ocultar
     social: {
         whatsapp: "https://wa.me/5500000000000",

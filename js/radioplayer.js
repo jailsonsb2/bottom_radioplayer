@@ -30,6 +30,7 @@
 
   const CONFIG = window.streams || {};
   const SEAMLESS = CONFIG.seamless !== false;
+  const LYRICS_ENABLED = CONFIG.lyrics !== false;
 
   // --- [CONFIGURAÇÕES] -----------------------------------------------
 
@@ -247,6 +248,13 @@
       root.className = "msp_radio";
       root.id = "radioplayer-root";
       root.innerHTML = TEMPLATE.replace(/{{BASE}}/g, BASE);
+      // Com lyrics desativado na config, remove o botão e o modal de letras
+      if (!LYRICS_ENABLED) {
+          const lyricsButton = root.querySelector(".player-button-lyrics");
+          const lyricsModal = root.querySelector("#modal-lyrics");
+          if (lyricsButton) lyricsButton.remove();
+          if (lyricsModal) lyricsModal.remove();
+      }
       document.body.appendChild(root);
   }
 
@@ -1160,7 +1168,7 @@
       }
 
       function setLyrics(artist, title) {
-          if (!lyricsContent) return;
+          if (!LYRICS_ENABLED || !lyricsContent) return;
           getLyrics(artist, title)
               .then((lyrics) => {
                   const $p = document.createElement("p");

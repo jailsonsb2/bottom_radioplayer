@@ -1,5 +1,8 @@
 window.streams = {
     timeRefresh: 10000,
+    // Letras da música tocando: use false para ocultar o botão "Lyrics"
+    // e desativar a busca de letras (lyrics.ovh / LRCLIB)
+    lyrics: true,
     stations: [
         {
             name: "Jailson Webradio",

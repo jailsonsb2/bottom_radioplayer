@@ -179,6 +179,12 @@
         </section>
 
         <section class="gen-section">
+            <h2>Sobre a rádio (história e contato)</h2>
+            <p class="gen-hint">Aparece na home e na página Sobre. Separe os parágrafos da história com uma linha em branco; deixe em branco os contatos que não quiser exibir.</p>
+            <div class="gen-item" id="gen-about"></div>
+        </section>
+
+        <section class="gen-section">
             <h2>Redes sociais e rodapé</h2>
             <p class="gen-hint">Deixe em branco as redes que não quiser exibir.</p>
             <div class="gen-item" id="gen-social"></div>
@@ -211,6 +217,8 @@
             data.social = data.social || {};
             data.footer = data.footer || { text: "" };
             data.brand = data.brand || { name: "", logo: "" };
+            data.about = data.about || { history: "" };
+            data.about.contact = data.about.contact || {};
 
             // --- tema (mesmo comportamento do site) ---
             const themeToggle = document.getElementById("theme-toggle");
@@ -381,6 +389,21 @@
                 });
             }
 
+            // --- sobre a rádio (história + contato) ---
+            function renderAbout() {
+                const root = document.getElementById("gen-about");
+                root.innerHTML = "";
+                root.appendChild(field("História da rádio", data.about.history, (v) => data.about.history = v, "textarea"));
+                root.appendChild(row(
+                    field("Endereço", data.about.contact.address, (v) => data.about.contact.address = v),
+                    field("Telefone", data.about.contact.phone, (v) => data.about.contact.phone = v)
+                ));
+                root.appendChild(row(
+                    field("WhatsApp (link wa.me)", data.about.contact.whatsapp, (v) => data.about.contact.whatsapp = v),
+                    field("E-mail", data.about.contact.email, (v) => data.about.contact.email = v)
+                ));
+            }
+
             // --- social + rodapé ---
             function renderSocial() {
                 const root = document.getElementById("gen-social");
@@ -426,6 +449,9 @@
                     if (!out.schedule[day].length) delete out.schedule[day];
                 });
                 Object.keys(out.social).forEach((k) => { if (!out.social[k]) delete out.social[k]; });
+                Object.keys(out.about.contact).forEach((k) => { if (!out.about.contact[k]) delete out.about.contact[k]; });
+                if (!Object.keys(out.about.contact).length) delete out.about.contact;
+                if (!out.about.history && !out.about.contact) delete out.about;
                 return out;
             }
 
@@ -471,6 +497,7 @@
             renderDayTabs();
             renderSchedule();
             renderTeam();
+            renderAbout();
             renderSocial();
         })();
     </script>

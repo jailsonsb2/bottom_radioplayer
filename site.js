@@ -51,6 +51,26 @@
         };
     }
 
+    // --- menu mobile (hambúrguer) ------------------------------------------
+    // Em telas pequenas o .site-nav vira um painel colapsável; o botão
+    // alterna a classe nav-open no header. onclick (e não addEventListener)
+    // pelo mesmo motivo do toggle de tema: reexecução via seamless.
+
+    const navToggle = document.getElementById("nav-toggle");
+    if (navToggle) {
+        const header = navToggle.closest(".site-header");
+        const setOpen = (open) => {
+            header.classList.toggle("nav-open", open);
+            navToggle.setAttribute("aria-expanded", open ? "true" : "false");
+            navToggle.setAttribute("aria-label", open ? "Fechar menu" : "Abrir menu");
+        };
+        navToggle.onclick = () => setOpen(!header.classList.contains("nav-open"));
+        // clicar num link do menu fecha o painel (âncoras não recarregam a página)
+        header.querySelectorAll(".site-nav a").forEach((link) => {
+            link.onclick = () => setOpen(false);
+        });
+    }
+
     // --- hero: slider com autoavanço ---------------------------------------
 
     const heroRoot = document.getElementById("site-hero");
@@ -548,6 +568,55 @@
             link.innerHTML = SOCIAL_ICONS[key];
             socialWrap.appendChild(link);
         });
+    }
+
+    // --- sobre a rádio: história + contato (home e página Sobre) ----------
+
+    const CONTACT_ICONS = {
+        address: '<svg viewBox="0 0 24 24"><path d="M20 10c0 6-8 12-8 12S4 16 4 10a8 8 0 0 1 16 0Z"></path><circle cx="12" cy="10" r="3"></circle></svg>',
+        phone: '<svg viewBox="0 0 24 24"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3 19.5 19.5 0 0 1-6-6 19.8 19.8 0 0 1-3-8.7A2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7 12.8 12.8 0 0 0 .7 2.8 2 2 0 0 1-.5 2.1L8.1 9.9a16 16 0 0 0 6 6l1.3-1.2a2 2 0 0 1 2.1-.5 12.8 12.8 0 0 0 2.8.7 2 2 0 0 1 1.7 2Z"></path></svg>',
+        whatsapp: SOCIAL_ICONS.whatsapp,
+        email: '<svg viewBox="0 0 24 24"><rect width="20" height="16" x="2" y="4" rx="3"></rect><path d="m2 7 10 7L22 7"></path></svg>',
+    };
+
+    const aboutRoot = document.getElementById("site-about");
+    if (aboutRoot && content.about) {
+        const about = content.about;
+
+        const history = el("div", "about-history");
+        String(about.history || "").split(/\n+/).forEach((paragraph) => {
+            if (paragraph.trim()) history.appendChild(el("p", null, paragraph.trim()));
+        });
+        aboutRoot.appendChild(history);
+
+        const contact = about.contact || {};
+        const items = [
+            { key: "address", label: contact.address },
+            { key: "phone", label: contact.phone, href: contact.phone ? "tel:" + String(contact.phone).replace(/[^+\d]/g, "") : "" },
+            { key: "whatsapp", label: contact.whatsapp ? "WhatsApp" : "", href: contact.whatsapp },
+            { key: "email", label: contact.email, href: contact.email ? "mailto:" + contact.email : "" },
+        ].filter((item) => item.label);
+
+        if (items.length) {
+            const card = el("div", "contact-card");
+            card.appendChild(el("h3", null, "Contato"));
+            items.forEach((item) => {
+                const row = el(item.href ? "a" : "div", "contact-item");
+                if (item.href) {
+                    row.href = item.href;
+                    if (/^https?:/i.test(item.href)) {
+                        row.target = "_blank";
+                        row.rel = "noopener";
+                    }
+                }
+                const icon = el("span", "contact-icon");
+                icon.innerHTML = CONTACT_ICONS[item.key];
+                row.appendChild(icon);
+                row.appendChild(el("span", null, item.label));
+                card.appendChild(row);
+            });
+            aboutRoot.appendChild(card);
+        }
     }
 
     // --- footer -----------------------------------------------------------

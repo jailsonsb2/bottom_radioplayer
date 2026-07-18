@@ -85,6 +85,7 @@ The component also exposes each track to the site: `window.RadioPlayer.currentTr
 ### Advanced Customization
 
 - **Images:** Replace the images in the `assets` folder with your own.
+- **Lyrics:** the "Lyrics" button shows the current song's lyrics (lyrics.ovh with LRCLIB fallback). To turn the feature off, set `lyrics: false` in `config.js` (`window.streams.lyrics = false`) — the button and modal disappear and no lyrics request is ever made.
 - **Colors:** Customize the player's colors by editing the `css/custom.css` file.
 - **Behavior:** Adapt the player by editing `js/radioplayer.js` (the component). `js/main.js` is the legacy non-component version, kept for reference.
 - **JavaScript API:** the component exposes `window.RadioPlayer` with `play()`, `pause()`, `toggle()`, the `audio` element and the `root` DOM node.

@@ -25,9 +25,13 @@
                 <a href="index.html#videos">Vídeos</a>
                 <a href="index.html#programacao">Programação</a>
                 <a href="index.html#equipe">Equipe</a>
+                <a href="index.html#contato">Contato</a>
                 <a href="pagina2.html">Sobre</a>
             </nav>
             <button type="button" id="theme-toggle" class="theme-toggle" aria-label="Alternar tema claro/escuro"></button>
+            <button type="button" id="nav-toggle" class="nav-toggle" aria-label="Abrir menu" aria-expanded="false">
+                <svg viewBox="0 0 24 24"><path d="M3 6h18M3 12h18M3 18h18"></path></svg>
+            </button>
         </div>
     </header>
 
@@ -43,15 +47,9 @@
             </p>
         </section>
 
-        <section class="site-section">
+        <section class="site-section" id="contato">
             <h2 class="site-section-title">Nossa história</h2>
-            <p style="line-height: 1.8; color: rgba(238,241,245,.7); max-width: 720px;">
-                No ar desde 2024, a Minha Rádio nasceu para levar música sem parar para todo
-                lugar. Hoje somos multi-estação, com programação ao vivo, aplicativo próprio e
-                uma comunidade de ouvintes que cresce a cada dia. Este site é a demonstração do
-                componente <strong>bottom_radioplayer</strong> — o player fixo no rodapé funciona
-                em qualquer página com apenas duas linhas de código.
-            </p>
+            <div class="about-grid" id="site-about"></div>
         </section>
 
         <footer class="site-footer">
