@@ -75,9 +75,16 @@
                                         <path d="M18 5v14M6 4v16l10-8Z"></path>
                                     </svg>
                                 </button>
+                                <button class="player-button player-button-more" data-outside="player-more" aria-label="Mais controles">
+                                    <svg class="i i-dots" viewBox="0 0 24 24">
+                                        <circle cx="5" cy="12" r="1"></circle>
+                                        <circle cx="12" cy="12" r="1"></circle>
+                                        <circle cx="19" cy="12" r="1"></circle>
+                                    </svg>
+                                </button>
                             </div>
 
-                            <div class="player-right flex items-center">
+                            <div class="player-right flex items-center" id="player-more">
                                 <div class="online-tv"></div>
                                 <button class="player-button player-button-history" data-outside="offcanvas-history">
                                     <svg class="i i-music" viewBox="0 0 24 24">
@@ -621,6 +628,19 @@
       root.querySelectorAll("[data-outside]").forEach((button) => {
           outsideClick(button);
       });
+
+      // Painel "mais" (mobile): acionar qualquer recurso a partir dele
+      // fecha o painel — o offcanvas/modal aberto assume a tela
+      const moreButton = root.querySelector(".player-button-more");
+      const moreControls = root.querySelector("#player-more");
+      if (moreButton && moreControls) {
+          moreControls.addEventListener("click", (event) => {
+              if (event.target.closest("button, a")) {
+                  moreButton.classList.remove(ACTIVE_CLASS);
+                  moreControls.classList.remove(ACTIVE_CLASS);
+              }
+          });
+      }
 
       // Ícones — Meteor Icons: https://meteoricons.com/
       const icons = {

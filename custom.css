@@ -95,11 +95,28 @@
     }
 
     #app-player .player-button-backward-step,
-    #app-player .player-button-forward-step {
+    #app-player .player-button-forward-step,
+    #app-player .player-button-more {
         width: 40px;
         height: 40px;
         --i-size: 18px;
     }
+
+    /* painel "mais": vidro escuro flutuando acima do dock */
+    #app-player .player-right.is-active {
+        gap: 12px;
+        border-radius: 20px;
+        border: 1px solid rgba(255, 255, 255, 0.14);
+        background: rgba(11, 14, 19, 0.9);
+        backdrop-filter: blur(20px) saturate(160%);
+        -webkit-backdrop-filter: blur(20px) saturate(160%);
+        box-shadow: 0 24px 60px rgba(0, 0, 0, 0.5);
+        animation: more-in 0.25s cubic-bezier(0.2, 0.75, 0.2, 1) both;
+    }
+}
+
+@keyframes more-in {
+    from { opacity: 0; transform: translateY(10px); }
 }
 
 /* véu escuro constante no lugar do accent a 50% (que sumia com cor escura);
@@ -178,9 +195,10 @@ body.is-playing #app-player .player-song-name::before {
     color: #fff;
 }
 
-/* anterior/próxima: círculos glass */
+/* anterior/próxima/mais: círculos glass */
 #app-player .player-button-backward-step,
-#app-player .player-button-forward-step {
+#app-player .player-button-forward-step,
+#app-player .player-button-more {
     width: 42px;
     height: 42px;
     border-radius: 50%;
@@ -191,9 +209,16 @@ body.is-playing #app-player .player-song-name::before {
 }
 
 #app-player .player-button-backward-step:hover,
-#app-player .player-button-forward-step:hover {
+#app-player .player-button-forward-step:hover,
+#app-player .player-button-more:hover {
     background: rgba(255, 255, 255, 0.16);
     color: #fff;
+}
+
+/* painel "mais" aberto: botão marcado com o accent */
+#app-player .player-button-more.is-active {
+    color: var(--accent, #4dd7e0);
+    border-color: var(--accent, #4dd7e0);
 }
 
 /* --- botões da direita: círculos só-ícone (o rótulo vira dica) --- */

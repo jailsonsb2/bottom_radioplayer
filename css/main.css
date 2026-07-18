@@ -474,6 +474,28 @@ body, html {
   #app-player .player-right {
     display: none !important;
   }
+  /* aberto pelo botão "mais": os controles extras viram um painel
+     flutuante acima da barra do player */
+  #app-player .player-right.is-active {
+    display: flex !important;
+    position: absolute;
+    right: 12px;
+    bottom: calc(100% + 12px);
+    z-index: 5;
+    flex-wrap: wrap;
+    justify-content: center;
+    padding: 12px 14px;
+    border-radius: 16px;
+    background-color: rgba(8, 10, 15, 0.92);
+  }
+}
+#app-player .player-button.player-button-more {
+  display: none;
+}
+@media (max-width: 991px) {
+  #app-player .player-button.player-button-more {
+    display: flex;
+  }
 }
 #app-player .player-cover-title {
   width: 90px;
