@@ -439,6 +439,7 @@
           playButton.innerHTML = icons.play;
           playButton.classList.remove("is-active");
           document.body.classList.remove("is-playing");
+          scheduleMarquee(); // o equalizador sai de cena: o espaço do título muda
       }
 
       // Enquanto o áudio estiver em buffer, mostra o spinner girando
@@ -456,6 +457,7 @@
           playButton.innerHTML = icons.pause;
           playButton.classList.add("is-active");
           document.body.classList.add("is-playing");
+          scheduleMarquee(); // o equalizador entra em cena: o espaço do título muda
       });
 
       function handleConnectionDrop() {
@@ -1034,6 +1036,7 @@
           playerCoverImg && (playerCoverImg.src = station.cover || station.album);
           stationName.textContent = station.name;
           stationDescription.textContent = station.description;
+          scheduleMarquee();
           playerTv && (playerTv.innerHTML = "");
 
           const modalImage = root.querySelector(".player-modal-image");
@@ -1089,10 +1092,42 @@
           }
       }
 
+      // Letreiro (marquee): quando o título/artista não cabem no espaço do
+      // dock, o texto desliza de um lado ao outro em vez de ficar cortado.
+      // Mede o excesso e entrega a distância ao CSS via --marquee-shift.
+      let marqueeTimeout;
+
+      function updateMarquee() {
+          const pairs = [
+              [root.querySelector(".player-left .player-song-name"), root.querySelector(".player-left .song-name")],
+              [root.querySelector(".player-left .song-artist"), root.querySelector(".player-left .song-artist")],
+          ];
+          pairs.forEach(([box, span]) => {
+              if (!box || !span) return;
+              span.classList.remove("is-marquee");
+              span.style.removeProperty("--marquee-shift");
+              const overflow = Math.max(box.scrollWidth - box.clientWidth, span.scrollWidth - span.clientWidth);
+              if (overflow > 6) {
+                  span.style.setProperty("--marquee-shift", `${-(overflow + 12)}px`);
+                  span.classList.add("is-marquee");
+              }
+          });
+      }
+
+      // Debounce: aguarda o layout assentar (troca de fonte, resize,
+      // aparição do equalizador) antes de medir
+      function scheduleMarquee() {
+          clearTimeout(marqueeTimeout);
+          marqueeTimeout = setTimeout(updateMarquee, 150);
+      }
+
+      window.addEventListener("resize", scheduleMarquee);
+
       function currentSong(data) {
           const content = songNow;
           content.querySelector(".song-name").textContent = data.title;
           content.querySelector(".song-artist").textContent = data.artist;
+          scheduleMarquee();
 
           const modalSongName = root.querySelector("#modal-share .song-name");
           const modalSongArtist = root.querySelector("#modal-share .song-artist");

@@ -499,6 +499,7 @@ body, html {
 }
 #app-player .player-cover-title {
   width: 90px;
+  overflow: hidden;
 }
 @media (min-width: 992px) {
   #app-player .player-cover-title {
@@ -719,6 +720,29 @@ body, html {
   display: flex;
   align-items: center;
   margin-bottom: 0.25rem;
+  overflow: hidden;
+}
+#app-player .player-song-name .song-name {
+  white-space: nowrap;
+}
+/* letreiro: título/artista que não cabem deslizam em vez de cortar
+   (o JS mede o excesso e entrega a distância em --marquee-shift) */
+#app-player .player-left .song-name.is-marquee,
+#app-player .player-left .song-artist.is-marquee {
+  overflow: visible;
+  text-overflow: clip;
+  animation: player-marquee 12s linear infinite;
+}
+@keyframes player-marquee {
+  0%, 12% { transform: translateX(0); }
+  46%, 54% { transform: translateX(var(--marquee-shift, -40px)); }
+  88%, 100% { transform: translateX(0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  #app-player .player-left .song-name.is-marquee,
+  #app-player .player-left .song-artist.is-marquee {
+    animation: none;
+  }
 }
 #app-player .player-program {
   position: absolute;
