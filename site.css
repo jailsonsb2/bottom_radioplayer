@@ -111,6 +111,79 @@ img { max-width: 100%; display: block; }
 
 .theme-toggle:hover { background: var(--site-surface-strong); }
 
+/* extras no topo: chip de clima + botão de doação (à la portal) */
+.header-extras {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.header-weather {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    height: 38px;
+    padding: 0 12px 0 10px;
+    border-radius: 999px;
+    border: 1px solid var(--site-border);
+    background: var(--site-surface);
+    color: var(--site-text);
+    text-decoration: none;
+    transition: background 0.2s ease;
+}
+
+.header-weather:hover { background: var(--site-surface-strong); }
+
+.header-weather-icon { font-size: 18px; line-height: 1; }
+
+.header-weather-info {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.15;
+}
+
+.header-weather-city {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--site-muted);
+}
+
+.header-weather-temp {
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.header-donate {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    height: 38px;
+    padding: 0 14px;
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 700;
+    text-decoration: none;
+    color: var(--site-accent-ink);
+    background: linear-gradient(135deg, var(--site-accent), #2ba7b0);
+    transition: filter 0.2s ease, transform 0.15s ease;
+}
+
+.header-donate:hover { filter: brightness(1.08); transform: translateY(-1px); }
+
+.header-donate-icon {
+    display: flex;
+    width: 14px;
+    height: 14px;
+}
+
+.header-donate-icon svg {
+    width: 100%;
+    height: 100%;
+    fill: currentColor;
+    stroke: none;
+}
+
 .site-header-inner {
     max-width: 1120px;
     margin: 0 auto;
@@ -202,6 +275,13 @@ img { max-width: 100%; display: block; }
 
 @media (max-width: 700px) {
     .nav-toggle { display: flex; }
+
+    /* no mobile o header fica apertado: o clima some, o botão de doar
+       vira só o coração (o rótulo é escondido) */
+    .header-weather { display: none; }
+
+    .header-donate { padding: 8px; gap: 0; }
+    .header-donate span:not(.header-donate-icon) { display: none; }
 
     /* menu vira um painel colapsável abaixo do header */
     .site-nav {
@@ -755,13 +835,54 @@ body.news-modal-open { overflow: hidden; }
 
 /* --- equipe --- */
 
-.team-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-    gap: 20px;
+/* Carrossel: track rola na horizontal (scroll-snap), setas nas pontas.
+   As setas só aparecem quando o conteúdo transborda (has-overflow),
+   e ficam desabilitadas na ponta em que já não há mais o que rolar. */
+.team-carousel {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 10px;
 }
 
+.team-arrow {
+    flex: none;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: 1px solid var(--site-border);
+    background: var(--site-surface);
+    color: var(--site-text);
+    font-size: 20px;
+    line-height: 1;
+    cursor: pointer;
+    transition: background 0.2s ease, opacity 0.2s ease;
+    display: none;
+}
+
+.team-carousel.has-overflow .team-arrow { display: block; }
+
+.team-arrow:hover:not(:disabled) { background: var(--site-surface-strong); }
+
+.team-arrow:disabled { opacity: 0.35; cursor: default; }
+
+.team-track {
+    display: flex;
+    gap: 20px;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    scroll-behavior: smooth;
+    flex: 1;
+    min-width: 0;
+    padding-bottom: 4px;
+}
+
+.team-track::-webkit-scrollbar { height: 6px; }
+
 .team-card {
+    flex: none;
+    width: 200px;
+    scroll-snap-align: start;
     text-align: center;
     padding: 24px 16px;
     border-radius: var(--site-radius);
@@ -843,6 +964,21 @@ a.contact-item:hover { color: var(--site-text); }
     stroke-linejoin: round;
 }
 
+/* mapa: ocupa as duas colunas do grid, abaixo da história/contato */
+.map-card {
+    grid-column: 1 / -1;
+    border-radius: var(--site-radius);
+    border: 1px solid var(--site-border);
+    overflow: hidden;
+}
+
+.map-card iframe {
+    display: block;
+    width: 100%;
+    height: 260px;
+    border: 0;
+}
+
 @media (max-width: 800px) {
     .about-grid { grid-template-columns: 1fr; }
 }
@@ -896,4 +1032,31 @@ a.contact-item:hover { color: var(--site-text); }
     stroke-width: 2;
     stroke-linecap: round;
     stroke-linejoin: round;
+}
+
+/* badges oficiais das lojas (rodapé) — SVG branco de assets/app/ */
+.footer-apps {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.store-badge {
+    display: inline-flex;
+    transition: transform 0.15s ease, opacity 0.2s ease;
+}
+
+.store-badge:hover { transform: translateY(-1px); opacity: 0.85; }
+
+.store-badge img {
+    height: 40px;
+    width: auto;
+    display: block;
+}
+
+/* o SVG é branco (feito para fundo escuro); no tema claro, inverte para
+   preto e assim mantém contraste sobre o rodapé claro */
+:root[data-theme="light"] .store-badge img {
+    filter: invert(1);
 }

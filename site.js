@@ -528,7 +528,10 @@
     // --- equipe -----------------------------------------------------------
 
     const teamGrid = document.getElementById("site-team");
-    if (teamGrid && Array.isArray(content.team)) {
+    if (teamGrid && Array.isArray(content.team) && content.team.length) {
+        teamGrid.classList.remove("team-grid");
+        teamGrid.classList.add("team-track");
+
         content.team.forEach((member) => {
             const card = el("div", "team-card");
             const img = el("img");
@@ -540,6 +543,41 @@
             card.appendChild(el("span", null, member.role));
             teamGrid.appendChild(card);
         });
+
+        // Setas esquerda/direita: rolam um cartão por clique. Só fazem
+        // sentido (e só aparecem) quando o conteúdo realmente transborda —
+        // com poucos membros, o grid já mostra tudo sem precisar rolar.
+        const wrap = el("div", "team-carousel");
+        teamGrid.parentNode.insertBefore(wrap, teamGrid);
+
+        const prevButton = el("button", "team-arrow team-arrow-prev", "‹");
+        prevButton.type = "button";
+        prevButton.setAttribute("aria-label", "Membro anterior");
+
+        const nextButton = el("button", "team-arrow team-arrow-next", "›");
+        nextButton.type = "button";
+        nextButton.setAttribute("aria-label", "Próximo membro");
+
+        wrap.appendChild(prevButton);
+        wrap.appendChild(teamGrid);
+        wrap.appendChild(nextButton);
+
+        function scrollAmount() {
+            const card = teamGrid.querySelector(".team-card");
+            return (card ? card.getBoundingClientRect().width : 200) + 20;
+        }
+        prevButton.addEventListener("click", () => teamGrid.scrollBy({ left: -scrollAmount(), behavior: "smooth" }));
+        nextButton.addEventListener("click", () => teamGrid.scrollBy({ left: scrollAmount(), behavior: "smooth" }));
+
+        function updateArrows() {
+            const overflowing = teamGrid.scrollWidth > teamGrid.clientWidth + 4;
+            wrap.classList.toggle("has-overflow", overflowing);
+            prevButton.disabled = teamGrid.scrollLeft <= 4;
+            nextButton.disabled = teamGrid.scrollLeft >= teamGrid.scrollWidth - teamGrid.clientWidth - 4;
+        }
+        teamGrid.addEventListener("scroll", updateArrows);
+        window.addEventListener("resize", updateArrows);
+        updateArrows();
     }
 
     // --- redes sociais (saíram do player; vivem no rodapé do site) --------
@@ -579,10 +617,80 @@
         email: '<svg viewBox="0 0 24 24"><rect width="20" height="16" x="2" y="4" rx="3"></rect><path d="m2 7 10 7L22 7"></path></svg>',
     };
 
+    function weatherEmoji(desc) {
+        const text = String(desc || "").toLowerCase();
+        if (/thunder/.test(text)) return "⛈️";
+        if (/snow|sleet|ice/.test(text)) return "❄️";
+        if (/rain|drizzle|shower/.test(text)) return "🌧️";
+        if (/fog|mist|haze/.test(text)) return "🌫️";
+        if (/overcast|cloudy/.test(text)) return "☁️";
+        if (/partly/.test(text)) return "⛅";
+        if (/clear|sunny/.test(text)) return "☀️";
+        return "🌡️";
+    }
+
+    const about = content.about || {};
+
+    // --- extras no header (topo): clima + botão de doação -----------------
+    // Ficam no topo, à la portal (UOL): um chip de clima discreto (emoji +
+    // cidade + temperatura) e um botão pequeno de doação. Injetados no
+    // header por JS para valer nas duas páginas sem duplicar HTML; o guard
+    // por .header-extras evita reinjeção na navegação seamless.
+    const HEART_ICON = '<svg viewBox="0 0 24 24"><path d="M12 21s-7-4.35-9.5-8.5A5.5 5.5 0 0 1 12 6a5.5 5.5 0 0 1 9.5 6.5C19 16.65 12 21 12 21Z"></path></svg>';
+
+    document.querySelectorAll(".site-header-inner").forEach((headerInner) => {
+        if (headerInner.querySelector(".header-extras")) return;
+        const themeToggle = headerInner.querySelector("#theme-toggle");
+        const extras = el("div", "header-extras");
+
+        // clima da cidade (wttr.in — sem chave de API)
+        if (about.city) {
+            const weather = el("a", "header-weather");
+            weather.href = "https://wttr.in/" + encodeURIComponent(about.city);
+            weather.target = "_blank";
+            weather.rel = "noopener";
+            weather.title = "Previsão do tempo em " + about.city;
+            const icon = el("span", "header-weather-icon", "🌡️");
+            const info = el("span", "header-weather-info");
+            info.appendChild(el("span", "header-weather-city", about.city));
+            const temp = el("span", "header-weather-temp", "--°");
+            info.appendChild(temp);
+            weather.appendChild(icon);
+            weather.appendChild(info);
+            extras.appendChild(weather);
+
+            fetch(`https://wttr.in/${encodeURIComponent(about.city)}?format=j1`)
+                .then((response) => (response.ok ? response.json() : Promise.reject()))
+                .then((data) => {
+                    const current = data.current_condition && data.current_condition[0];
+                    if (!current) return Promise.reject();
+                    const desc = (current.weatherDesc && current.weatherDesc[0] && current.weatherDesc[0].value) || "";
+                    icon.textContent = weatherEmoji(desc);
+                    temp.textContent = current.temp_C + "°C";
+                })
+                .catch(() => weather.remove()); // serviço indisponível: não mostra chip quebrado
+        }
+
+        // botão de doação
+        if (about.donation && about.donation.url) {
+            const donate = el("a", "header-donate");
+            donate.href = about.donation.url;
+            donate.target = "_blank";
+            donate.rel = "noopener";
+            const heart = el("span", "header-donate-icon");
+            heart.innerHTML = HEART_ICON;
+            donate.appendChild(heart);
+            donate.appendChild(el("span", null, about.donation.label || "Doar"));
+            extras.appendChild(donate);
+        }
+
+        if (extras.childNodes.length && themeToggle) headerInner.insertBefore(extras, themeToggle);
+    });
+
+    // --- sobre a rádio: história + contato + mapa -------------------------
+
     const aboutRoot = document.getElementById("site-about");
     if (aboutRoot && content.about) {
-        const about = content.about;
-
         const history = el("div", "about-history");
         String(about.history || "").split(/\n+/).forEach((paragraph) => {
             if (paragraph.trim()) history.appendChild(el("p", null, paragraph.trim()));
@@ -617,7 +725,53 @@
             });
             aboutRoot.appendChild(card);
         }
+
+        // mapa da cidade (Google Maps embed — sem chave de API)
+        const mapQuery = contact.address || about.city;
+        if (mapQuery) {
+            const mapCard = el("div", "map-card");
+            const iframe = el("iframe");
+            iframe.src = `https://www.google.com/maps?q=${encodeURIComponent(mapQuery)}&output=embed`;
+            iframe.loading = "lazy";
+            iframe.title = "Mapa: " + mapQuery;
+            mapCard.appendChild(iframe);
+            aboutRoot.appendChild(mapCard);
+        }
     }
+
+    // --- apps oficiais no rodapé (badges de loja) ------------------------
+    // Usa os SVGs oficiais em assets/app/ (badge branco completo). O CSS
+    // inverte a cor no tema claro para manter contraste. content.apps tem
+    // prioridade; cai para o config.js do player quando vazio.
+    const STORE_BADGES = {
+        android: "assets/app/android.svg",
+        ios: "assets/app/ios.svg",
+    };
+    const STORE_NAMES = { android: "Google Play", ios: "App Store" };
+
+    document.querySelectorAll(".site-footer").forEach((footer) => {
+        if (footer.querySelector(".footer-apps")) return;
+        const stationApps = (window.streams && window.streams.stations && window.streams.stations[0] && window.streams.stations[0].apps) || {};
+        const appsData = Object.assign({}, stationApps, content.apps || {});
+        const appEntries = Object.keys(STORE_BADGES).filter((key) => appsData[key] && appsData[key] !== "#");
+        if (!appEntries.length) return;
+
+        const wrap = el("div", "footer-apps");
+        appEntries.forEach((key) => {
+            const badge = el("a", "store-badge");
+            badge.href = appsData[key];
+            badge.target = "_blank";
+            badge.rel = "noopener";
+            badge.setAttribute("aria-label", STORE_NAMES[key]);
+            const img = el("img");
+            img.src = STORE_BADGES[key];
+            img.alt = STORE_NAMES[key];
+            img.loading = "lazy";
+            badge.appendChild(img);
+            wrap.appendChild(badge);
+        });
+        footer.insertBefore(wrap, footer.firstChild);
+    });
 
     // --- footer -----------------------------------------------------------
 

@@ -51,6 +51,24 @@ window.siteContent = {
             whatsapp: "https://wa.me/5500000000000",
             email: "contato@minharadio.com",
         },
+        // Cidade usada no card de clima e no mapa do rodapé de contato.
+        // Deixe "" para ocultar os dois cards.
+        city: "São Paulo",
+        // Link de doação (PayPal, Pix, Ko-fi, etc.) — deixe "" para ocultar o botão.
+        // O botão flutuante do Ko-fi (fim do <body> em index.html/pagina2.html)
+        // já cobre esse mesmo link; os dois convivem sem conflito.
+        donation: {
+            url: "https://ko-fi.com/C1C1ZZ2EP",
+            label: "Apoiar no Ko-fi",
+        },
+    },
+
+    // Links dos apps oficiais — deixe "" para ocultar o respectivo botão.
+    // Se vazios aqui, o site usa os links já cadastrados em config.js
+    // (window.streams.stations[0].apps).
+    apps: {
+        android: "https://play.google.com/store/apps/details?id=com.jbcast.jwradio",
+        ios: "",
     },
 
     // Redes sociais do site (aparecem no rodapé) — deixe "" para ocultar

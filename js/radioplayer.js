@@ -224,7 +224,36 @@
       document.head.appendChild(link);
   }
 
+  // CSS crítico injetado de forma síncrona (um <style>, não um <link>): as
+  // folhas de estilo externas (main.css/custom.css) carregam de forma
+  // assíncrona, então há uma janela entre o mountDom() inserir o HTML do
+  // player no DOM e o CSS externo chegar — nela, modais/offcanvas ficavam
+  // sem "position: fixed" nem "opacity: 0", renderizando por um instante
+  // como um bloco normal, visível, no meio da página (o "flash" do modal
+  // de compartilhar ao abrir o site). As regras abaixo replicam apenas o
+  // estado FECHADO com os mesmos seletores do main.css — quando o CSS
+  // externo chega, as regras batem (idempotente) e a classe "is-active"
+  // continua controlando a exibição normalmente.
+  function injectCriticalStyle() {
+      if (document.getElementById("radioplayer-critical-style")) return;
+      const style = document.createElement("style");
+      style.id = "radioplayer-critical-style";
+      style.textContent = `
+          .app-player .player-modal { position: fixed; }
+          .app-player .player-modal:not(.is-active) { opacity: 0; pointer-events: none; }
+          .modal { position: fixed; }
+          .modal:not(.is-active) { opacity: 0; pointer-events: none; }
+          .modal-overlay { position: fixed; inset: 0; opacity: 0; pointer-events: none; }
+          .modal-video { position: fixed; }
+          .modal-video:not(.is-active) { visibility: hidden; opacity: 0; pointer-events: none; }
+          .offcanvas-player { position: fixed; }
+          .offcanvas-player:not(.is-active) { opacity: 0; pointer-events: none; }
+      `;
+      document.head.appendChild(style);
+  }
+
   function injectAssets() {
+      injectCriticalStyle();
       injectStylesheet("https://fonts.googleapis.com/css2?family=Montserrat:wght@300;700&display=swap");
       injectStylesheet("https://fonts.cdnfonts.com/css/akira-expanded");
       injectStylesheet(BASE + "css/main.css");
