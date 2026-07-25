@@ -80,6 +80,12 @@ img { max-width: 100%; display: block; }
     padding: 0 24px 180px; /* respiro para o dock do player */
 }
 
+/* no celular o dock é mais baixo (e ainda pode ser recolhido): menos
+   espaço morto no fim da página */
+@media (max-width: 991px) {
+    .site-container { padding-bottom: 130px; }
+}
+
 /* --- header --- */
 
 .site-header {
@@ -165,7 +171,7 @@ img { max-width: 100%; display: block; }
     font-weight: 700;
     text-decoration: none;
     color: var(--site-accent-ink);
-    background: linear-gradient(135deg, var(--site-accent), #2ba7b0);
+    background: linear-gradient(135deg, var(--site-accent), var(--site-accent-2, #2ba7b0));
     transition: filter 0.2s ease, transform 0.15s ease;
 }
 
@@ -183,6 +189,117 @@ img { max-width: 100%; display: block; }
     fill: currentColor;
     stroke: none;
 }
+
+/* botão "Instalar app" (PWA) — injetado pelo pwa.js quando o navegador
+   oferece a instalação. No topo é só o ícone (o header já está cheio);
+   o botão com texto fica no card "Como nos ouvir". */
+.header-install {
+    width: 38px;
+    height: 38px;
+    flex: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    border: 1px solid var(--site-border);
+    background: var(--site-surface);
+    color: var(--site-text);
+    cursor: pointer;
+    transition: background 0.2s ease, transform 0.15s ease;
+}
+
+.header-install:hover {
+    background: var(--site-surface-strong);
+    transform: translateY(-1px);
+}
+
+.header-install svg,
+.listen-install-icon svg {
+    width: 16px;
+    height: 16px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.listen-install {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 18px;
+    padding: 11px 20px;
+    border: none;
+    border-radius: 999px;
+    background: linear-gradient(135deg, var(--site-accent), var(--site-accent-2, #2ba7b0));
+    color: var(--site-accent-ink);
+    font-family: inherit;
+    font-size: 13.5px;
+    font-weight: 800;
+    cursor: pointer;
+    transition: filter 0.2s ease, transform 0.15s ease;
+}
+
+.listen-install:hover { filter: brightness(1.08); transform: translateY(-1px); }
+
+.listen-install-icon { display: flex; }
+
+/* aviso de versão nova do site (service worker atualizado) */
+.pwa-toast {
+    position: fixed;
+    left: 50%;
+    bottom: 150px; /* acima do dock do player */
+    transform: translateX(-50%);
+    z-index: 190;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    max-width: calc(100vw - 32px);
+    padding: 12px 12px 12px 18px;
+    border-radius: 999px;
+    background: rgba(13, 17, 23, 0.96);
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+    color: #fff;
+    font-size: 13px;
+    animation: pwa-toast-in 0.35s ease both;
+}
+
+@keyframes pwa-toast-in {
+    from { transform: translate(-50%, 16px); opacity: 0; }
+}
+
+.pwa-toast-text { flex: 1; min-width: 0; }
+
+.pwa-toast-button {
+    flex: none;
+    padding: 8px 16px;
+    border: none;
+    border-radius: 999px;
+    background: var(--site-accent);
+    color: var(--site-accent-ink);
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 800;
+    cursor: pointer;
+}
+
+.pwa-toast-button:disabled { opacity: 0.6; cursor: default; }
+
+.pwa-toast-close {
+    flex: none;
+    width: 28px;
+    height: 28px;
+    border: none;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+    font-size: 12px;
+    cursor: pointer;
+}
+
+.pwa-toast-close:hover { background: rgba(255, 255, 255, 0.22); }
 
 .site-header-inner {
     max-width: 1120px;
@@ -227,16 +344,18 @@ img { max-width: 100%; display: block; }
 
 .site-nav {
     display: flex;
-    gap: 4px;
+    gap: 2px;
     flex-wrap: wrap;
 }
 
+/* espaçamento enxuto: o header tem no máximo 1120px e precisa caber menu +
+   clima + doação + instalar + tema numa linha só */
 .site-nav a {
     color: var(--site-muted);
     text-decoration: none;
     font-size: 13px;
     font-weight: 600;
-    padding: 8px 14px;
+    padding: 8px 10px;
     border-radius: 999px;
     transition: background 0.2s ease, color 0.2s ease;
 }
@@ -246,7 +365,7 @@ img { max-width: 100%; display: block; }
     color: var(--site-text);
 }
 
-/* botão hambúrguer — só aparece em telas pequenas */
+/* botão hambúrguer — aparece quando o menu não cabe mais na linha */
 .nav-toggle {
     display: none;
     width: 38px;
@@ -274,16 +393,33 @@ img { max-width: 100%; display: block; }
 }
 
 @media (max-width: 700px) {
-    .nav-toggle { display: flex; }
-
     /* no mobile o header fica apertado: o clima some, o botão de doar
        vira só o coração (o rótulo é escondido) */
     .header-weather { display: none; }
 
-    .header-donate { padding: 8px; gap: 0; }
+    /* sem o rótulo, o botão de doar vira uma bolinha do mesmo tamanho dos
+       outros (clima, instalar, tema, menu) — antes ficava uma pílula
+       estreita, fora do padrão do header */
+    .header-donate {
+        width: 38px;
+        height: 38px;
+        padding: 0;
+        gap: 0;
+        border-radius: 50%;
+        flex: none;
+    }
+
     .header-donate span:not(.header-donate-icon) { display: none; }
 
-    /* menu vira um painel colapsável abaixo do header */
+    .header-donate-icon { width: 16px; height: 16px; }
+}
+
+/* Abaixo de ~1150px o menu inteiro não cabe mais ao lado dos extras (ele
+   quebrava em duas linhas e o header dobrava de altura): vira o painel
+   colapsável do hambúrguer. */
+@media (max-width: 1150px) {
+    .nav-toggle { display: flex; }
+
     .site-nav {
         display: none;
         position: absolute;
@@ -351,20 +487,20 @@ img { max-width: 100%; display: block; }
     padding: 14px 28px;
     border: none;
     border-radius: 999px;
-    background: linear-gradient(135deg, var(--site-accent), #2ba7b0);
+    background: linear-gradient(135deg, var(--site-accent), var(--site-accent-2, #2ba7b0));
     color: var(--site-accent-ink);
     font-family: inherit;
     font-size: 15px;
     font-weight: 800;
     cursor: pointer;
     text-decoration: none;
-    box-shadow: 0 14px 34px rgba(77, 215, 224, 0.35);
+    box-shadow: 0 14px 34px color-mix(in srgb, var(--site-accent) 35%, transparent);
     transition: transform 0.15s ease, box-shadow 0.2s ease;
 }
 
 .hero-cta:hover {
     transform: scale(1.04);
-    box-shadow: 0 16px 40px rgba(77, 215, 224, 0.45);
+    box-shadow: 0 16px 40px color-mix(in srgb, var(--site-accent) 45%, transparent);
 }
 
 /* --- hero slider --- */
@@ -762,6 +898,157 @@ body.news-modal-open { overflow: hidden; }
     border: 0;
 }
 
+/* --- galeria de fotos --- */
+
+.gallery-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 14px;
+}
+
+.gallery-item {
+    position: relative;
+    display: block;
+    padding: 0;
+    border: 1px solid var(--site-border);
+    border-radius: 14px;
+    overflow: hidden;
+    background: var(--site-surface);
+    cursor: zoom-in;
+    transition: transform 0.15s ease, border-color 0.2s ease;
+}
+
+.gallery-item:hover {
+    transform: translateY(-3px);
+    border-color: var(--site-accent);
+}
+
+.gallery-item img {
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    object-fit: cover;
+    transition: transform 0.35s ease, opacity 0.2s ease;
+}
+
+.gallery-item:hover img { transform: scale(1.05); }
+
+/* legenda sobre a foto, com degradê para o texto ficar legível */
+.gallery-caption {
+    position: absolute;
+    inset: auto 0 0 0;
+    padding: 26px 12px 10px;
+    font-size: 12.5px;
+    font-weight: 700;
+    color: #fff;
+    text-align: left;
+    background: linear-gradient(transparent, rgba(5, 8, 12, 0.85));
+}
+
+/* --- lightbox da galeria --- */
+
+.lightbox {
+    position: fixed;
+    inset: 0;
+    z-index: 200;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 24px;
+    background: rgba(5, 8, 12, 0.88);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    opacity: 0;
+    transition: opacity 0.25s ease;
+}
+
+.lightbox.is-open { opacity: 1; }
+
+.lightbox-figure {
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    max-width: min(1000px, 100%);
+    transform: scale(0.97);
+    transition: transform 0.25s ease;
+}
+
+.lightbox.is-open .lightbox-figure { transform: none; }
+
+.lightbox-figure img {
+    max-width: 100%;
+    max-height: 76vh;
+    border-radius: 16px;
+    box-shadow: 0 40px 100px rgba(0, 0, 0, 0.6);
+}
+
+.lightbox-caption {
+    font-size: 14px;
+    font-weight: 700;
+    color: #fff;
+    text-align: center;
+}
+
+.lightbox-counter {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 18px;
+    text-align: center;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.lightbox-close,
+.lightbox-nav {
+    flex: none;
+    border: 1px solid rgba(255, 255, 255, 0.22);
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+    cursor: pointer;
+    border-radius: 50%;
+    transition: background 0.2s ease;
+}
+
+.lightbox-close:hover,
+.lightbox-nav:hover { background: rgba(255, 255, 255, 0.24); }
+
+.lightbox-close {
+    position: absolute;
+    top: 18px;
+    right: 18px;
+    width: 42px;
+    height: 42px;
+    font-size: 16px;
+}
+
+.lightbox-nav {
+    width: 46px;
+    height: 46px;
+    font-size: 26px;
+    line-height: 1;
+}
+
+body.lightbox-open { overflow: hidden; }
+
+@media (max-width: 700px) {
+    .lightbox { padding: 16px; }
+
+    /* as setas saem das laterais e flutuam sobre a foto */
+    .lightbox-nav {
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+    }
+
+    .lightbox-prev { left: 10px; }
+    .lightbox-next { right: 10px; }
+}
+
 /* --- programação --- */
 
 .schedule-tabs {
@@ -920,14 +1207,86 @@ body.news-modal-open { overflow: hidden; }
 
 .about-history p:last-child { margin-bottom: 0; }
 
-.contact-card {
+/* coluna da direita: "como nos ouvir" em cima, contato embaixo */
+.about-side {
+    display: grid;
+    gap: 24px;
+    align-content: start;
+}
+
+.contact-card,
+.listen-card {
     border-radius: var(--site-radius);
     background: var(--site-surface);
     border: 1px solid var(--site-border);
     padding: 22px;
 }
 
-.contact-card h3 { margin: 0 0 12px; font-size: 16px; }
+.contact-card h3,
+.listen-card h3 { margin: 0 0 12px; font-size: 16px; }
+
+/* --- como nos ouvir (apps + Alexa) --- */
+
+.listen-text {
+    margin: 0 0 16px;
+    font-size: 13.5px;
+    line-height: 1.7;
+    color: var(--site-muted);
+}
+
+.listen-stores {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.listen-stores .store-badge img { height: 44px; }
+
+.listen-alexa-label {
+    display: block;
+    margin: 18px 0 8px;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--site-muted);
+}
+
+.listen-alexa {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 16px 10px 12px;
+    border-radius: 999px;
+    border: 1px solid var(--site-border);
+    background: var(--site-surface-strong);
+    color: var(--site-text);
+    font-size: 13.5px;
+    font-weight: 700;
+    text-decoration: none;
+    transition: border-color 0.2s ease, transform 0.15s ease;
+}
+
+a.listen-alexa:hover {
+    border-color: #00caff;
+    transform: translateY(-1px);
+}
+
+.listen-alexa-icon {
+    display: flex;
+    width: 22px;
+    height: 22px;
+    flex: none;
+    color: #00caff;
+}
+
+.listen-alexa-icon svg {
+    width: 100%;
+    height: 100%;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+}
 
 .contact-item {
     display: flex;

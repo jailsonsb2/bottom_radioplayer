@@ -1,0 +1,45 @@
+{
+    "name": "Minha Rádio",
+    "short_name": "Minha Rádio",
+    "description": "Ouça a Minha Rádio ao vivo: música sem parar, notícias e os melhores programas.",
+    "lang": "pt-BR",
+    "dir": "ltr",
+    "start_url": "./",
+    "scope": "./",
+    "id": "./",
+    "display": "standalone",
+    "orientation": "any",
+    "background_color": "#0b0e13",
+    "theme_color": "#0b0e13",
+    "categories": ["music", "entertainment", "news"],
+    "icons": [
+        {
+            "src": "assets/pwa/icon-192.png",
+            "sizes": "192x192",
+            "type": "image/png",
+            "purpose": "any"
+        },
+        {
+            "src": "assets/pwa/icon-512.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "any"
+        },
+        {
+            "src": "assets/pwa/icon-maskable-512.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "maskable"
+        }
+    ],
+    "shortcuts": [
+        {
+            "name": "Programação",
+            "url": "./index.html#programacao"
+        },
+        {
+            "name": "Galeria de fotos",
+            "url": "./index.html#galeria"
+        }
+    ]
+}

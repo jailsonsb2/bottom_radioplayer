@@ -5,6 +5,17 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Minha Rádio — Sobre</title>
+
+    <!-- PWA: o site pode ser instalado como aplicativo (veja pwa.js e sw.js) -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#0b0e13">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Minha Rádio">
+    <link rel="icon" href="assets/favicon.png">
+    <link rel="apple-touch-icon" href="assets/pwa/icon-192.png">
+
     <script>
         // Aplica o tema salvo antes do primeiro paint (evita flash)
         (function () {
@@ -23,6 +34,7 @@
             <nav class="site-nav">
                 <a href="index.html#noticias">Notícias</a>
                 <a href="index.html#videos">Vídeos</a>
+                <a href="index.html#galeria">Galeria</a>
                 <a href="index.html#programacao">Programação</a>
                 <a href="index.html#equipe">Equipe</a>
                 <a href="index.html#contato">Contato</a>
@@ -63,6 +75,9 @@
     <!-- Conteúdo do site (edite o content.js) -->
     <script src="content.js"></script>
     <script src="site.js"></script>
+
+    <!-- PWA (opcional): registra o service worker e o botão "Instalar app" -->
+    <script src="pwa.js"></script>
 
     <!-- RadioPlayer: só estas duas linhas em cada página do site -->
     <script src="config.js"></script>

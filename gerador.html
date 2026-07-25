@@ -57,6 +57,45 @@
         .gen-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
         @media (max-width: 640px) { .gen-row { grid-template-columns: 1fr; } }
 
+        .gen-field input[type="color"] {
+            height: 46px;
+            padding: 4px;
+            cursor: pointer;
+        }
+
+        .gen-check {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 13.5px;
+            color: var(--site-muted);
+            cursor: pointer;
+        }
+
+        .gen-check input { width: 18px; height: 18px; accent-color: var(--site-accent); cursor: pointer; }
+
+        /* prévia da cor escolhida */
+        .gen-swatches { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+
+        .gen-swatch {
+            padding: 11px 20px;
+            border-radius: 999px;
+            font-size: 13px;
+            font-weight: 800;
+            color: var(--site-accent-ink);
+            background: linear-gradient(135deg, var(--site-accent), var(--site-accent-2, #2ba7b0));
+        }
+
+        .gen-swatch-alt {
+            padding: 10px 18px;
+            border-radius: 999px;
+            border: 1px solid var(--site-accent);
+            color: var(--site-accent);
+            font-size: 13px;
+            font-weight: 800;
+            background: none;
+        }
+
         .gen-remove {
             position: absolute;
             top: 10px;
@@ -145,6 +184,13 @@
         </section>
 
         <section class="gen-section">
+            <h2>Cor do site</h2>
+            <p class="gen-hint">A cor de destaque manda nos botões, links, selos e no degradê. O site deriva sozinho o
+               brilho do fundo e a cor do texto sobre ela — a prévia abaixo já muda enquanto você escolhe.</p>
+            <div class="gen-item" id="gen-theme"></div>
+        </section>
+
+        <section class="gen-section">
             <h2>Slides do topo</h2>
             <p class="gen-hint">O botão pode dar play na rádio (ação "play") ou abrir um link.</p>
             <div id="gen-slides"></div>
@@ -163,6 +209,19 @@
             <p class="gen-hint">O código do vídeo é o trecho após "v=" na URL do YouTube (ex.: kXYiU_JCYtU).</p>
             <div id="gen-videos"></div>
             <button type="button" class="gen-add" data-add="videos">+ Adicionar vídeo</button>
+        </section>
+
+        <section class="gen-section">
+            <h2>Galeria de fotos</h2>
+            <p class="gen-hint">A foto grande abre no lightbox; a miniatura é opcional (use uma versão menor para a página carregar mais rápido).</p>
+            <div id="gen-gallery"></div>
+            <button type="button" class="gen-add" data-add="gallery">+ Adicionar foto</button>
+        </section>
+
+        <section class="gen-section">
+            <h2>Como nos ouvir (apps e Alexa)</h2>
+            <p class="gen-hint">Vira um card na seção "Sobre a rádio" e os badges do rodapé. Deixe em branco o que não quiser exibir.</p>
+            <div class="gen-item" id="gen-listen"></div>
         </section>
 
         <section class="gen-section">
@@ -212,6 +271,10 @@
             data.slides = data.slides || [];
             data.news = data.news || [];
             data.videos = data.videos || [];
+            data.gallery = data.gallery || [];
+            data.apps = data.apps || {};
+            data.listen = data.listen || {};
+            data.theme = data.theme || { accent: "#4dd7e0", accentLight: "" };
             data.schedule = data.schedule || {};
             data.team = data.team || [];
             data.social = data.social || {};
@@ -229,6 +292,7 @@
                 document.documentElement.dataset.theme = next;
                 localStorage.setItem("site:theme", next);
                 themeToggle.textContent = icon();
+                previewTheme(); // a prévia da cor depende do tema atual
             };
 
             // --- helpers de formulário ---
@@ -250,6 +314,10 @@
                         input.appendChild(o);
                     });
                     input.value = value || "link";
+                } else if (type === "color") {
+                    input = document.createElement("input");
+                    input.type = "color";
+                    input.value = value || "#4dd7e0";
                 } else {
                     input = document.createElement("input");
                     input.type = "text";
@@ -258,6 +326,18 @@
                 input.addEventListener("input", () => onInput(input.value));
                 if (type === "select-action") input.addEventListener("change", () => onInput(input.value));
                 wrap.appendChild(input);
+                return wrap;
+            }
+
+            function checkbox(label, checked, onChange) {
+                const wrap = document.createElement("label");
+                wrap.className = "gen-check";
+                const input = document.createElement("input");
+                input.type = "checkbox";
+                input.checked = !!checked;
+                input.addEventListener("change", () => onChange(input.checked));
+                wrap.appendChild(input);
+                wrap.appendChild(document.createTextNode(label));
                 return wrap;
             }
 
@@ -336,6 +416,105 @@
                     ));
                     root.appendChild(item);
                 });
+            }
+
+            // --- cor do site (mesma matemática do site.js, para a prévia
+            //     valer o que o site vai mostrar) ---
+            function hexToRgb(hex) {
+                const clean = String(hex || "").trim().replace(/^#/, "");
+                const full = clean.length === 3 ? clean.replace(/./g, (c) => c + c) : clean;
+                if (!/^[0-9a-f]{6}$/i.test(full)) return null;
+                const n = parseInt(full, 16);
+                return { r: (n >> 16) & 255, g: (n >> 8) & 255, b: n & 255 };
+            }
+            const rgbToHex = ({ r, g, b }) => "#" + [r, g, b].map((v) => Math.max(0, Math.min(255, Math.round(v))).toString(16).padStart(2, "0")).join("");
+            function luminance({ r, g, b }) {
+                const ch = (value) => { const v = value / 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); };
+                return 0.2126 * ch(r) + 0.7152 * ch(g) + 0.0722 * ch(b);
+            }
+            const scaleRgb = (rgb, f) => ({ r: rgb.r * f, g: rgb.g * f, b: rgb.b * f });
+
+            function previewTheme() {
+                const escuro = document.documentElement.dataset.theme !== "light";
+                const base = hexToRgb(data.theme.accent);
+                if (!base) return;
+                const claro = hexToRgb(data.theme.accentLight) || (luminance(base) > 0.45 ? scaleRgb(base, 0.7) : base);
+                const usada = escuro ? base : claro;
+                const style = document.documentElement.style;
+                style.setProperty("--site-accent", rgbToHex(usada));
+                style.setProperty("--site-accent-2", rgbToHex(scaleRgb(usada, escuro ? 0.62 : 0.75)));
+                style.setProperty("--site-accent-ink", luminance(usada) > 0.45 ? "#04252a" : "#ffffff");
+            }
+
+            function renderTheme() {
+                const root = document.getElementById("gen-theme");
+                root.innerHTML = "";
+
+                const auto = !data.theme.accentLight;
+                root.appendChild(field("Cor de destaque", data.theme.accent || "#4dd7e0", (v) => {
+                    data.theme.accent = v;
+                    previewTheme();
+                }, "color"));
+
+                root.appendChild(checkbox("Ajustar a cor automaticamente no tema claro (recomendado)", auto, (marcado) => {
+                    data.theme.accentLight = marcado ? "" : (data.theme.accent || "#4dd7e0");
+                    renderTheme();
+                    previewTheme();
+                }));
+
+                if (!auto) {
+                    root.appendChild(field("Cor de destaque no tema claro", data.theme.accentLight, (v) => {
+                        data.theme.accentLight = v;
+                        previewTheme();
+                    }, "color"));
+                }
+
+                const previa = document.createElement("div");
+                previa.className = "gen-swatches";
+                const cheio = document.createElement("span");
+                cheio.className = "gen-swatch";
+                cheio.textContent = "Ouvir agora";
+                const vazado = document.createElement("span");
+                vazado.className = "gen-swatch-alt";
+                vazado.textContent = "Ler mais →";
+                previa.appendChild(cheio);
+                previa.appendChild(vazado);
+                root.appendChild(previa);
+
+                previewTheme();
+            }
+
+            // --- galeria ---
+            function renderGallery() {
+                const root = document.getElementById("gen-gallery");
+                root.innerHTML = "";
+                data.gallery.forEach((photo, i) => {
+                    const item = document.createElement("div");
+                    item.className = "gen-item";
+                    item.appendChild(removeButton(data.gallery, i, renderGallery));
+                    item.appendChild(row(
+                        field("Foto (URL)", photo.image, (v) => photo.image = v),
+                        field("Miniatura (URL, opcional)", photo.thumb, (v) => photo.thumb = v)
+                    ));
+                    item.appendChild(field("Legenda", photo.caption, (v) => photo.caption = v));
+                    root.appendChild(item);
+                });
+            }
+
+            // --- como nos ouvir (apps + Alexa) ---
+            function renderListen() {
+                const root = document.getElementById("gen-listen");
+                root.innerHTML = "";
+                root.appendChild(row(
+                    field("App Android (link da Play Store)", data.apps.android, (v) => data.apps.android = v),
+                    field("App iOS (link da App Store)", data.apps.ios, (v) => data.apps.ios = v)
+                ));
+                root.appendChild(row(
+                    field("Título do card", data.listen.title, (v) => data.listen.title = v),
+                    field("Skill da Alexa (link na Amazon, opcional)", data.apps.alexa, (v) => data.apps.alexa = v)
+                ));
+                root.appendChild(field("Texto do card", data.listen.text, (v) => data.listen.text = v, "textarea"));
+                root.appendChild(field('Frase da Alexa (ex.: "Alexa, tocar Minha Rádio")', data.listen.alexaPhrase, (v) => data.listen.alexaPhrase = v));
             }
 
             // --- programação ---
@@ -425,6 +604,7 @@
                     if (kind === "slides") { data.slides.push({ badge: "", title: "", subtitle: "", image: "", button: { label: "", action: "link", url: "" } }); renderSlides(); }
                     if (kind === "news") { data.news.push({ title: "", date: "", image: "", excerpt: "", content: "", url: "" }); renderNews(); }
                     if (kind === "videos") { data.videos.push({ id: "", title: "" }); renderVideos(); }
+                    if (kind === "gallery") { data.gallery.push({ image: "", thumb: "", caption: "" }); renderGallery(); }
                     if (kind === "schedule") { data.schedule[currentDay] = data.schedule[currentDay] || []; data.schedule[currentDay].push({ time: "", name: "", host: "" }); renderSchedule(); }
                     if (kind === "team") { data.team.push({ name: "", role: "", photo: "" }); renderTeam(); }
                 };
@@ -444,6 +624,15 @@
                 out.news.forEach((n) => { if (!n.content) delete n.content; if (!n.url) delete n.url; });
                 out.videos = out.videos.filter((v) => v.id);
                 out.team = out.team.filter((m) => m.name);
+                out.gallery = out.gallery.filter((p) => p.image);
+                out.gallery.forEach((p) => { if (!p.thumb) delete p.thumb; if (!p.caption) delete p.caption; });
+                if (!out.gallery.length) delete out.gallery;
+                Object.keys(out.apps).forEach((k) => { if (!out.apps[k]) delete out.apps[k]; });
+                if (!Object.keys(out.apps).length) delete out.apps;
+                Object.keys(out.listen).forEach((k) => { if (!out.listen[k]) delete out.listen[k]; });
+                if (!Object.keys(out.listen).length) delete out.listen;
+                if (!out.theme.accentLight) delete out.theme.accentLight;
+                if (!out.theme.accent) delete out.theme;
                 Object.keys(out.schedule).forEach((day) => {
                     out.schedule[day] = (out.schedule[day] || []).filter((s) => s.time && s.name);
                     if (!out.schedule[day].length) delete out.schedule[day];
@@ -491,9 +680,12 @@
             };
 
             // --- primeira renderização ---
+            renderTheme();
             renderSlides();
             renderNews();
             renderVideos();
+            renderGallery();
+            renderListen();
             renderDayTabs();
             renderSchedule();
             renderTeam();

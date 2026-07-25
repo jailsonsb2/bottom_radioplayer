@@ -19,6 +19,66 @@
         return node;
     }
 
+    // --- cor de destaque do site (content.theme) ---------------------------
+    // Uma cor só configura tudo: o degradê dos botões (--site-accent-2), o
+    // brilho do fundo (--site-glow-1), a cor do texto sobre o accent
+    // (--site-accent-ink, escolhida pelo contraste) e a cor de partida do
+    // player (--accent, até a capa da música ditar a dela). Vai num <style>
+    // porque o tema claro é um seletor de atributo — style inline não chega
+    // lá.
+
+    function hexToRgb(hex) {
+        const clean = String(hex || "").trim().replace(/^#/, "");
+        const full = clean.length === 3 ? clean.replace(/./g, (c) => c + c) : clean;
+        if (!/^[0-9a-f]{6}$/i.test(full)) return null;
+        const n = parseInt(full, 16);
+        return { r: (n >> 16) & 255, g: (n >> 8) & 255, b: n & 255 };
+    }
+
+    const rgbToHex = ({ r, g, b }) =>
+        "#" + [r, g, b].map((v) => Math.max(0, Math.min(255, Math.round(v))).toString(16).padStart(2, "0")).join("");
+
+    // luminância relativa (WCAG) — decide se o texto sobre a cor fica claro
+    // ou escuro e se o accent precisa escurecer no tema claro
+    function luminance({ r, g, b }) {
+        const channel = (value) => {
+            const v = value / 255;
+            return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
+        };
+        return 0.2126 * channel(r) + 0.7152 * channel(g) + 0.0722 * channel(b);
+    }
+
+    const scaleRgb = (rgb, factor) => ({ r: rgb.r * factor, g: rgb.g * factor, b: rgb.b * factor });
+    const rgba = (rgb, alpha) => `rgba(${Math.round(rgb.r)}, ${Math.round(rgb.g)}, ${Math.round(rgb.b)}, ${alpha})`;
+    const inkFor = (rgb) => (luminance(rgb) > 0.45 ? "#04252a" : "#ffffff");
+
+    const accentRgb = hexToRgb((content.theme || {}).accent);
+    if (accentRgb) {
+        // tema claro: usa a cor informada ou escurece a principal quando ela
+        // é clara demais para servir de fundo de texto branco
+        const lightRgb = hexToRgb((content.theme || {}).accentLight) ||
+            (luminance(accentRgb) > 0.45 ? scaleRgb(accentRgb, 0.7) : accentRgb);
+
+        let styleTag = document.getElementById("site-theme-vars");
+        if (!styleTag) {
+            styleTag = document.createElement("style");
+            styleTag.id = "site-theme-vars";
+            document.head.appendChild(styleTag);
+        }
+        styleTag.textContent =
+            ":root{" +
+            `--site-accent:${rgbToHex(accentRgb)};` +
+            `--site-accent-2:${rgbToHex(scaleRgb(accentRgb, 0.62))};` +
+            `--site-accent-ink:${inkFor(accentRgb)};` +
+            `--site-glow-1:${rgba(accentRgb, 0.12)};` +
+            `--accent:${rgbToHex(accentRgb)}}` +
+            ':root[data-theme="light"]{' +
+            `--site-accent:${rgbToHex(lightRgb)};` +
+            `--site-accent-2:${rgbToHex(scaleRgb(lightRgb, 0.75))};` +
+            `--site-accent-ink:${inkFor(lightRgb)};` +
+            `--site-glow-1:${rgba(lightRgb, 0.14)}}`;
+    }
+
     // --- marca do header (logo substitui o texto quando configurado) ------
 
     const brand = content.brand || {};
@@ -423,7 +483,9 @@
             }
         });
 
-        right.insertBefore(button, right.querySelector(".player-button-history"));
+        // Clipe fica junto da Letra: os dois são extras da música que está
+        // tocando (a fita vai de som → música → histórico → rádio → divulgar)
+        right.insertBefore(button, right.querySelector(".player-button-lyrics"));
     }
 
     function onTrackChange(event) {
@@ -471,6 +533,120 @@
             card.appendChild(el("div", "video-card-title", video.title));
             videosGrid.appendChild(card);
         });
+    }
+
+    // --- galeria de fotos (grid + lightbox) -------------------------------
+    //
+    // As miniaturas usam photo.thumb quando existir (versão leve) e caem
+    // para a própria foto. O lightbox navega com setas, teclado e swipe.
+
+    function openLightbox(photos, startIndex) {
+        let index = startIndex;
+
+        const overlay = el("div", "lightbox");
+        const figure = el("figure", "lightbox-figure");
+        const img = el("img");
+        const caption = el("figcaption", "lightbox-caption");
+        const counter = el("div", "lightbox-counter");
+
+        const closeButton = el("button", "lightbox-close", "✕");
+        closeButton.type = "button";
+        closeButton.setAttribute("aria-label", "Fechar");
+
+        const prevButton = el("button", "lightbox-nav lightbox-prev", "‹");
+        prevButton.type = "button";
+        prevButton.setAttribute("aria-label", "Foto anterior");
+
+        const nextButton = el("button", "lightbox-nav lightbox-next", "›");
+        nextButton.type = "button";
+        nextButton.setAttribute("aria-label", "Próxima foto");
+
+        figure.appendChild(img);
+        figure.appendChild(caption);
+        overlay.appendChild(closeButton);
+        overlay.appendChild(prevButton);
+        overlay.appendChild(figure);
+        overlay.appendChild(nextButton);
+        overlay.appendChild(counter);
+
+        if (photos.length < 2) {
+            prevButton.hidden = true;
+            nextButton.hidden = true;
+            counter.hidden = true;
+        }
+
+        function show(next) {
+            index = (next + photos.length) % photos.length;
+            const photo = photos[index];
+            img.src = photo.image || photo.thumb;
+            img.alt = photo.caption || "";
+            caption.textContent = photo.caption || "";
+            caption.hidden = !photo.caption;
+            counter.textContent = index + 1 + " / " + photos.length;
+        }
+
+        function close() {
+            overlay.remove();
+            document.body.classList.remove("lightbox-open");
+            document.removeEventListener("keydown", onKey);
+        }
+
+        function onKey(event) {
+            if (event.key === "Escape") close();
+            else if (event.key === "ArrowRight") show(index + 1);
+            else if (event.key === "ArrowLeft") show(index - 1);
+        }
+
+        closeButton.addEventListener("click", close);
+        prevButton.addEventListener("click", () => show(index - 1));
+        nextButton.addEventListener("click", () => show(index + 1));
+        // clique no fundo (fora da foto e dos botões) fecha
+        overlay.addEventListener("click", (event) => {
+            if (event.target === overlay || event.target === figure) close();
+        });
+        document.addEventListener("keydown", onKey);
+
+        // swipe horizontal no celular
+        let touchStartX = null;
+        overlay.addEventListener("touchstart", (event) => {
+            touchStartX = event.changedTouches[0].clientX;
+        }, { passive: true });
+        overlay.addEventListener("touchend", (event) => {
+            if (touchStartX === null) return;
+            const delta = event.changedTouches[0].clientX - touchStartX;
+            touchStartX = null;
+            if (Math.abs(delta) > 50) show(index + (delta < 0 ? 1 : -1));
+        }, { passive: true });
+
+        show(index);
+        document.body.appendChild(overlay);
+        document.body.classList.add("lightbox-open");
+        requestAnimationFrame(() => overlay.classList.add("is-open"));
+    }
+
+    const galleryGrid = document.getElementById("site-gallery");
+    const photos = (content.gallery || []).filter((photo) => photo && (photo.image || photo.thumb));
+    if (galleryGrid && photos.length) {
+        photos.forEach((photo, index) => {
+            const item = el("button", "gallery-item");
+            item.type = "button";
+            item.setAttribute("aria-label", "Ampliar: " + (photo.caption || "foto " + (index + 1)));
+
+            const img = el("img");
+            img.src = photo.thumb || photo.image;
+            img.alt = photo.caption || "";
+            img.loading = "lazy";
+            item.appendChild(img);
+
+            if (photo.caption) item.appendChild(el("span", "gallery-caption", photo.caption));
+
+            item.addEventListener("click", () => openLightbox(photos, index));
+            galleryGrid.appendChild(item);
+        });
+    } else if (galleryGrid) {
+        // sem fotos: esconde a seção inteira (título incluso)
+        const section = galleryGrid.closest(".site-section");
+        if (section) section.hidden = true;
     }
 
     // --- programação (abas por dia, hoje pré-selecionado) ----------------
@@ -617,6 +793,9 @@
         email: '<svg viewBox="0 0 24 24"><rect width="20" height="16" x="2" y="4" rx="3"></rect><path d="m2 7 10 7L22 7"></path></svg>',
     };
 
+    // anel da Alexa (card "Como nos ouvir")
+    const ALEXA_ICON = '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"></circle><circle cx="12" cy="12" r="3.5"></circle></svg>';
+
     function weatherEmoji(desc) {
         const text = String(desc || "").toLowerCase();
         if (/thunder/.test(text)) return "⛈️";
@@ -687,7 +866,36 @@
         if (extras.childNodes.length && themeToggle) headerInner.insertBefore(extras, themeToggle);
     });
 
-    // --- sobre a rádio: história + contato + mapa -------------------------
+    // --- apps oficiais: badges das lojas -----------------------------------
+    // Usa os SVGs oficiais em assets/app/ (badge branco completo). O CSS
+    // inverte a cor no tema claro para manter contraste. content.apps tem
+    // prioridade; cai para o config.js do player quando vazio.
+
+    const STORE_BADGES = {
+        android: "assets/app/android.svg",
+        ios: "assets/app/ios.svg",
+    };
+    const STORE_NAMES = { android: "Google Play", ios: "App Store" };
+
+    const stationApps = (window.streams && window.streams.stations && window.streams.stations[0] && window.streams.stations[0].apps) || {};
+    const appsData = Object.assign({}, stationApps, content.apps || {});
+    const storeKeys = Object.keys(STORE_BADGES).filter((key) => appsData[key] && appsData[key] !== "#");
+
+    function storeBadge(key) {
+        const badge = el("a", "store-badge");
+        badge.href = appsData[key];
+        badge.target = "_blank";
+        badge.rel = "noopener";
+        badge.setAttribute("aria-label", STORE_NAMES[key]);
+        const img = el("img");
+        img.src = STORE_BADGES[key];
+        img.alt = STORE_NAMES[key];
+        img.loading = "lazy";
+        badge.appendChild(img);
+        return badge;
+    }
+
+    // --- sobre a rádio: história + como ouvir + contato + mapa ------------
 
     const aboutRoot = document.getElementById("site-about");
     if (aboutRoot && content.about) {
@@ -696,6 +904,42 @@
             if (paragraph.trim()) history.appendChild(el("p", null, paragraph.trim()));
         });
         aboutRoot.appendChild(history);
+
+        // coluna da direita: "como nos ouvir" em cima, contato embaixo
+        const side = el("div", "about-side");
+
+        // card "Como nos ouvir": apps das lojas + frase da Alexa
+        // content.listen ausente = card com os textos padrão; listen: null
+        // (ou false) esconde o card de vez
+        const listen = content.listen === undefined ? {} : content.listen;
+        if (listen && (storeKeys.length || listen.alexaPhrase || appsData.alexa)) {
+            const card = el("div", "listen-card");
+            card.appendChild(el("h3", null, listen.title || "Como nos ouvir?"));
+            if (listen.text) card.appendChild(el("p", "listen-text", listen.text));
+
+            if (storeKeys.length) {
+                const stores = el("div", "listen-stores");
+                storeKeys.forEach((key) => stores.appendChild(storeBadge(key)));
+                card.appendChild(stores);
+            }
+
+            if (listen.alexaPhrase || appsData.alexa) {
+                card.appendChild(el("span", "listen-alexa-label", "Ou peça para a Alexa:"));
+                const chip = el(appsData.alexa ? "a" : "div", "listen-alexa");
+                if (appsData.alexa) {
+                    chip.href = appsData.alexa;
+                    chip.target = "_blank";
+                    chip.rel = "noopener";
+                }
+                const icon = el("span", "listen-alexa-icon");
+                icon.innerHTML = ALEXA_ICON;
+                chip.appendChild(icon);
+                chip.appendChild(el("span", null, "“" + (listen.alexaPhrase || "Alexa, tocar " + (brand.name || "a rádio")) + "”"));
+                card.appendChild(chip);
+            }
+
+            side.appendChild(card);
+        }
 
         const contact = about.contact || {};
         const items = [
@@ -723,8 +967,10 @@
                 row.appendChild(el("span", null, item.label));
                 card.appendChild(row);
             });
-            aboutRoot.appendChild(card);
+            side.appendChild(card);
         }
+
+        if (side.childNodes.length) aboutRoot.appendChild(side);
 
         // mapa da cidade (Google Maps embed — sem chave de API)
         const mapQuery = contact.address || about.city;
@@ -740,36 +986,12 @@
     }
 
     // --- apps oficiais no rodapé (badges de loja) ------------------------
-    // Usa os SVGs oficiais em assets/app/ (badge branco completo). O CSS
-    // inverte a cor no tema claro para manter contraste. content.apps tem
-    // prioridade; cai para o config.js do player quando vazio.
-    const STORE_BADGES = {
-        android: "assets/app/android.svg",
-        ios: "assets/app/ios.svg",
-    };
-    const STORE_NAMES = { android: "Google Play", ios: "App Store" };
 
     document.querySelectorAll(".site-footer").forEach((footer) => {
-        if (footer.querySelector(".footer-apps")) return;
-        const stationApps = (window.streams && window.streams.stations && window.streams.stations[0] && window.streams.stations[0].apps) || {};
-        const appsData = Object.assign({}, stationApps, content.apps || {});
-        const appEntries = Object.keys(STORE_BADGES).filter((key) => appsData[key] && appsData[key] !== "#");
-        if (!appEntries.length) return;
+        if (footer.querySelector(".footer-apps") || !storeKeys.length) return;
 
         const wrap = el("div", "footer-apps");
-        appEntries.forEach((key) => {
-            const badge = el("a", "store-badge");
-            badge.href = appsData[key];
-            badge.target = "_blank";
-            badge.rel = "noopener";
-            badge.setAttribute("aria-label", STORE_NAMES[key]);
-            const img = el("img");
-            img.src = STORE_BADGES[key];
-            img.alt = STORE_NAMES[key];
-            img.loading = "lazy";
-            badge.appendChild(img);
-            wrap.appendChild(badge);
-        });
+        storeKeys.forEach((key) => wrap.appendChild(storeBadge(key)));
         footer.insertBefore(wrap, footer.firstChild);
     });
 

@@ -27,6 +27,10 @@ A bottom-bar **HTML5 radio player** that works as a **drop-in JavaScript compone
 - **Dynamic accent color** extracted from the current cover art.
 - **Integrated social sharing** for Facebook, Twitter, and WhatsApp.
 - **Media Session integration** (lock screen / notification controls).
+- **Mobile-first dock** — on phones the song title gets the space (no cramped 24px column): cover · "on air + station" · title · artist · one big play button, extra controls in a labeled sheet, a handle to collapse the dock out of the way, and safe-area padding for iPhones. Tapping the cover opens the station list.
+- **Photo gallery** with lightbox (arrows, keyboard, swipe) on the demo site.
+- **"How to listen" card** with the official app badges (Google Play / App Store) and the Alexa phrase.
+- **Installable (PWA)** — manifest, icons, offline shell via service worker and an "install app" button.
 
 ### Demo Screenshots
 
@@ -53,7 +57,7 @@ A bottom-bar **HTML5 radio player** that works as a **drop-in JavaScript compone
    That's it — the player builds itself at the bottom of the page. See `index.html` and `pagina2.html` for a working two-page demo of the uninterrupted navigation.
 
 4. **(Optional) Configure the site content:**
-   - The demo site sections (hero slides, news with full articles, YouTube videos, weekly schedule, team, social links, footer) all live in `content.js` and are rendered by `site.js` + `site.css`.
+   - The demo site sections (hero slides, news with full articles, YouTube videos, **photo gallery**, weekly schedule, team, **"how to listen" card**, social links, footer) all live in `content.js` and are rendered by `site.js` + `site.css`.
    - Edit `content.js` by hand, **or use the visual generator**: open `gerador.html` locally in your browser — it pre-fills the forms with your current content, lets you add/remove items, and generates a new `content.js` to copy or download. Replace the file at the root of the site and you're done.
 
 > ⚠️ **Do not publish `gerador.html` to your production site.** It is a local admin tool — anyone with the URL could read your whole configuration and craft replacement files. Keep it on your machine (or delete it from the server after deploying).
@@ -82,11 +86,48 @@ If your now-playing metadata API returns a **`youtubeId`** field (or `youtube_id
 
 The component also exposes each track to the site: `window.RadioPlayer.currentTrack` and the `radioplayer:track` DOM event (`detail: { title, artist, art, cover, youtubeId }`), plus `radioplayer:ready` when the player mounts.
 
+### The player on phones
+
+Most listeners arrive on a phone, so the dock is laid out for that screen first (`custom.css`, `@media (max-width: 991px)`):
+
+- **The title owns the width.** Previous/next switch *stations*, so on phones they leave the bar (they come back on tablets, ≥768px) and the cover becomes the shortcut to the station list — a chevron badge marks it. With a single station in `config.js` the player gets a `single-station` class and those buttons disappear at every size.
+- **Context line** — `● AO VIVO · Station name` above the song, so the station is still identifiable while a track plays.
+- **Extra controls with labels** — the "…" button opens a 3-column sheet (TV, Clip, History, Share, Lyrics, Stations). Silent icons in circles told nobody what they did; volume is left out (hardware buttons own it, and iOS ignores `audio.volume`).
+- **Collapse handle** — the tab on top of the dock slides it off-screen so the page is fully readable; the audio keeps playing and the state survives seamless navigation.
+- **Safe area** — the dock offset uses `env(safe-area-inset-bottom)`, clearing the iPhone home bar.
+- History and stations open as a full-width sheet above the dock instead of a narrow right-anchored panel.
+
+### Photo Gallery and "How to listen"
+
+Two content-driven sections of the demo site, both configured in `content.js` (or in `gerador.html`):
+
+```js
+gallery: [
+    { image: "photos/studio.jpg", thumb: "photos/studio-small.jpg", caption: "Main studio" },
+],
+apps:   { android: "https://play.google.com/…", ios: "", alexa: "https://www.amazon.com/dp/…" },
+listen: { title: "How to listen", text: "…", alexaPhrase: "Alexa, play My Radio" },
+```
+
+- **Gallery** — a responsive grid in the `#galeria` section; clicking a photo opens a lightbox with arrows, keyboard (←/→/Esc), swipe and a counter. `thumb` is optional (use it to serve a lighter thumbnail); with an empty list the whole section hides itself.
+- **How to listen** — a card in the "About" section with the official store badges plus the Alexa phrase (linked to your skill when `apps.alexa` is filled). The same `apps` entries feed the store badges in the footer, and fall back to `window.streams.stations[0].apps` from `config.js` when empty.
+
+### PWA (installable app)
+
+The demo site ships as an installable app: `manifest.json`, icons in `assets/pwa/`, the `sw.js` service worker and `pwa.js` (which registers it and shows the **Install app** button in the header and inside the "How to listen" card — on iOS the button explains the *Share › Add to Home Screen* path instead, since Safari has no install prompt).
+
+- Requires **HTTPS** (or localhost). GitHub Pages, Netlify and any host with TLS work out of the box.
+- Caching rules in `sw.js`: everything editable — pages, CSS, JS, JSON — is **network-first**, so an online visitor always gets what you just published and the cache only answers when the network fails (offline, or your server down); images, icons and fonts use **stale-while-revalidate**; the audio stream, metadata APIs, YouTube, maps and weather are cross-origin and **never touched**.
+- If a page looks frozen in an old version, check the server is actually up: with it down, the service worker legitimately serves the offline copy. During development keep DevTools › Application › Service Workers › *Bypass for network* checked, or hard-reload (Ctrl+Shift+R), which skips the worker entirely.
+- After deploying a new version, bump `const VERSION` at the top of `sw.js`: the old cache is dropped and anyone with the site open gets a "new version available" toast.
+- Replace `assets/pwa/icon-*.png` and the name/colors in `manifest.json` with your radio's own. To drop the feature entirely, delete the `<script src="pwa.js">` line from the pages.
+
 ### Advanced Customization
 
 - **Images:** Replace the images in the `assets` folder with your own.
 - **Lyrics:** the "Lyrics" button shows the current song's lyrics (lyrics.ovh with LRCLIB fallback). To turn the feature off, set `lyrics: false` in `config.js` (`window.streams.lyrics = false`) — the button and modal disappear and no lyrics request is ever made.
-- **Colors:** Customize the player's colors by editing the `css/custom.css` file.
+- **Site accent color:** one field does it — `theme: { accent: "#4dd7e0", accentLight: "" }` in `content.js`, or the color picker in `gerador.html` (live preview). From that single colour `site.js` derives the button gradient (`--site-accent-2`), the background glow (`--site-glow-1`), the text colour used on top of the accent (`--site-accent-ink`, picked by WCAG luminance so labels stay readable) and the player's starting accent (`--accent`, until the cover art sets its own). Leave `accentLight` empty and the light theme darkens the colour only as much as contrast requires.
+- **Colors (player):** Customize the player's colors by editing the `css/custom.css` file.
 - **Behavior:** Adapt the player by editing `js/radioplayer.js` (the component). `js/main.js` is the legacy non-component version, kept for reference.
 - **JavaScript API:** the component exposes `window.RadioPlayer` with `play()`, `pause()`, `toggle()`, the `audio` element and the `root` DOM node.
 

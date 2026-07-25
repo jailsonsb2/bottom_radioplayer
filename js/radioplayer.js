@@ -46,6 +46,10 @@
         <div id="jp_container_rcast" class="np__global_player">
             <div class="app-player" id="app-player">
                 <div class="player song-now flex column">
+                    <!-- alça de recolher: no celular o dock desce e libera a tela -->
+                    <button class="player-collapse" type="button" aria-label="Recolher o player" aria-expanded="true">
+                        <svg class="i i-chevron-down" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"></path></svg>
+                    </button>
                     <div class="player-wrapper">
                         <div class="player-cover flex items-center justify-center g-2 items-center">
                             <div class="player-left flex items-center">
@@ -53,14 +57,25 @@
                                     <img alt="artwork" height="600" src="{{BASE}}assets/cover.png" width="600" />
                                 </div>
                                 <div class="player-cover-title uppercase fw-700 flex column">
+                                    <div class="player-meta">
+                                        <span class="player-live"><i class="player-live-dot"></i>Ao vivo</span>
+                                        <span class="player-meta-station truncate"></span>
+                                    </div>
                                     <div class="player-song-name">
-                                        <span class="color-title fw-700 song-name song-title station-name">Song</span>
+                                        <i class="player-eq" aria-hidden="true"></i>
+                                        <!-- o letreiro desliza DENTRO deste span: assim o texto
+                                             é recortado antes de passar por cima do equalizador -->
+                                        <span class="player-song-clip">
+                                            <span class="color-title fw-700 song-name song-title station-name">Song</span>
+                                        </span>
                                     </div>
                                     <span class="color-title fs-8 song-artist station-description truncate">Artist</span>
                                 </div>
                             </div>
                             <div class="player-controller">
-                                <button class="player-button player-button-backward-step">
+                                <!-- anterior/próxima trocam de ESTAÇÃO (não de faixa): o
+                                     rótulo evita a leitura errada do ícone -->
+                                <button class="player-button player-button-backward-step" title="Estação anterior" aria-label="Estação anterior">
                                     <svg class="i i-backward-step" viewBox="0 0 24 24">
                                         <path d="M6 5v14M18 4v16L8 12Z"></path>
                                     </svg>
@@ -70,12 +85,12 @@
                                         <path d="m7 3 14 9-14 9z"></path>
                                     </svg>
                                 </button>
-                                <button class="player-button player-button-forward-step">
+                                <button class="player-button player-button-forward-step" title="Próxima estação" aria-label="Próxima estação">
                                     <svg class="i i-forward-step" viewBox="0 0 24 24">
                                         <path d="M18 5v14M6 4v16l10-8Z"></path>
                                     </svg>
                                 </button>
-                                <button class="player-button player-button-more" data-outside="player-more" aria-label="Mais controles">
+                                <button class="player-button player-button-more" data-outside="player-more" aria-label="Mais controles" title="Mais controles">
                                     <svg class="i i-dots" viewBox="0 0 24 24">
                                         <circle cx="5" cy="12" r="1"></circle>
                                         <circle cx="12" cy="12" r="1"></circle>
@@ -84,18 +99,17 @@
                                 </button>
                             </div>
 
+                            <!-- Ordem dos botões (a fita lê da esquerda para a direita):
+                                 som → a música que toca → o que já tocou → a rádio → divulgar.
+                                 1) Volume, encostado no transporte (prev/play/next)
+                                 2) Clipe (injetado pelo site.js antes da Letra) e Letra:
+                                    os dois extras da MÚSICA atual
+                                 3) Histórico: as músicas anteriores
+                                 4) TV e Estações: o SINAL que se está consumindo
+                                 5) Compartilhar e, por fim, a logo da estação -->
                             <div class="player-right flex items-center" id="player-more">
-                                <div class="online-tv"></div>
-                                <button class="player-button player-button-history" data-outside="offcanvas-history">
-                                    <svg class="i i-music" viewBox="0 0 24 24">
-                                        <path d="M22 16V2L9 5v13"></path>
-                                        <circle cx="5" cy="18" r="4"></circle>
-                                        <circle cx="18" cy="16" r="4"></circle>
-                                    </svg>
-                                    History
-                                </button>
                                 <div class="player-button player-button-volume">
-                                    <button class="player-button player-button-volume-toggle" data-outside="player-volume">
+                                    <button class="player-button player-button-volume-toggle" data-outside="player-volume" title="Volume">
                                         <svg class="i i-volume-high" viewBox="0 0 24 24">
                                             <path d="M6 9H2v6h4l5 4V5Zm9 7a5 5 0 0 0 0-8m3 12a10 10 0 0 0 0-16"></path>
                                         </svg>
@@ -109,28 +123,37 @@
                                         </div>
                                     </div>
                                 </div>
-                                <button class="player-button player-button-share" data-outside="modal-share">
+                                <button class="player-button player-button-lyrics" data-outside="modal-lyrics" title="Letra da música">
+                                    <svg class="i i-list-music" viewBox="0 0 24 24">
+                                        <path d="M16 8h6V3h-6v15M2 3h9M2 8h9m-9 5h3"></path>
+                                        <circle cx="12" cy="18" r="4"></circle>
+                                    </svg>
+                                    Letra
+                                </button>
+                                <button class="player-button player-button-history" data-outside="offcanvas-history" title="Músicas que já tocaram">
+                                    <svg class="i i-music" viewBox="0 0 24 24">
+                                        <path d="M22 16V2L9 5v13"></path>
+                                        <circle cx="5" cy="18" r="4"></circle>
+                                        <circle cx="18" cy="16" r="4"></circle>
+                                    </svg>
+                                    Histórico
+                                </button>
+                                <div class="online-tv"></div>
+                                <button class="player-button-alt player-button-stations" data-outside="offcanvas-stations" title="Trocar de estação">
+                                    <svg class="i i-radio" viewBox="0 0 24 24">
+                                        <circle cx="12" cy="12" r="2"></circle>
+                                        <path d="M5 4.9a10 10 0 0 0 0 14.2M7.8 7.7a6 6 0 0 0 0 8.6m8.4 0a6 6 0 0 0 0-8.6M19 19.1a10 10 0 0 0 0-14.2"></path>
+                                    </svg>
+                                    Estações
+                                </button>
+                                <button class="player-button player-button-share" data-outside="modal-share" title="Compartilhar">
                                     <svg class="i i-share" viewBox="0 0 24 24">
                                         <circle cx="18" cy="5" r="3"></circle>
                                         <circle cx="6" cy="12" r="3"></circle>
                                         <circle cx="18" cy="19" r="3"></circle>
                                         <path d="m8.5 13.5 7 4m0-11-7 4"></path>
                                     </svg>
-                                    Share
-                                </button>
-                                <button class="player-button player-button-lyrics" data-outside="modal-lyrics">
-                                    <svg class="i i-list-music" viewBox="0 0 24 24">
-                                        <path d="M16 8h6V3h-6v15M2 3h9M2 8h9m-9 5h3"></path>
-                                        <circle cx="12" cy="18" r="4"></circle>
-                                    </svg>
-                                    Lyrics
-                                </button>
-                                <button class="player-button-alt player-button-stations" data-outside="offcanvas-stations">
-                                    <svg class="i i-radio" viewBox="0 0 24 24">
-                                        <circle cx="12" cy="12" r="2"></circle>
-                                        <path d="M5 4.9a10 10 0 0 0 0 14.2M7.8 7.7a6 6 0 0 0 0 8.6m8.4 0a6 6 0 0 0 0-8.6M19 19.1a10 10 0 0 0 0-14.2"></path>
-                                    </svg>
-                                    Estações
+                                    Compartilhar
                                 </button>
 
                                 <div class="player-station player-artwork-style relative">
@@ -308,6 +331,10 @@
       const stationsList = $("#stations");
       const stationName = $(".station-name");
       const stationDescription = $(".station-description");
+      const playerBox = $(".player");
+      // linha "Ao vivo · nome da estação" (visível no celular, onde o nome da
+      // estação não cabe em lugar nenhum quando uma música está tocando)
+      const metaStation = $(".player-meta-station");
       const playerArtwork = $(".player-artwork img:first-child");
       const playerCoverImg = $(".player-cover-image");
       // As redes sociais saíram do dock (agora vivem no site — footer);
@@ -342,6 +369,9 @@
       let lastYoutubeId = "";
       let lastLyricsKey = "";
       let timeoutId;
+      // Marca cada consulta de metadados: a resposta de uma estação que o
+      // ouvinte acabou de abandonar chega atrasada e não pode pintar o dock
+      let metadataRequestId = 0;
 
       const audio = new Audio();
       audio.crossOrigin = "anonymous";
@@ -924,21 +954,51 @@
       function createOpenTvButton(url) {
           const $button = document.createElement("button");
           $button.classList.add("player-button", "player-button-tv");
+          $button.title = "Assistir ao vivo";
           $button.innerHTML = icons.tv + "Tv";
+
+          const modalBody = playerTvModal.querySelector(".modal-body-video");
+          const closeButton = playerTvModal.querySelector("[data-close]");
+          // o overlay que fica DEPOIS do modal no template é o que escurece a
+          // página quando a TV abre — clicar nele também fecha
+          const overlay = playerTvModal.nextElementSibling &&
+              playerTvModal.nextElementSibling.classList.contains("modal-overlay")
+              ? playerTvModal.nextElementSibling
+              : null;
+          let resumeRadio = false;
+
+          function onKey(event) {
+              if (event.key === "Escape") closeTv();
+          }
+
+          // Fecha e desliga TODAS as formas de fechar (X, overlay, Esc): sem
+          // remover os listeners, reabrir a TV os empilhava no mesmo botão X
+          function closeTv() {
+              $button.classList.remove("is-active");
+              playerTvModal.classList.remove("is-active");
+              modalBody.innerHTML = "";
+              closeButton.removeEventListener("click", closeTv);
+              if (overlay) overlay.removeEventListener("click", closeTv);
+              document.removeEventListener("keydown", onKey);
+              // Retoma a rádio (no ponto ao vivo) se estava tocando antes
+              if (resumeRadio) {
+                  resumeRadio = false;
+                  isIntentionalPause = false;
+                  fadeIn();
+                  play(audio, currentStation.stream_url);
+              }
+          }
+
           $button.addEventListener("click", () => {
               $button.blur();
-              const modalBody = playerTvModal.querySelector(".modal-body-video");
-              const closeButton = playerTvModal.querySelector("[data-close]");
               if ($button.classList.contains("is-active")) {
-                  playerTvModal.classList.remove("is-active");
-                  $button.classList.remove("is-active");
-                  modalBody.innerHTML = "";
+                  closeTv();
                   return;
               }
               $button.classList.add("is-active");
               playerTvModal.classList.add("is-active");
 
-              const wasPlaying = !audio.paused;
+              resumeRadio = !audio.paused;
               // Pausa INTENCIONAL: sem esta flag o watchdog de reconexão
               // trataria a pausa como queda e religaria a rádio sobre a TV
               isIntentionalPause = true;
@@ -951,18 +1011,17 @@
               // dentro de iframes de outra origem, mesmo com ?autoplay=1 na URL
               $iframe.allow = "autoplay; fullscreen; encrypted-media; picture-in-picture";
               $iframe.allowFullscreen = true;
+              // A página embutida é de outra origem: não há como estilizar a
+              // barra de rolagem dela, e não há nada para rolar num vídeo —
+              // então desligamos a rolagem (era uma barra branca no meio do
+              // modal escuro)
+              $iframe.setAttribute("scrolling", "no");
+              $iframe.style.overflow = "hidden";
               modalBody.appendChild($iframe);
-              closeButton.addEventListener("click", () => {
-                  $button.classList.remove("is-active");
-                  playerTvModal.classList.remove("is-active");
-                  modalBody.innerHTML = "";
-                  // Retoma a rádio (no ponto ao vivo) se estava tocando antes
-                  if (wasPlaying) {
-                      isIntentionalPause = false;
-                      fadeIn();
-                      play(audio, currentStation.stream_url);
-                  }
-              }, { once: true });
+
+              closeButton.addEventListener("click", closeTv);
+              if (overlay) overlay.addEventListener("click", closeTv);
+              document.addEventListener("keydown", onKey);
           });
           playerTv.appendChild($button);
       }
@@ -1061,10 +1120,19 @@
       });
 
       function setAssetsInPage(station) {
+          // Zera a memória do "já mostrei esta música": na estação nova, a
+          // primeira resposta tem de pintar o dock mesmo que, por coincidência,
+          // traga o mesmo título da estação anterior
+          currentSongPlaying = undefined;
+          lastAlbumArt = "";
+          lastYoutubeId = "";
+          lastLyricsKey = "";
+
           playerArtwork && (playerArtwork.src = station.album);
           playerCoverImg && (playerCoverImg.src = station.cover || station.album);
           stationName.textContent = station.name;
           stationDescription.textContent = station.description;
+          metaStation && (metaStation.textContent = station.name);
           scheduleMarquee();
           playerTv && (playerTv.innerHTML = "");
 
@@ -1128,7 +1196,10 @@
 
       function updateMarquee() {
           const pairs = [
-              [root.querySelector(".player-left .player-song-name"), root.querySelector(".player-left .song-name")],
+              // caixa que recorta = o clip (não o .player-song-name, que
+              // também abriga o equalizador)
+              [root.querySelector(".player-left .player-song-clip") || root.querySelector(".player-left .player-song-name"),
+                  root.querySelector(".player-left .song-name")],
               [root.querySelector(".player-left .song-artist"), root.querySelector(".player-left .song-artist")],
           ];
           pairs.forEach(([box, span]) => {
@@ -1281,8 +1352,55 @@
       setAssetsInPage(currentStation);
       audio.src = currentStation.stream_url;
 
+      // Com uma estação só, anterior/próxima não levam a lugar nenhum — some
+      // com eles e o título ganha o espaço (faz muita diferença no celular)
+      if (playerBox) playerBox.classList.toggle("single-station", stations.length < 2);
+
       if (playButton !== null) {
           playButton.addEventListener("click", handlePlayPause);
+      }
+
+      // Capa = atalho para a lista de estações (no celular anterior/próxima
+      // não cabem na barra; com uma estação só não há o que trocar)
+      if (stations.length > 1) {
+          const artwork = $(".player-left .player-artwork");
+          const stationsButton = $(".player-button-stations");
+          if (artwork && stationsButton) {
+              // setTimeout: o clique na capa precisa TERMINAR de borbulhar antes
+              // do clique sintético no botão — o handler global de "clicou fora"
+              // fecharia o offcanvas no mesmo instante em que ele abre
+              const openStations = () => setTimeout(() => stationsButton.click(), 0);
+              artwork.setAttribute("role", "button");
+              artwork.setAttribute("tabindex", "0");
+              artwork.setAttribute("aria-label", "Trocar de estação");
+              artwork.addEventListener("click", openStations);
+              artwork.addEventListener("keydown", (event) => {
+                  if (event.key === "Enter" || event.key === " ") {
+                      event.preventDefault();
+                      openStations();
+                  }
+              });
+          }
+      }
+
+      // --- [RECOLHER O DOCK] --------------------------------------------
+      // No celular a barra cobre parte da página; a alça no topo do dock
+      // desliza ele para baixo (o áudio continua tocando) e traz de volta.
+
+      const collapseButton = $(".player-collapse");
+      if (collapseButton && playerBox) {
+          collapseButton.addEventListener("click", () => {
+              const collapsed = playerBox.classList.toggle("is-collapsed");
+              collapseButton.setAttribute("aria-expanded", collapsed ? "false" : "true");
+              collapseButton.setAttribute("aria-label", collapsed ? "Mostrar o player" : "Recolher o player");
+              // recolher com o painel "mais" aberto deixaria o painel solto
+              if (collapsed) {
+                  const more = $("#player-more");
+                  const moreButton = $(".player-button-more");
+                  more && more.classList.remove("is-active");
+                  moreButton && moreButton.classList.remove("is-active");
+              }
+          });
       }
 
       // --- [CONTROLE DE VOLUME] ----------------------------------------
@@ -1367,10 +1485,16 @@
 
           const server = currentStation.server || "itunes";
           const jsonUri = currentStation.api || API_URL + encodeURIComponent(currentStation.stream_url);
+          const requestId = ++metadataRequestId;
 
           fetch(jsonUri)
               .then((response) => response.json())
               .then(async (res) => {
+                  // Só a consulta mais recente pode escrever no player: sem
+                  // isto, trocar de estação e receber a resposta (lenta) da
+                  // anterior repintava capa, título e histórico da rádio velha
+                  if (requestId !== metadataRequestId) return;
+
                   const current = normalizeTitle(res);
                   const title = current.title;
 
@@ -1409,6 +1533,9 @@
                           cache[`${dataFrom.artist} - ${dataFrom.title}`.toLowerCase()] = dataFrom;
                       } else {
                           dataFrom = await getDataFrom({ artist, title, art, cover, server });
+                          // a busca de capa (iTunes/Spotify) é outra ida à
+                          // rede: confere de novo se a estação não mudou
+                          if (requestId !== metadataRequestId) return;
                       }
 
                       currentSong(dataFrom);

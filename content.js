@@ -13,6 +13,16 @@ window.siteContent = {
         logo: "assets/jailson_logo.png",
     },
 
+    // Cor de destaque do site (botões, links, chips, selos). O site deriva
+    // sozinho o degradê, o brilho do fundo e a cor do texto sobre a cor —
+    // basta trocar aqui (ou usar o seletor de cor do gerador.html).
+    // accentLight é opcional: em branco, o tema claro escurece a cor
+    // principal só o quanto precisar para o contraste.
+    theme: {
+        accent: "#4dd7e0",
+        accentLight: "#0aa6b4",
+    },
+
     // Slides do topo da página — o primeiro botão pode dar play na rádio
     // (action: "play") ou abrir um link (url). image é opcional (fundo suave
     // à direita no desktop).
@@ -65,10 +75,20 @@ window.siteContent = {
 
     // Links dos apps oficiais — deixe "" para ocultar o respectivo botão.
     // Se vazios aqui, o site usa os links já cadastrados em config.js
-    // (window.streams.stations[0].apps).
+    // (window.streams.stations[0].apps). O alexa é o link da skill na
+    // Amazon (opcional: sem link, a frase da Alexa ainda aparece).
     apps: {
         android: "https://play.google.com/store/apps/details?id=com.jbcast.jwradio",
         ios: "",
+        alexa: "",
+    },
+
+    // "Como nos ouvir" — card na seção Sobre com os apps e a frase da Alexa.
+    // Deixe listen: null (ou os campos vazios) para ocultar o card.
+    listen: {
+        title: "Como nos ouvir?",
+        text: "Ouça agora mesmo aqui no site, pelo player do rodapé. Para levar a rádio com você, baixe o aplicativo gratuito no celular:",
+        alexaPhrase: "Alexa, tocar Minha Rádio",
     },
 
     // Redes sociais do site (aparecem no rodapé) — deixe "" para ocultar
@@ -113,6 +133,19 @@ window.siteContent = {
         { id: "kXYiU_JCYtU", title: "Clipe em destaque" },
         { id: "hTWKbfoikeg", title: "Ao vivo no estúdio" },
         { id: "YQHsXMglC9A", title: "Entrevista exclusiva" },
+    ],
+
+    // Galeria de fotos (estúdio, eventos, equipe...) — image é a foto em
+    // tamanho grande (abre no lightbox), thumb é opcional (versão leve para
+    // a miniatura) e caption é a legenda. Deixe a lista vazia para ocultar
+    // a seção.
+    gallery: [
+        { image: "https://picsum.photos/seed/radio-gal1/1200/800", caption: "Estúdio principal" },
+        { image: "https://picsum.photos/seed/radio-gal2/1200/800", caption: "Mesa de transmissão" },
+        { image: "https://picsum.photos/seed/radio-gal3/1200/800", caption: "Bastidores do programa da manhã" },
+        { image: "https://picsum.photos/seed/radio-gal4/1200/800", caption: "Cobertura do festival" },
+        { image: "https://picsum.photos/seed/radio-gal5/1200/800", caption: "Visita dos ouvintes" },
+        { image: "https://picsum.photos/seed/radio-gal6/1200/800", caption: "Equipe no ar" },
     ],
 
     // Programação semanal — chaves: dom, seg, ter, qua, qui, sex, sab

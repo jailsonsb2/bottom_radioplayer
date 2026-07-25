@@ -43,76 +43,294 @@
     from { transform: translateY(140%); }
 }
 
+/* a alça de recolher e a linha "Ao vivo · estação" são exclusivas do celular,
+   onde espaço e contexto são escassos */
+#app-player .player-collapse,
+#app-player .player-meta {
+    display: none;
+}
+
+/* com uma estação só, anterior/próxima não levam a lugar nenhum (a classe
+   single-station é posta pelo JS quando a config tem uma estação) */
+#app-player .player.single-station .player-button-backward-step,
+#app-player .player.single-station .player-button-forward-step {
+    display: none;
+}
+
+/* a capa é o atalho para a lista de estações (o JS liga o clique quando há
+   mais de uma) — o chevron no canto avisa que ela é clicável */
+#app-player .player:not(.single-station) .player-artwork {
+    cursor: pointer;
+}
+
+#app-player .player:not(.single-station) .player-artwork::after {
+    content: "";
+    position: absolute;
+    right: 3px;
+    bottom: 3px;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background:
+        url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round"><path d="m6 9 6 6 6-6"/></svg>') center / 10px no-repeat,
+        rgba(8, 10, 15, 0.8);
+    pointer-events: none;
+}
+
+/* ============================================================
+   CELULAR — o layout onde a maioria ouve
+   ------------------------------------------------------------
+   A barra antiga espremia o título em ~24px (capa + 4 botões
+   comiam a largura toda). Aqui o texto é o protagonista:
+   capa · [ao vivo/estação + música + artista] · play.
+   O resto (histórico, letra, compartilhar, estações...) vive no
+   painel "mais", agora em grade COM RÓTULO — ícone mudo em
+   círculo não diz a ninguém o que faz.
+   ============================================================ */
+
 @media (max-width: 991px) {
     #app-player .player {
-        inset: auto 0 12px;
-        width: calc(100% - 20px);
-        padding: 14px 16px;
-        border-radius: 24px;
+        /* respeita a barra de gestos do iPhone */
+        inset: auto 0 max(10px, env(safe-area-inset-bottom));
+        width: calc(100% - 16px);
+        padding: 12px 14px;
+        border-radius: 22px;
+        /* translate (e não transform) para não brigar com a animação de
+           entrada do dock, que já usa transform */
+        transition: translate 0.35s cubic-bezier(0.2, 0.75, 0.2, 1);
     }
 
-    /* mini player com presença: capa, título e controles maiores.
-       flex:1 + min-width:0 no bloco da esquerda: é ele que encolhe
-       (truncando o título) — sem isso os controles estouravam a borda */
+    /* --- alça de recolher (padrão bottom sheet) --- */
+
+    #app-player .player-collapse {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: absolute;
+        top: -25px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 62px;
+        height: 26px;
+        padding: 0;
+        border: 1px solid rgba(255, 255, 255, 0.16);
+        border-bottom: none;
+        border-radius: 14px 14px 0 0;
+        background: rgba(11, 14, 19, 0.92);
+        backdrop-filter: blur(20px) saturate(160%);
+        -webkit-backdrop-filter: blur(20px) saturate(160%);
+        color: rgba(255, 255, 255, 0.75);
+        --i-size: 16px;
+        cursor: pointer;
+    }
+
+    #app-player .player-collapse svg {
+        transition: transform 0.3s ease;
+    }
+
+    /* recolhido: o dock inteiro desce para fora da tela e sobra só a alça */
+    #app-player .player.is-collapsed {
+        translate: 0 calc(100% + max(10px, env(safe-area-inset-bottom)));
+    }
+
+    #app-player .player.is-collapsed .player-collapse svg {
+        transform: rotate(180deg);
+    }
+
+    /* --- bloco da esquerda: capa + textos --- */
+
+    #app-player .player-cover {
+        gap: 12px;
+    }
+
+    /* flex:1 + min-width:0: é este bloco que ganha a sobra de largura */
     #app-player .player-left {
-        gap: 14px;
+        gap: 12px;
         flex: 1;
         min-width: 0;
         margin-right: 0;
     }
 
     #app-player .player-artwork-style {
-        max-width: 64px;
+        max-width: 56px;
     }
 
     #app-player .player-cover-title {
         width: auto;
         flex: 1;
         min-width: 0;
+        gap: 3px;
+    }
+
+    /* linha de contexto: mesmo com música tocando dá para saber qual
+       estação está no ar (antes o nome sumia na primeira faixa) */
+    #app-player .player-meta {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        min-width: 0;
+        font-size: 9.5px;
+        font-weight: 800;
+        letter-spacing: 0.12em;
+        color: rgba(255, 255, 255, 0.62);
+    }
+
+    #app-player .player-live {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        flex: none;
+        color: var(--accent, #4dd7e0);
+    }
+
+    #app-player .player-live-dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: #ff5a5f;
+        box-shadow: 0 0 8px #ff5a5f;
+        animation: player-live-pulse 1.6s ease-in-out infinite;
+    }
+
+    #app-player .player-meta-station {
+        overflow: hidden;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+    }
+
+    #app-player .player-meta-station::before {
+        content: "·";
+        margin-right: 6px;
     }
 
     #app-player .player-song-name .song-name {
-        font-size: 16px;
+        font-size: 15.5px;
     }
 
     #app-player .song-artist {
-        font-size: 12.5px;
+        font-size: 12px;
+        opacity: 0.75;
     }
 
-    /* controles saem do centro absoluto (sobrepunham o título) e ancoram
-       à direita, no fluxo, com toque maior */
+    /* --- transporte: um play grande manda no dock --- */
+
     #app-player .player-controller {
         position: static;
         transform: none;
-        gap: 10px;
-        margin-left: 12px;
+        gap: 8px;
+        margin-left: 8px;
         flex: none;
     }
 
     #app-player .player-button-play {
-        padding: 1.05rem;
+        width: 54px;
+        height: 54px;
+        padding: 0;
         --i-size: 22px;
+        justify-content: center;
     }
 
-    #app-player .player-button-backward-step,
-    #app-player .player-button-forward-step,
-    #app-player .player-button-more {
-        width: 40px;
-        height: 40px;
-        --i-size: 18px;
+    /* Anterior/próxima saem da barra no celular: eles trocam de ESTAÇÃO e
+       custavam ~80px de largura — o mesmo espaço que faltava para o nome da
+       música. A troca continua a um toque pela capa (abre a lista) e em
+       "Estações", no painel "mais". */
+    #app-player .player .player-button-backward-step,
+    #app-player .player .player-button-forward-step {
+        display: none;
     }
 
-    /* painel "mais": vidro escuro flutuando acima do dock */
+    /* seletor com .player para vencer o tamanho padrão (42px) definido
+       adiante neste arquivo */
+    #app-player .player .player-button-more {
+        width: 38px;
+        height: 38px;
+        --i-size: 17px;
+    }
+
+
+    /* --- painel "mais": grade com ícone + rótulo --- */
+
     #app-player .player-right.is-active {
-        gap: 12px;
+        left: 12px;
+        right: 12px;
+        display: grid !important;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 8px;
+        padding: 12px;
         border-radius: 20px;
         border: 1px solid rgba(255, 255, 255, 0.14);
-        background: rgba(11, 14, 19, 0.9);
+        background: rgba(11, 14, 19, 0.92);
         backdrop-filter: blur(20px) saturate(160%);
         -webkit-backdrop-filter: blur(20px) saturate(160%);
         box-shadow: 0 24px 60px rgba(0, 0, 0, 0.5);
         animation: more-in 0.25s cubic-bezier(0.2, 0.75, 0.2, 1) both;
     }
+
+    /* o botão da TV vive dentro de um wrapper (.online-tv): sem isso ele
+       não seria filho direto da grade e sairia com metade da largura */
+    #app-player .player-right.is-active .online-tv {
+        display: contents;
+    }
+
+    /* volume não entra na grade: no celular quem manda é o botão físico
+       (e o iOS ignora volume por JS) */
+    #app-player .player-right.is-active .player-button-volume {
+        display: none !important;
+    }
+
+    #app-player .player-right.is-active .player-button,
+    #app-player .player-right.is-active .player-button-alt {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 7px;
+        width: auto;
+        height: auto;
+        min-height: 68px;
+        padding: 10px 6px;
+        border-radius: 16px;
+        border: 1px solid rgba(255, 255, 255, 0.14);
+        background: rgba(255, 255, 255, 0.06);
+        color: rgba(255, 255, 255, 0.9);
+        font-size: 10px;
+        font-weight: 800;
+        letter-spacing: 0.06em;
+        line-height: 1.1;
+        text-align: center;
+        text-transform: uppercase;
+        --i-size: 21px;
+    }
+
+    #app-player .player-right.is-active .player-button.is-active {
+        border-color: var(--accent, #4dd7e0);
+        color: var(--accent, #4dd7e0);
+    }
+
+    #app-player .history {
+        flex-direction: column;
+    }
+
+    #app-player .history-item {
+        max-width: none;
+        width: 100%;
+    }
+}
+
+/* tablet: a barra é larga o bastante para anterior/próxima voltarem */
+@media (min-width: 768px) and (max-width: 991px) {
+    #app-player .player:not(.single-station) .player-button-backward-step,
+    #app-player .player:not(.single-station) .player-button-forward-step {
+        display: flex;
+        width: 40px;
+        height: 40px;
+        --i-size: 18px;
+    }
+}
+
+@keyframes player-live-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.35; }
 }
 
 @keyframes more-in {
@@ -161,15 +379,22 @@
     }
 }
 
-/* equalizador animado ao lado do nome da música (só enquanto toca) */
+/* equalizador animado ao lado do nome da música (só enquanto toca).
+   É um elemento próprio (e não um ::before do .player-song-name) porque o
+   letreiro precisa de uma caixa de recorte só dele — dentro da mesma caixa,
+   o texto deslizava por cima das barrinhas. */
 #app-player .player-song-name {
     display: flex;
     align-items: center;
     gap: 8px;
 }
 
-body.is-playing #app-player .player-song-name::before {
-    content: "";
+#app-player .player-eq {
+    display: none;
+}
+
+body.is-playing #app-player .player-eq {
+    display: block;
     flex: none;
     width: 15px;
     height: 13px;
@@ -280,18 +505,49 @@ body.is-playing #app-player .player-song-name::before {
     background: rgba(255, 255, 255, 0.16) !important;
 }
 
-/* logo da estação vira "vinil": circular e girando enquanto toca */
+/* Logo da estação: marca PARADA com um anel de "no ar" pulsando enquanto
+   toca. O giro de vinil que existia aqui girava o logotipo — e logotipo de
+   rádio é texto ("Jailson Webradio", "Capital 87,9 FM"), que girando fica
+   ilegível, justamente o oposto do que a logo está fazendo no dock. O anel
+   dá o sinal de ao vivo (mesma ideia do pontinho vermelho) sem mexer a marca. */
 #app-player .player-station,
 #app-player .player-station img {
     border-radius: 50%;
 }
 
-body.is-playing #app-player .player-station img {
-    animation: vinyl-spin 8s linear infinite;
+#app-player .player-station {
+    /* o anel cresce para fora: o recorte herdado da capa o cortaria */
+    overflow: visible;
 }
 
-@keyframes vinyl-spin {
-    to { transform: rotate(360deg); }
+#app-player .player-station::after {
+    content: "";
+    position: absolute;
+    inset: -6px;
+    border-radius: 50%;
+    border: 2px solid var(--accent, #4dd7e0);
+    opacity: 0;
+    pointer-events: none;
+}
+
+/* só transform + opacity: a animação roda no compositor, sem repaint */
+body.is-playing #app-player .player-station::after {
+    animation: station-live-ring 2.4s ease-out infinite;
+}
+
+@keyframes station-live-ring {
+    0% { opacity: 0.85; transform: scale(0.94); }
+    70% { opacity: 0; transform: scale(1.28); }
+    100% { opacity: 0; transform: scale(1.28); }
+}
+
+/* quem pede menos movimento fica com o anel aceso, parado — a informação
+   ("está no ar") continua lá */
+@media (prefers-reduced-motion: reduce) {
+    body.is-playing #app-player .player-station::after {
+        animation: none;
+        opacity: 0.7;
+    }
 }
 
 /* --- painéis flutuantes (histórico, estações, volume, modais) --- */
@@ -311,6 +567,20 @@ body.is-playing #app-player .player-station img {
 @media (min-width: 992px) {
     #app-player .offcanvas-player {
         inset: auto 24px calc(18px + 6.5rem) auto;
+    }
+}
+
+/* Celular: os painéis viram uma folha de largura cheia acima do dock (antes
+   ficavam ancorados à direita, do tamanho do conteúdo — a lista de estações
+   nascia estreita e o histórico saía em fila horizontal, cortado na borda) */
+@media (max-width: 991px) {
+    #app-player .offcanvas-player {
+        /* 108px = altura do dock (83) + folga inferior (10) + respiro */
+        inset: auto 8px 108px 8px;
+        max-width: none;
+        max-height: 58vh;
+        overflow-y: auto;
+        overscroll-behavior: contain;
     }
 }
 
@@ -411,44 +681,46 @@ body.is-playing #app-player .player-station img {
     color: #fff;
 }
 
-/* --- TV ao vivo: tela cheia (a base a deixava como um PiP de 370px) --- */
+/* --- TV ao vivo: janela compacta no CENTRO da tela --- */
+/* Antes era tela cheia; virou uma janela pequena e centralizada (o vídeo
+   continua expansível pelo botão de tela cheia do próprio player embutido).
+   Fecha no ✕, clicando fora (overlay) ou com Esc. */
 
 #app-player .modal-video {
-    inset: 0 !important;
-    transform: none;
-    width: 100%;
-    height: 100%;
+    inset: 50% auto auto 50% !important;
+    transform: translate(-50%, -50%);
+    width: min(90vw, 520px);
     max-width: none !important;
+    height: auto;
     padding: 0;
-    border-radius: 0;
+    border-radius: 16px;
+    overflow: hidden;
     background: #05070a;
+    border: 1px solid rgba(255, 255, 255, 0.16);
     z-index: 200;
-    display: flex;
-    align-items: center;
-    justify-content: center;
 }
 
 #app-player .modal-video .modal-body-video {
     width: 100%;
-    height: 100%;
+    display: block;
 }
 
 #app-player .modal-video iframe {
     width: 100%;
-    height: 100%;
-    aspect-ratio: auto;
+    height: auto;
+    aspect-ratio: 16 / 9;
     border-radius: 0;
     display: block;
 }
 
-/* fechar fixo no canto, sempre visível sobre o vídeo */
+/* fechar no canto da janela, sempre visível sobre o vídeo */
 #app-player .modal-video [data-close] {
-    position: fixed;
-    top: 16px;
-    right: 16px;
+    position: absolute;
+    top: 10px;
+    right: 10px;
     z-index: 210;
-    width: 42px;
-    height: 42px;
+    width: 38px;
+    height: 38px;
     border-radius: 50%;
     background: rgba(13, 17, 23, 0.75) !important;
     border: 1px solid rgba(255, 255, 255, 0.25);
@@ -456,10 +728,16 @@ body.is-playing #app-player .player-station img {
     display: flex;
     align-items: center;
     justify-content: center;
-    --i-size: 18px;
+    --i-size: 16px;
     backdrop-filter: blur(8px);
     -webkit-backdrop-filter: blur(8px);
     transition: background 0.2s ease;
+}
+
+@media (max-width: 767px) {
+    #app-player .modal-video {
+        width: min(94vw, 440px);
+    }
 }
 
 .modal-video [data-close]:hover {

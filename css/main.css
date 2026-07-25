@@ -725,6 +725,14 @@ body, html {
 #app-player .player-song-name .song-name {
   white-space: nowrap;
 }
+/* caixa que recorta o letreiro — o equalizador fica FORA dela, então o
+   texto deslizando não passa mais por cima do ícone */
+#app-player .player-song-clip {
+  display: block;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+}
 /* letreiro: título/artista que não cabem deslizam em vez de cortar
    (o JS mede o excesso e entrega a distância em --marquee-shift) */
 #app-player .player-left .song-name.is-marquee,
@@ -973,12 +981,14 @@ body, html {
   --modal-overlay-opacity: 1;
   pointer-events: all;
 }
+/* Modal da TV/vídeo ao vivo: caixa compacta no CENTRO da tela (antes ficava
+   colada no canto inferior direito no desktop e ocupava a largura inteira no
+   mobile, onde o max-width era 880px) */
 .modal-video {
-  inset: auto 1rem 6rem auto;
+  inset: 50% auto auto 50%;
+  transform: translate(-50%, -50%);
   position: fixed;
-  margin: auto;
-  width: 100%;
-  max-width: 370px;
+  width: min(90vw, 520px);
   padding: 0.5rem;
   background-color: var(--player-bg-modal);
   border-radius: 0.5rem;
@@ -986,16 +996,11 @@ body, html {
   box-shadow: var(--shadow-xl);
   transition: opacity var(--duration);
 }
-@media (max-width: 767px) {
-  .modal-video {
-    max-width: 880px;
-    inset: 50% auto auto 50%;
-    transform: translate(-50%, -50%);
-  }
-  .modal-video.is-active ~ * {
-    --modal-overlay-opacity: 1;
-    pointer-events: all;
-  }
+/* escurece o resto da página enquanto a TV está aberta (o overlay é irmão
+   do modal no template) */
+.modal-video.is-active ~ * {
+  --modal-overlay-opacity: 1;
+  pointer-events: all;
 }
 .modal-video [data-close] {
   position: absolute;
@@ -1012,6 +1017,16 @@ body, html {
   aspect-ratio: 16/9;
   width: 100%;
   height: auto;
+}
+@media (max-width: 767px) {
+  .modal-video {
+    width: min(94vw, 440px);
+  }
+  /* em tela estreita o X pendurado para fora da caixa sairia do viewport */
+  .modal-video [data-close] {
+    right: 0.4rem;
+    top: 0.4rem;
+  }
 }
 
 .offcanvas-player {
