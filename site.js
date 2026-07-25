@@ -144,6 +144,62 @@
         });
     }
 
+    // --- seções: ordem (content.order) e visibilidade ----------------------
+    //
+    // As seções vivem no HTML numa ordem fixa; content.order reordena os
+    // blocos da página E os links do menu sem tocar no HTML. O hero fica
+    // sempre em cima e o rodapé embaixo (nenhum dos dois entra na lista).
+    //
+    // has() repete a condição que cada bloco de renderização usa mais
+    // abaixo: sem conteúdo, a seção some no fim do script (título incluso) e
+    // leva o link do menu junto. É por conteúdo, e não por "o container ficou
+    // vazio", porque as páginas internas têm o menu sem ter as seções — lá o
+    // link precisa sumir do mesmo jeito.
+
+    const SECTIONS = [
+        { id: "noticias", has: () => !!(content.news || []).length },
+        { id: "videos", has: () => !!(content.videos || []).length },
+        { id: "galeria", has: () => !!photos.length },
+        { id: "programacao", has: () => !!content.schedule },
+        { id: "equipe", has: () => !!(content.team || []).length },
+        { id: "contato", has: () => !!content.about },
+    ];
+
+    // o link do menu aponta para "#id" na home e "index.html#id" nas internas
+    const navLinkFor = (id) => document.querySelector('.site-nav a[href$="#' + id + '"]');
+
+    // ordem pedida, sem repetidos nem nomes desconhecidos; o que faltar vai
+    // para o fim na ordem padrão (assim uma lista incompleta não perde seção)
+    const sectionOrder = (Array.isArray(content.order) ? content.order : [])
+        .filter((id, i, list) => list.indexOf(id) === i && SECTIONS.some((s) => s.id === id));
+    SECTIONS.forEach((s) => {
+        if (!sectionOrder.includes(s.id)) sectionOrder.push(s.id);
+    });
+
+    const container = document.querySelector(".site-container");
+    if (container) {
+        // reinserir antes do rodapé mantém o hero (que não está na lista) no topo
+        const siteFooter = container.querySelector(".site-footer");
+        sectionOrder.forEach((id) => {
+            const section = document.getElementById(id);
+            if (section && section.parentNode === container) container.insertBefore(section, siteFooter);
+        });
+    }
+
+    const siteNav = document.querySelector(".site-nav");
+    if (siteNav) {
+        // links que não são de seção (o "Sobre", que é outra página) ficam no
+        // fim, na ordem em que estavam — daí o rank alto e o sort estável
+        const rank = (link) => {
+            const href = link.getAttribute("href") || "";
+            const id = sectionOrder.findIndex((sid) => href.endsWith("#" + sid));
+            return id === -1 ? sectionOrder.length : id;
+        };
+        Array.from(siteNav.children)
+            .sort((a, b) => rank(a) - rank(b))
+            .forEach((link) => siteNav.appendChild(link));
+    }
+
     // --- hero: slider com autoavanço ---------------------------------------
 
     const heroRoot = document.getElementById("site-hero");
@@ -656,10 +712,6 @@
             item.addEventListener("click", () => openLightbox(photos, index));
             galleryGrid.appendChild(item);
         });
-    } else if (galleryGrid) {
-        // sem fotos: esconde a seção inteira (título incluso)
-        const section = galleryGrid.closest(".site-section");
-        if (section) section.hidden = true;
     }
 
     // --- programação (abas por dia, hoje pré-selecionado) ----------------
@@ -1014,4 +1066,17 @@
     if (footerText && content.footer) {
         footerText.textContent = "© " + new Date().getFullYear() + " " + (content.footer.text || "");
     }
+
+    // --- seção vazia some (título incluso) e leva o link do menu junto -----
+    //
+    // Atribuir hidden nos dois sentidos (e não só true) mantém isto
+    // idempotente na reexecução da navegação seamless.
+
+    SECTIONS.forEach(({ id, has }) => {
+        const empty = !has();
+        const section = document.getElementById(id);
+        if (section) section.hidden = empty;
+        const link = navLinkFor(id);
+        if (link) link.hidden = empty;
+    });
 })();

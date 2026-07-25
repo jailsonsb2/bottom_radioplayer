@@ -132,6 +132,19 @@ about: {
 - **Weather chip and map** — `about.city` drives both the little temperature chip in the header and the map card in the "About" section. Leave it empty and both disappear. The map sits under the history text, in the same column, so the section doesn't leave a hole beside the side cards.
 - **Donation button** — `about.donation` puts a highlighted button in the header. Empty `url` hides it.
 
+### Section order (and empty sections)
+
+The home page sections are stacked in whatever order `content.order` lists them — put your station's strongest content on top. The same order is applied to the header menu, on every page:
+
+```js
+order: ["galeria", "noticias", "videos", "programacao", "equipe", "contato"],
+```
+
+- Valid names are exactly those six. The hero slides are always first and the footer always last, so they aren't listed.
+- The field is **optional**: drop it (or list only a couple of names) and the missing sections keep the default order at the end — an older `content.js` still renders everything.
+- **Sections with no content hide themselves**, title and menu link included. A station with no videos doesn't need to touch `order` — an empty `videos: []` is enough to make the section and its menu entry disappear.
+- `gerador.html` has an **"Ordem das seções"** block with ↑/↓ buttons that writes this list for you.
+
 ### PWA (installable app)
 
 The demo site ships as an installable app: `manifest.json`, icons in `assets/pwa/`, the `sw.js` service worker and `pwa.js` (which registers it and shows the **Install app** button in the header and inside the "How to listen" card — on iOS the button explains the *Share › Add to Home Screen* path instead, since Safari has no install prompt).

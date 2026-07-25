@@ -31,6 +31,14 @@ window.siteContent = {
         style: "liquid",
     },
 
+    // Ordem das seções na home (e dos links do menu). O topo (slides) fica
+    // sempre em primeiro e o rodapé em último; estas seis é que você escolhe
+    // como empilhar — coloque na frente o que a sua rádio tem de mais forte.
+    // Nomes válidos: noticias, videos, galeria, programacao, equipe, contato.
+    // Remova a lista inteira (ou um nome dela) para manter a ordem padrão;
+    // seções sem conteúdo somem sozinhas, então não precisa tirar daqui.
+    order: ["noticias", "videos", "galeria", "programacao", "equipe", "contato"],
+
     // Slides do topo da página — o primeiro botão pode dar play na rádio
     // (action: "play") ou abrir um link (url). image é opcional (fundo suave
     // à direita no desktop).

@@ -130,6 +130,43 @@
 
         .gen-add:hover { background: var(--site-surface-strong); }
 
+        /* ordem das seções: lista com setas ↑/↓ */
+        .gen-order { display: grid; gap: 8px; }
+
+        .gen-order-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 12px;
+            border: 1px solid var(--site-border);
+            border-radius: 12px;
+            background: var(--site-surface);
+        }
+
+        .gen-order-pos {
+            width: 24px;
+            font-weight: 800;
+            font-size: 13px;
+            color: var(--site-accent);
+        }
+
+        .gen-order-name { flex: 1; font-weight: 700; font-size: 14px; }
+
+        .gen-order-move {
+            width: 30px;
+            height: 30px;
+            border: 1px solid var(--site-border);
+            border-radius: 50%;
+            background: none;
+            color: var(--site-text);
+            font-size: 15px;
+            line-height: 1;
+            cursor: pointer;
+        }
+
+        .gen-order-move:hover:not(:disabled) { background: var(--site-surface-strong); }
+        .gen-order-move:disabled { opacity: 0.3; cursor: default; }
+
         .gen-tabs { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
 
         .gen-output textarea {
@@ -264,6 +301,14 @@
             <p class="gen-hint">A cor de destaque manda nos botões, links, selos e no degradê. O site deriva sozinho o
                brilho do fundo e a cor do texto sobre ela — a prévia abaixo já muda enquanto você escolhe.</p>
             <div class="gen-item" id="gen-theme"></div>
+        </section>
+
+        <section class="gen-section">
+            <h2>Ordem das seções</h2>
+            <p class="gen-hint">Define a ordem em que as seções aparecem na home e no menu — suba o que a sua rádio tem de
+               mais forte. Os slides do topo e o rodapé ficam sempre nas pontas. Seção sem conteúdo some sozinha do site,
+               não precisa mexer aqui.</p>
+            <div class="gen-order" id="gen-order"></div>
         </section>
 
         <section class="gen-section">
@@ -626,6 +671,63 @@
                 });
             }
 
+            // --- ordem das seções ---
+            // A lista gerada aqui é lida pelo site.js, que reordena os blocos
+            // da home e os links do menu. O topo (slides) e o rodapé não
+            // entram: ficam sempre nas pontas.
+
+            const SECTION_NAMES = [
+                ["noticias", "Notícias"],
+                ["videos", "Vídeos"],
+                ["galeria", "Galeria de fotos"],
+                ["programacao", "Programação da semana"],
+                ["equipe", "Equipe"],
+                ["contato", "Sobre a rádio / contato"],
+            ];
+
+            // mesma regra do site.js: sem repetidos nem nomes desconhecidos, e
+            // o que faltar entra no fim — um content.js antigo (sem order) ou
+            // com a lista pela metade continua abrindo com todas as seções
+            function normalizeOrder(list) {
+                const out = (Array.isArray(list) ? list : [])
+                    .filter((id, i, l) => l.indexOf(id) === i && SECTION_NAMES.some(([key]) => key === id));
+                SECTION_NAMES.forEach(([key]) => { if (!out.includes(key)) out.push(key); });
+                return out;
+            }
+
+            data.order = normalizeOrder(data.order);
+
+            function moveButton(index, delta, label, title) {
+                const btn = document.createElement("button");
+                btn.type = "button";
+                btn.className = "gen-order-move";
+                btn.textContent = label;
+                btn.title = title;
+                btn.disabled = index + delta < 0 || index + delta >= data.order.length;
+                btn.onclick = () => {
+                    const target = index + delta;
+                    const moved = data.order[index];
+                    data.order[index] = data.order[target];
+                    data.order[target] = moved;
+                    renderOrder();
+                };
+                return btn;
+            }
+
+            function renderOrder() {
+                const root = document.getElementById("gen-order");
+                root.innerHTML = "";
+                data.order.forEach((id, i) => {
+                    const entry = SECTION_NAMES.find(([key]) => key === id);
+                    const item = el("div", "gen-order-item");
+                    item.appendChild(el("span", "gen-order-pos", (i + 1) + "º"));
+                    item.appendChild(el("span", "gen-order-name", entry ? entry[1] : id));
+                    item.appendChild(moveButton(i, -1, "↑", "Subir"));
+                    item.appendChild(moveButton(i, 1, "↓", "Descer"));
+                    root.appendChild(item);
+                });
+            }
+
             // --- galeria ---
             function renderGallery() {
                 const root = document.getElementById("gen-gallery");
@@ -838,6 +940,7 @@
             // --- primeira renderização ---
             renderStyle();
             renderTheme();
+            renderOrder();
             renderSlides();
             renderNews();
             renderVideos();
