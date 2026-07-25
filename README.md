@@ -39,7 +39,9 @@ A bottom-bar **HTML5 radio player** that works as a **drop-in JavaScript compone
 
 ### Demo Screenshots
 
-![Demo Screenshot](https://i.imgur.com/M15Qv0t.png)
+![Demo Screenshot](https://i.imgur.com/hqlZY3Z.png)
+
+![Demo Screenshot](https://i.imgur.com/Eo0p377.png)
 
 ### How do I add the player to my website? (Installation)
 

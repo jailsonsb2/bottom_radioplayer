@@ -259,10 +259,10 @@
         padding: 12px;
         border-radius: 20px;
         border: 1px solid rgba(255, 255, 255, 0.14);
-        background: rgba(11, 14, 19, 0.92);
+        background: rgba(11, 14, 19, 0.98);
         backdrop-filter: blur(20px) saturate(160%);
         -webkit-backdrop-filter: blur(20px) saturate(160%);
-        box-shadow: 0 24px 60px rgba(0, 0, 0, 0.5);
+        box-shadow: 0 24px 60px rgba(0, 0, 0, 0.6);
         animation: more-in 0.25s cubic-bezier(0.2, 0.75, 0.2, 1) both;
     }
 
@@ -290,9 +290,9 @@
         min-height: 68px;
         padding: 10px 6px;
         border-radius: 16px;
-        border: 1px solid rgba(255, 255, 255, 0.14);
-        background: rgba(255, 255, 255, 0.06);
-        color: rgba(255, 255, 255, 0.9);
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        background: rgba(255, 255, 255, 0.18);
+        color: #fff;
         font-size: 10px;
         font-weight: 800;
         letter-spacing: 0.06em;
@@ -305,6 +305,38 @@
     #app-player .player-right.is-active .player-button.is-active {
         border-color: var(--accent, #4dd7e0);
         color: var(--accent, #4dd7e0);
+    }
+
+    html[data-theme="light"] #app-player .player-right.is-active,
+    html[data-theme="light"] #app-player .offcanvas-player,
+    html[data-theme="light"] #app-player .dropdown,
+    html[data-theme="light"] #app-player .player-collapse,
+    html[data-theme="light"] #app-player .player-modal {
+        background: rgba(11, 14, 19, 0.96) !important;
+        border-color: rgba(255, 255, 255, 0.14) !important;
+    }
+
+    html[data-theme="light"] #app-player .player-right.is-active .player-button,
+    html[data-theme="light"] #app-player .player-right.is-active .player-button-alt,
+    html[data-theme="light"] #app-player .player-right button.player-button,
+    html[data-theme="light"] #app-player .player-right .player-button-volume-toggle,
+    html[data-theme="light"] #app-player .player-button-backward-step,
+    html[data-theme="light"] #app-player .player-button-forward-step,
+    html[data-theme="light"] #app-player .player-button-more,
+    html[data-theme="light"] #app-player .player-button-alt {
+        background: rgba(255, 255, 255, 0.16) !important;
+        border-color: rgba(255, 255, 255, 0.20) !important;
+        color: #fff !important;
+    }
+
+    html[data-theme="light"] #app-player .player-button-backward-step:hover,
+    html[data-theme="light"] #app-player .player-button-forward-step:hover,
+    html[data-theme="light"] #app-player .player-button-more:hover,
+    html[data-theme="light"] #app-player .player-right button.player-button:hover,
+    html[data-theme="light"] #app-player .player-right .player-button-volume-toggle:hover,
+    html[data-theme="light"] #app-player .player-button-alt:hover {
+        background: rgba(255, 255, 255, 0.28) !important;
+        color: #fff !important;
     }
 
     #app-player .history {
@@ -427,8 +459,9 @@ body.is-playing #app-player .player-eq {
     width: 42px;
     height: 42px;
     border-radius: 50%;
-    border: 1px solid rgba(255, 255, 255, 0.16);
-    background: rgba(255, 255, 255, 0.07);
+    border: 1px solid rgba(255, 255, 255, 0.24);
+    background: rgba(255, 255, 255, 0.18);
+    color: #fff;
     justify-content: center;
     transition: background 0.2s ease, color 0.2s ease;
 }
@@ -436,7 +469,7 @@ body.is-playing #app-player .player-eq {
 #app-player .player-button-backward-step:hover,
 #app-player .player-button-forward-step:hover,
 #app-player .player-button-more:hover {
-    background: rgba(255, 255, 255, 0.16);
+    background: rgba(255, 255, 255, 0.28);
     color: #fff;
 }
 
@@ -456,15 +489,16 @@ body.is-playing #app-player .player-eq {
     height: 44px;
     flex: none;
     border-radius: 50%;
-    border: 1px solid rgba(255, 255, 255, 0.16);
-    background: rgba(255, 255, 255, 0.07);
+    border: 1px solid rgba(255, 255, 255, 0.24);
+    background: rgba(255, 255, 255, 0.22);
+    color: #fff;
     justify-content: center;
     transition: background 0.2s ease, color 0.2s ease;
 }
 
 #app-player .player-right button.player-button:hover,
 #app-player .player-right .player-button-volume-toggle:hover {
-    background: rgba(255, 255, 255, 0.16);
+    background: rgba(255, 255, 255, 0.32);
     color: #fff;
 }
 
@@ -496,13 +530,13 @@ body.is-playing #app-player .player-eq {
     gap: 0;
     --i-size: 20px;
     border-radius: 50%;
-    border: 1px solid rgba(255, 255, 255, 0.18);
-    background: rgba(255, 255, 255, 0.08) !important;
+    border: 1px solid rgba(255, 255, 255, 0.20);
+    background: rgba(255, 255, 255, 0.12) !important;
     transition: background 0.2s ease;
 }
 
 #app-player .player-button-alt:hover {
-    background: rgba(255, 255, 255, 0.16) !important;
+    background: rgba(255, 255, 255, 0.24) !important;
 }
 
 /* Logo da estação: marca PARADA com um anel de "no ar" pulsando enquanto
@@ -556,12 +590,12 @@ body.is-playing #app-player .player-station::after {
     inset: auto 16px 7.5rem auto;
     max-width: min(1240px, calc(100% - 32px));
     border-radius: 20px;
-    border: 1px solid rgba(255, 255, 255, 0.14);
-    background: rgba(11, 14, 19, 0.9);
+    border: 1px solid rgba(255, 255, 255, 0.10);
+    background: rgba(11, 14, 19, 0.95);
     backdrop-filter: blur(20px) saturate(160%);
     -webkit-backdrop-filter: blur(20px) saturate(160%);
     overflow: hidden;
-    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.5);
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.55);
 }
 
 @media (min-width: 992px) {
@@ -585,8 +619,8 @@ body.is-playing #app-player .player-station::after {
 }
 
 #app-player .dropdown {
-    background: rgba(11, 14, 19, 0.92);
-    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: rgba(11, 14, 19, 0.96);
+    border: 1px solid rgba(255, 255, 255, 0.10);
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
     border-radius: 14px;

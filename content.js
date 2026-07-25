@@ -26,9 +26,9 @@ window.siteContent = {
     //   "liquid"   vidro espesso, borda especular, dock em cápsula
     //   "spatial"  objetos flutuando: sombras amplas e profundidade
     theme: {
-        accent: "#4dd7e0",
-        accentLight: "#0aa6b4",
-        style: "spatial",
+        accent: "#38b6ff",
+        accentLight: "#80daff",
+        style: "liquid",
     },
 
     // Slides do topo da página — o primeiro botão pode dar play na rádio
