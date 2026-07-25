@@ -281,6 +281,10 @@
       injectStylesheet("https://fonts.cdnfonts.com/css/akira-expanded");
       injectStylesheet(BASE + "css/main.css");
       injectStylesheet(BASE + "custom.css");
+      // estilos visuais alternativos (clay/minimal/liquid/spatial): só agem
+      // se houver data-ui no <html>, então em qualquer site que só embuta o
+      // dock o visual segue sendo o vidro de sempre
+      injectStylesheet(BASE + "css/ui-styles.css");
 
       // meta theme-color (o accent dinâmico escreve nela; cria se a página não tiver)
       if (!document.querySelector("meta[name=theme-color]")) {
@@ -459,9 +463,25 @@
           });
       }
 
+      // Fecha a TV ao vivo de fora do botão dela (definido em
+      // createOpenTvButton). A TV não é um embed do YouTube: é de outra
+      // origem e sem jsapi, então não existe postMessage que a pause — a
+      // única forma de calar o áudio dela é remover o iframe.
+      let closeLiveTv = null;
+
+      // Calar TUDO que disputa o áudio com a rádio. Vive aqui, e é chamado
+      // de dentro do play(), porque os caminhos que dão play são muitos —
+      // botão do dock, troca de estação, tela de bloqueio (Media Session),
+      // retomada automática, API pública, fechar a TV. Enquanto a guarda
+      // ficou só no botão do dock, cada um dos outros tocava a rádio POR
+      // CIMA do clipe (áudio dobrado).
+      function stopCompetingVideo() {
+          pauseYouTubeEmbeds();
+          if (closeLiveTv) closeLiveTv();
+      }
+
       function handlePlayPause() {
           if (audio.paused) {
-              pauseYouTubeEmbeds();
               isIntentionalPause = false;
               localStorage.setItem("radioplayer:playing", "1");
               fadeIn();
@@ -475,6 +495,8 @@
       }
 
       function play(audio, newSource = null) {
+          stopCompetingVideo();
+
           if (newSource) {
               audio.src = newSource; // atribuir src já dispara o load
           } else if (audio.paused) {
@@ -974,6 +996,11 @@
           // Fecha e desliga TODAS as formas de fechar (X, overlay, Esc): sem
           // remover os listeners, reabrir a TV os empilhava no mesmo botão X
           function closeTv() {
+              // TV já fechada: sai. É esta linha que impede a recursão quando
+              // o próprio closeTv() retoma a rádio — o play() chama de volta
+              // o stopCompetingVideo(), que chamaria closeTv() outra vez.
+              if (!$button.classList.contains("is-active")) return;
+
               $button.classList.remove("is-active");
               playerTvModal.classList.remove("is-active");
               modalBody.innerHTML = "";
@@ -989,12 +1016,23 @@
               }
           }
 
+          // Quando a rádio volta a tocar, a TV sai de cena. Sem retomar a
+          // rádio de novo (resumeRadio = false): quem chamou é justamente o
+          // play() — deixar o retomar aqui daria um segundo play().
+          closeLiveTv = () => {
+              resumeRadio = false;
+              closeTv();
+          };
+
           $button.addEventListener("click", () => {
               $button.blur();
               if ($button.classList.contains("is-active")) {
                   closeTv();
                   return;
               }
+              // um clipe (ou vídeo do site) tocando também disputa o áudio
+              pauseYouTubeEmbeds();
+
               $button.classList.add("is-active");
               playerTvModal.classList.add("is-active");
 
@@ -1134,7 +1172,13 @@
           stationDescription.textContent = station.description;
           metaStation && (metaStation.textContent = station.name);
           scheduleMarquee();
+          // O botão da TV é recriado a cada estação. Fecha a TV da estação
+          // anterior ANTES de descartar o botão: sem isso o iframe ficaria
+          // tocando sem ninguém para fechá-lo (esta função roda antes do
+          // play() na troca de estação — a rádio entraria por cima da TV).
+          if (closeLiveTv) closeLiveTv();
           playerTv && (playerTv.innerHTML = "");
+          closeLiveTv = null;
 
           const modalImage = root.querySelector(".player-modal-image");
           if (modalImage) {
@@ -1180,11 +1224,16 @@
                       },
                   ],
               });
+              // Passa pelo MESMO caminho do botão do dock em vez de chamar
+              // play/pause crus: assim a tela de bloqueio (e as teclas de
+              // mídia) herdam o fade, o "radioplayer:playing" persistido e a
+              // marcação de pausa intencional — sem ela, uma pausa pelo
+              // celular era lida como queda de rede e a rádio voltava sozinha.
               navigator.mediaSession.setActionHandler("play", () => {
-                  play(audio);
+                  if (audio.paused) handlePlayPause();
               });
               navigator.mediaSession.setActionHandler("pause", () => {
-                  pause(audio);
+                  if (!audio.paused) handlePlayPause();
               });
           }
       }

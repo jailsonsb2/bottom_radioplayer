@@ -25,12 +25,17 @@ A bottom-bar **HTML5 radio player** that works as a **drop-in JavaScript compone
 - **Song history** with covers (up to 10 recently played tracks).
 - **Lyrics** via lyrics.ovh with LRCLIB fallback — no API key required, with request caching.
 - **Dynamic accent color** extracted from the current cover art.
+- **Clip mode** — when the metadata API sends a `youtubeId`, a floating mini-player shows the music video of the song on air, seeked to the same position; it survives page navigation.
+- **Live TV** — with `tv_url` in a station, a "TV" button opens the live video in a compact centered window (✕, click-outside or Esc to close).
+- **One audio source at a time** — starting the radio pauses any playing video (site videos, clip mode) and closes the live TV; stopping the video brings the radio back. Enforced inside `play()`, so every entry point (dock button, station switch, lock screen, auto-resume, `RadioPlayer.play()`) obeys it.
+- **Marquee for long titles** — song and artist names that don't fit slide instead of being cut off, and only while they overflow.
 - **Integrated social sharing** for Facebook, Twitter, and WhatsApp.
-- **Media Session integration** (lock screen / notification controls).
+- **Media Session integration** (lock screen / notification controls) routed through the same play/pause path as the dock button, so fade, persisted state and the video rule apply there too.
 - **Mobile-first dock** — on phones the song title gets the space (no cramped 24px column): cover · "on air + station" · title · artist · one big play button, extra controls in a labeled sheet, a handle to collapse the dock out of the way, and safe-area padding for iPhones. Tapping the cover opens the station list.
 - **Photo gallery** with lightbox (arrows, keyboard, swipe) on the demo site.
 - **"How to listen" card** with the official app badges (Google Play / App Store) and the Alexa phrase.
 - **Installable (PWA)** — manifest, icons, offline shell via service worker and an "install app" button.
+- **Five design languages** — glassmorphism (default), claymorphism, minimalism, liquid glass and spatial UI, picked in the generator and applied to the site *and* the dock at once.
 
 ### Demo Screenshots
 
@@ -39,7 +44,7 @@ A bottom-bar **HTML5 radio player** that works as a **drop-in JavaScript compone
 ### How do I add the player to my website? (Installation)
 
 1. **Download the player files:**
-   - Download or clone this repository and host the `js/`, `css/` and `assets/` folders (plus `config.js` and `custom.css`) on your site.
+   - Download or clone this repository and host the `js/`, `css/` and `assets/` folders (plus `config.js` and `custom.css`) on your site. `css/ui-styles.css` ships inside `css/` and is what powers the alternative visual styles.
 
 2. **Configure your radio stations:**
    - Open the `config.js` file.
@@ -82,7 +87,8 @@ If your now-playing metadata API returns a **`youtubeId`** field (or `youtube_id
 - the floating mini-player opens with the music video of the song that is playing (radio audio pauses, video audio takes over), **synchronized with the radio position** (start = elapsed from the API) instead of starting from zero;
 - every song change just swaps the embed to the new clip;
 - songs without a clip close the video and fall back to the radio automatically;
-- the video keeps playing across page navigation (`data-seamless-keep`), and the preference is remembered.
+- the video keeps playing across page navigation (`data-seamless-keep`), and the preference is remembered;
+- **the radio and a video never play at the same time.** Any path that starts the radio — the dock button, switching station, the lock screen, auto-resume after a reload, `RadioPlayer.play()` — first pauses the YouTube embeds and closes the live TV; pausing or finishing the video hands the audio back to the radio. Pausing the clip *by hand* also turns clip mode off, so the next song doesn't reopen the video over the audio you just chose.
 
 The component also exposes each track to the site: `window.RadioPlayer.currentTrack` and the `radioplayer:track` DOM event (`detail: { title, artist, art, cover, youtubeId }`), plus `radioplayer:ready` when the player mounts.
 
@@ -112,6 +118,18 @@ listen: { title: "How to listen", text: "…", alexaPhrase: "Alexa, play My Radi
 - **Gallery** — a responsive grid in the `#galeria` section; clicking a photo opens a lightbox with arrows, keyboard (←/→/Esc), swipe and a counter. `thumb` is optional (use it to serve a lighter thumbnail); with an empty list the whole section hides itself.
 - **How to listen** — a card in the "About" section with the official store badges plus the Alexa phrase (linked to your skill when `apps.alexa` is filled). The same `apps` entries feed the store badges in the footer, and fall back to `window.streams.stations[0].apps` from `config.js` when empty.
 
+Two more optional fields live under `about` in `content.js`:
+
+```js
+about: {
+    city: "São Paulo",                                        // weather chip + footer map
+    donation: { url: "https://ko-fi.com/…", label: "Support us" },
+}
+```
+
+- **Weather chip and map** — `about.city` drives both the little temperature chip in the header and the map card in the "About" section. Leave it empty and both disappear. The map sits under the history text, in the same column, so the section doesn't leave a hole beside the side cards.
+- **Donation button** — `about.donation` puts a highlighted button in the header. Empty `url` hides it.
+
 ### PWA (installable app)
 
 The demo site ships as an installable app: `manifest.json`, icons in `assets/pwa/`, the `sw.js` service worker and `pwa.js` (which registers it and shows the **Install app** button in the header and inside the "How to listen" card — on iOS the button explains the *Share › Add to Home Screen* path instead, since Safari has no install prompt).
@@ -126,6 +144,17 @@ The demo site ships as an installable app: `manifest.json`, icons in `assets/pwa
 
 - **Images:** Replace the images in the `assets` folder with your own.
 - **Lyrics:** the "Lyrics" button shows the current song's lyrics (lyrics.ovh with LRCLIB fallback). To turn the feature off, set `lyrics: false` in `config.js` (`window.streams.lyrics = false`) — the button and modal disappear and no lyrics request is ever made.
+- **Visual style (5 design languages):** the whole thing — site *and* player dock — can switch design language with one field: `theme: { style: "clay" }` in `content.js`, or the picker at the top of `gerador.html`, which shows a live miniature of each option and repaints the generator page as you click.
+
+  | `style` | Looks like |
+  |---|---|
+  | `glass` (default) | Frosted glass: blur, translucent borders, floating island dock. The original look — omit the field and nothing changes. |
+  | `clay` | Claymorphism: opaque puffy surfaces, very round corners, no borders, buttons that squish when pressed. |
+  | `minimal` | Flat: 1px hairlines, no shadow or blur, square corners, and the dock goes back to being an edge-to-edge bar. |
+  | `liquid` | Liquid Glass: thicker blur, specular highlight along the edges, capsule-shaped dock and a sheen that crosses it while playing. |
+  | `spatial` | Spatial UI: neutral glass, wide ambient shadows, larger radii, and a dock that floats clear of the bottom edge. |
+
+  Everything lives in `css/ui-styles.css` as a layer of `--ui-*` tokens whose defaults *are* the current glass values, applied only when a `data-ui` attribute is present on `<html>` — so a site that never sets `style` (or never loads the file) renders exactly as before. Each style also has its own light-theme palette; the dock always keeps a dark surface, since it floats over the whole page and carries white text. To tune one, edit its token block in `css/ui-styles.css` — the generator's preview reads the same tokens and follows along.
 - **Site accent color:** one field does it — `theme: { accent: "#4dd7e0", accentLight: "" }` in `content.js`, or the color picker in `gerador.html` (live preview). From that single colour `site.js` derives the button gradient (`--site-accent-2`), the background glow (`--site-glow-1`), the text colour used on top of the accent (`--site-accent-ink`, picked by WCAG luminance so labels stay readable) and the player's starting accent (`--accent`, until the cover art sets its own). Leave `accentLight` empty and the light theme darkens the colour only as much as contrast requires.
 - **Colors (player):** Customize the player's colors by editing the `css/custom.css` file.
 - **Behavior:** Adapt the player by editing `js/radioplayer.js` (the component). `js/main.js` is the legacy non-component version, kept for reference.

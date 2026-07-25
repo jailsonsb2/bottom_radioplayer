@@ -225,10 +225,13 @@ img { max-width: 100%; display: block; }
 }
 
 .listen-install {
-    display: inline-flex;
+    display: flex;
+    width: 100%;
     align-items: center;
+    justify-content: center;
     gap: 8px;
-    margin-top: 18px;
+    min-height: 46px;
+    margin-top: 10px;
     padding: 11px 20px;
     border: none;
     border-radius: 999px;
@@ -1195,8 +1198,14 @@ body.lightbox-open { overflow: hidden; }
 .about-grid {
     display: grid;
     grid-template-columns: 1.6fr 1fr;
+    /* Linha 1 = altura do texto; linha 2 = TODA a sobra. Sem isso, a coluna
+       da direita (mais alta) distribuía a sobra entre as duas linhas e o
+       vão aparecia embaixo da história, com o mapa terminando antes dos
+       cards. Agora quem cresce é só o mapa, e as duas colunas fecham na
+       mesma linha. */
+    grid-template-rows: auto 1fr;
     gap: 24px;
-    align-items: start;
+    align-items: stretch;
 }
 
 .about-history p {
@@ -1234,17 +1243,27 @@ body.lightbox-open { overflow: hidden; }
     color: var(--site-muted);
 }
 
+/* AÇÕES DO CARD "COMO NOS OUVIR"
+   As três (loja, Alexa, instalar) eram blocos com a largura do próprio
+   conteúdo, empilhados à esquerda — a coluna ficava serrilhada. Agora cada
+   uma ocupa a largura toda do card, com o conteúdo centralizado e o mesmo
+   ritmo vertical: elas se leem como um conjunto, não como três sobras. */
+
 .listen-stores {
-    display: flex;
-    flex-wrap: wrap;
+    display: grid;
+    /* duas lojas dividem a linha; uma só ocupa a largura inteira */
+    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
     gap: 10px;
+    margin-top: 16px;
 }
+
+.listen-stores .store-badge { justify-content: center; }
 
 .listen-stores .store-badge img { height: 44px; }
 
 .listen-alexa-label {
     display: block;
-    margin: 18px 0 8px;
+    margin: 16px 0 8px;
     font-size: 12px;
     font-weight: 700;
     letter-spacing: 0.1em;
@@ -1253,10 +1272,13 @@ body.lightbox-open { overflow: hidden; }
 }
 
 .listen-alexa {
-    display: inline-flex;
+    display: flex;
+    width: 100%;
     align-items: center;
+    justify-content: center;
     gap: 10px;
-    padding: 10px 16px 10px 12px;
+    min-height: 46px;
+    padding: 10px 16px;
     border-radius: 999px;
     border: 1px solid var(--site-border);
     background: var(--site-surface-strong);
@@ -1324,8 +1346,20 @@ a.contact-item:hover { color: var(--site-text); }
 }
 
 /* mapa: ocupa as duas colunas do grid, abaixo da história/contato */
+/* O mapa desce para a COLUNA DA ESQUERDA, embaixo da história, e a coluna
+   da direita passa a atravessar as duas linhas. Ele ocupava a largura toda
+   numa terceira linha, e como a história costuma ser curta e a lateral é
+   alta (ouvir + contato), sobrava um retângulo vazio embaixo do texto —
+   agora é o mapa que preenche esse espaço. */
+.about-history { grid-column: 1; grid-row: 1; align-self: start; }
+.about-side { grid-column: 2; grid-row: 1 / span 2; }
+
 .map-card {
-    grid-column: 1 / -1;
+    grid-column: 1;
+    grid-row: 2;
+    /* o mapa é o elemento elástico da seção: ele estica até alcançar o pé
+       da coluna de cards (mínimo de 260px quando a coluna é curta) */
+    min-height: 260px;
     border-radius: var(--site-radius);
     border: 1px solid var(--site-border);
     overflow: hidden;
@@ -1334,12 +1368,28 @@ a.contact-item:hover { color: var(--site-text); }
 .map-card iframe {
     display: block;
     width: 100%;
-    height: 260px;
+    height: 100%;
+    min-height: 260px;
     border: 0;
 }
 
 @media (max-width: 800px) {
-    .about-grid { grid-template-columns: 1fr; }
+    /* coluna única: volta ao fluxo natural (história → ouvir/contato → mapa).
+       O grid-template-rows precisa cair junto — o "1fr" da linha 2 esticaria
+       o card de contato no empilhamento. */
+    .about-grid {
+        grid-template-columns: 1fr;
+        grid-template-rows: none;
+    }
+
+    .about-history,
+    .about-side,
+    .map-card {
+        grid-column: auto;
+        grid-row: auto;
+    }
+
+    .map-card { min-height: 0; }
 }
 
 /* --- footer --- */

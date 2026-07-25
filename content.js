@@ -18,9 +18,17 @@ window.siteContent = {
     // basta trocar aqui (ou usar o seletor de cor do gerador.html).
     // accentLight é opcional: em branco, o tema claro escurece a cor
     // principal só o quanto precisar para o contraste.
+    //
+    // style é a LINGUAGEM VISUAL do site e do player (troque e recarregue):
+    //   "glass"    vidro fosco — o padrão do projeto
+    //   "clay"     massa opaca e fofa, cantos redondos, sem borda
+    //   "minimal"  plano: fio de 1px, zero sombra, dock colado no rodapé
+    //   "liquid"   vidro espesso, borda especular, dock em cápsula
+    //   "spatial"  objetos flutuando: sombras amplas e profundidade
     theme: {
         accent: "#4dd7e0",
         accentLight: "#0aa6b4",
+        style: "spatial",
     },
 
     // Slides do topo da página — o primeiro botão pode dar play na rádio

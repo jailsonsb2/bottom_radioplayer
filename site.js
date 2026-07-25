@@ -79,6 +79,19 @@
             `--site-glow-1:${rgba(lightRgb, 0.14)}}`;
     }
 
+    // --- estilo visual (content.theme.style) -------------------------------
+    // Um atributo no <html> troca a linguagem visual do site E do dock:
+    // glass (padrão) · clay · minimal · liquid · spatial. Quem pinta é o
+    // css/ui-styles.css; aqui só validamos a escolha.
+    // As páginas do site já aplicam isto no pré-boot do <head> (antes do
+    // primeiro paint, para não piscar o vidro antes do estilo certo) — esta
+    // linha é a rede de segurança para páginas sem o pré-boot e o ponto de
+    // reaplicação após a navegação seamless.
+
+    const UI_STYLES = ["glass", "clay", "minimal", "liquid", "spatial"];
+    const uiStyle = String((content.theme || {}).style || "glass");
+    document.documentElement.dataset.ui = UI_STYLES.includes(uiStyle) ? uiStyle : "glass";
+
     // --- marca do header (logo substitui o texto quando configurado) ------
 
     const brand = content.brand || {};

@@ -5,14 +5,21 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Gerador do content.js — Minha Rádio</title>
+    <!-- carrega o conteúdo atual: pré-preenche o formulário e, no pré-boot
+         abaixo, define o estilo visual da própria página do gerador -->
+    <script src="content.js"></script>
     <script>
         (function () {
             var theme = localStorage.getItem("site:theme");
             if (!theme) theme = matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark";
             document.documentElement.dataset.theme = theme;
+
+            var content = window.siteContent || {};
+            document.documentElement.dataset.ui = (content.theme || {}).style || "glass";
         })();
     </script>
     <link rel="stylesheet" href="site.css">
+    <link rel="stylesheet" href="css/ui-styles.css">
     <style>
         .gen-section {
             margin-top: 40px;
@@ -163,6 +170,67 @@
         }
 
         .gen-secondary:hover { background: var(--site-surface-strong); }
+
+        /* --- seletor de estilo visual ---
+           A moldura do cartão usa os tokens da PÁGINA (o estilo escolhido);
+           só o miolo .style-preview carrega o data-ui do estilo que ele
+           representa — por isso as cinco miniaturas convivem lado a lado. */
+
+        .style-picker {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 14px;
+        }
+
+        .style-option {
+            padding: 0;
+            text-align: left;
+            border: 2px solid var(--site-border);
+            border-radius: 16px;
+            background: var(--site-surface);
+            color: var(--site-text);
+            font-family: inherit;
+            cursor: pointer;
+            overflow: hidden;
+            transition: border-color 0.2s ease, transform 0.15s ease;
+        }
+
+        .style-option:hover { transform: translateY(-2px); }
+
+        .style-option.is-active { border-color: var(--site-accent); }
+
+        .style-option-body { padding: 12px 14px 14px; }
+
+        .style-option-name {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            font-size: 14px;
+            font-weight: 800;
+        }
+
+        /* marca de selecionado: círculo com o accent (não conto só com a
+           borda — quem enxerga mal a diferença de 2px fica sem resposta) */
+        .style-option-check {
+            flex: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            border: 2px solid var(--site-border);
+        }
+
+        .style-option.is-active .style-option-check {
+            border-color: var(--site-accent);
+            background: radial-gradient(circle, var(--site-accent) 45%, transparent 47%);
+        }
+
+        .style-option-desc {
+            margin-top: 5px;
+            font-size: 12px;
+            line-height: 1.55;
+            color: var(--site-muted);
+        }
     </style>
 </head>
 
@@ -181,6 +249,14 @@
             <h1 style="font-size:clamp(26px,4vw,38px)">Configure o conteúdo do site</h1>
             <p>Preencha os campos abaixo (já carregados com o conteúdo atual) e clique em <strong>Gerar content.js</strong>.
                Depois é só baixar o arquivo e substituir o <code>content.js</code> na raiz do site.</p>
+        </section>
+
+        <section class="gen-section">
+            <h2>Estilo visual</h2>
+            <p class="gen-hint">Troca a linguagem do site <strong>e do player</strong> de uma vez: cantos, sombras,
+               transparência e relevo. Esta página do gerador se repinta com o estilo escolhido — o que você vê
+               aqui é o que o site vai ser.</p>
+            <div class="style-picker" id="gen-style"></div>
         </section>
 
         <section class="gen-section">
@@ -261,8 +337,7 @@
 
     </div>
 
-    <!-- carrega o conteúdo atual para pré-preencher o formulário -->
-    <script src="content.js"></script>
+    <!-- o content.js é carregado no <head> (o pré-boot depende dele) -->
     <script>
         (function () {
             "use strict";
@@ -275,6 +350,7 @@
             data.apps = data.apps || {};
             data.listen = data.listen || {};
             data.theme = data.theme || { accent: "#4dd7e0", accentLight: "" };
+            data.theme.style = data.theme.style || "glass";
             data.schedule = data.schedule || {};
             data.team = data.team || [];
             data.social = data.social || {};
@@ -296,6 +372,13 @@
             };
 
             // --- helpers de formulário ---
+            function el(tag, className, text) {
+                const node = document.createElement(tag);
+                if (className) node.className = className;
+                if (text) node.textContent = text;
+                return node;
+            }
+
             function field(label, value, onInput, type) {
                 const wrap = document.createElement("div");
                 wrap.className = "gen-field";
@@ -484,6 +567,65 @@
                 previewTheme();
             }
 
+            // --- estilo visual ---
+            // A miniatura é desenhada com os MESMOS tokens (--ui-*) do site e
+            // do dock de verdade: basta o data-ui no wrapper para ela se
+            // pintar sozinha. Nenhum valor de cor/sombra é copiado aqui, então
+            // mexer no css/ui-styles.css atualiza a prévia junto.
+
+            const STYLES = [
+                ["glass", "Glassmorphism", "Vidro fosco: o fundo aparece desfocado atrás das superfícies. É o visual original do projeto."],
+                ["clay", "Claymorphism", "Massa opaca e fofa: cantos bem redondos, relevo e nenhuma borda. Sem transparência."],
+                ["minimal", "Minimalismo", "Plano e sóbrio: fio de 1px, zero sombra e a cor de destaque só onde ela é informação."],
+                ["liquid", "Liquid Glass", "Vidro espesso: borda especular, cantos em cápsula e um reflexo que atravessa o dock tocando."],
+                ["spatial", "Spatial UI", "Objetos flutuando: sombras amplas, profundidade e elevação ao passar o mouse."],
+            ];
+
+            const previewMarkup =
+                '<div class="style-preview-card"><i></i><i></i><i></i></div>' +
+                '<div class="style-preview-dock">' +
+                    '<span class="style-preview-art"></span>' +
+                    '<span class="style-preview-lines"><i></i><i></i></span>' +
+                    '<span class="style-preview-btn"></span>' +
+                    '<span class="style-preview-play">&#9654;</span>' +
+                '</div>';
+
+            function renderStyle() {
+                const root = document.getElementById("gen-style");
+                root.innerHTML = "";
+                const atual = data.theme.style || "glass";
+
+                STYLES.forEach(([key, nome, descricao]) => {
+                    const btn = document.createElement("button");
+                    btn.type = "button";
+                    btn.className = "style-option" + (key === atual ? " is-active" : "");
+                    btn.setAttribute("aria-pressed", key === atual ? "true" : "false");
+
+                    const previa = document.createElement("div");
+                    previa.className = "style-preview";
+                    previa.dataset.ui = key;
+                    previa.innerHTML = previewMarkup;
+
+                    const corpo = document.createElement("div");
+                    corpo.className = "style-option-body";
+                    const titulo = document.createElement("div");
+                    titulo.className = "style-option-name";
+                    titulo.appendChild(document.createTextNode(nome));
+                    titulo.appendChild(el("span", "style-option-check"));
+                    corpo.appendChild(titulo);
+                    corpo.appendChild(el("div", "style-option-desc", descricao));
+
+                    btn.appendChild(previa);
+                    btn.appendChild(corpo);
+                    btn.onclick = () => {
+                        data.theme.style = key;
+                        document.documentElement.dataset.ui = key;
+                        renderStyle();
+                    };
+                    root.appendChild(btn);
+                });
+            }
+
             // --- galeria ---
             function renderGallery() {
                 const root = document.getElementById("gen-gallery");
@@ -581,6 +723,14 @@
                     field("WhatsApp (link wa.me)", data.about.contact.whatsapp, (v) => data.about.contact.whatsapp = v),
                     field("E-mail", data.about.contact.email, (v) => data.about.contact.email = v)
                 ));
+                // a cidade alimenta DOIS lugares: o chip de clima no topo e o
+                // mapa da seção Sobre — em branco, os dois somem
+                root.appendChild(field("Cidade (chip de clima no topo + mapa) — em branco, ocultam", data.about.city, (v) => data.about.city = v));
+                data.about.donation = data.about.donation || { url: "", label: "" };
+                root.appendChild(row(
+                    field("Link de doação (Pix, PayPal, Ko-fi…) — em branco, oculta o botão", data.about.donation.url, (v) => data.about.donation.url = v),
+                    field("Texto do botão de doação", data.about.donation.label, (v) => data.about.donation.label = v)
+                ));
             }
 
             // --- social + rodapé ---
@@ -632,7 +782,10 @@
                 Object.keys(out.listen).forEach((k) => { if (!out.listen[k]) delete out.listen[k]; });
                 if (!Object.keys(out.listen).length) delete out.listen;
                 if (!out.theme.accentLight) delete out.theme.accentLight;
-                if (!out.theme.accent) delete out.theme;
+                if (!out.theme.accent) delete out.theme.accent;
+                // "glass" é o padrão do site: gravar o campo só ruído no arquivo
+                if (!out.theme.style || out.theme.style === "glass") delete out.theme.style;
+                if (!Object.keys(out.theme).length) delete out.theme;
                 Object.keys(out.schedule).forEach((day) => {
                     out.schedule[day] = (out.schedule[day] || []).filter((s) => s.time && s.name);
                     if (!out.schedule[day].length) delete out.schedule[day];
@@ -640,7 +793,10 @@
                 Object.keys(out.social).forEach((k) => { if (!out.social[k]) delete out.social[k]; });
                 Object.keys(out.about.contact).forEach((k) => { if (!out.about.contact[k]) delete out.about.contact[k]; });
                 if (!Object.keys(out.about.contact).length) delete out.about.contact;
-                if (!out.about.history && !out.about.contact) delete out.about;
+                if (out.about.donation && !out.about.donation.url) delete out.about.donation;
+                if (!out.about.city) delete out.about.city;
+                if (!out.about.history) delete out.about.history;
+                if (!Object.keys(out.about).length) delete out.about;
                 return out;
             }
 
@@ -680,6 +836,7 @@
             };
 
             // --- primeira renderização ---
+            renderStyle();
             renderTheme();
             renderSlides();
             renderNews();

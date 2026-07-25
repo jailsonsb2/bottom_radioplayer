@@ -1,0 +1,1207 @@
+/* ============================================================
+   Estilos visuais (data-ui) — cinco linguagens, o mesmo layout
+   ------------------------------------------------------------
+   O projeto nasceu em glassmorphism (vidro fosco: blur, borda
+   translúcida, superfície a 6%). Este arquivo mantém o vidro
+   como PADRÃO e acrescenta quatro alternativas, escolhidas no
+   gerador e gravadas no content.js (theme.style):
+
+       glass    vidro fosco — o padrão histórico
+       clay     claymorphism — massa opaca e fofa, sem borda
+       minimal  minimalismo — plano, fio de 1px, zero sombra
+       liquid   liquid glass — vidro espesso com brilho especular
+       spatial  spatial UI — objetos flutuando, profundidade
+
+   COMO FUNCIONA
+   O visual inteiro passa por uma camada de tokens (--ui-*). Os
+   valores padrão abaixo são EXATAMENTE os do vidro atual, e as
+   regras que os consomem só entram em cena quando existe um
+   data-ui na página — sem o atributo (ou sem este arquivo) o
+   site e o dock continuam byte a byte como eram. Cada estilo
+   novo é, quase todo, uma troca de tokens; só o que não cabe em
+   token (o brilho do liquid, o afundar do clay) vira regra
+   própria, agrupada no fim do bloco de cada estilo.
+
+   POR QUE [data-ui] E NÃO :root[data-ui]
+   O atributo mora no <html>, mas os seletores o tratam como um
+   ANCESTRAL qualquer. Assim o gerador consegue mostrar as cinco
+   prévias lado a lado, cada uma dentro do seu próprio wrapper
+   com data-ui — e o mesmo CSS serve para a página inteira e
+   para a miniatura.
+
+   ESPECIFICIDADE
+   O site.css define os tokens do tema claro em :root[data-theme]
+   (0,2,0). Por isso cada bloco de estilo aparece duas vezes —
+   :root[data-ui="x"] para empatar (e vencer no desempate, já que
+   esta folha carrega depois) e [data-ui="x"] para as prévias
+   aninhadas do gerador.
+   ============================================================ */
+
+
+/* ============================================================
+   1. TOKENS — os valores padrão SÃO o vidro de hoje
+   ============================================================ */
+
+:root,
+[data-ui] {
+    /* header */
+    --ui-header-blur: blur(18px) saturate(160%);
+
+    /* cartões (notícias, vídeos, equipe, contato, programação...) */
+    --ui-card-bg: var(--site-surface);
+    --ui-card-border: 1px solid var(--site-border);
+    --ui-card-radius: var(--site-radius);
+    --ui-card-shadow: none;
+    --ui-card-hover-transform: translateY(-3px);
+    --ui-card-hover-border: rgba(255, 255, 255, 0.25);
+    --ui-card-hover-shadow: none;
+
+    /* controles pequenos (tema, menu, clima, setas, redes, abas) */
+    --ui-control-bg: var(--site-surface);
+    --ui-control-border: 1px solid var(--site-border);
+    --ui-control-shadow: none;
+    --ui-control-hover-bg: var(--site-surface-strong);
+    /* dois raios: a cápsula dos rótulos e o círculo dos só-ícone */
+    --ui-pill-radius: 999px;
+    --ui-round-radius: 50%;
+
+    /* painéis flutuantes (modais, lightbox, offcanvas, dropdown) */
+    --ui-panel-bg: rgba(11, 14, 19, 0.9);
+    --ui-panel-border: 1px solid rgba(255, 255, 255, 0.14);
+    --ui-panel-radius: 20px;
+    --ui-panel-shadow: 0 24px 60px rgba(0, 0, 0, 0.5);
+    --ui-panel-blur: blur(20px) saturate(160%);
+
+    /* botões de ação (ouvir agora, doar, instalar) */
+    --ui-cta-bg: linear-gradient(135deg, var(--site-accent), var(--site-accent-2, #2ba7b0));
+    --ui-cta-radius: 999px;
+    --ui-cta-shadow: 0 14px 34px color-mix(in srgb, var(--site-accent) 35%, transparent);
+    --ui-cta-hover-transform: scale(1.04);
+    --ui-cta-hover-shadow: 0 16px 40px color-mix(in srgb, var(--site-accent) 45%, transparent);
+
+    /* --- o dock do player --- */
+    --ui-dock-tint: transparent;
+    --ui-dock-veil: linear-gradient(120deg, rgba(8, 10, 15, 0.6) 0%, rgba(8, 10, 15, 0.85) 100%);
+    --ui-dock-border: 1px solid rgba(255, 255, 255, 0.16);
+    --ui-dock-radius: 26px;
+    --ui-dock-radius-mobile: 22px;
+    --ui-dock-shadow: 0 30px 80px rgba(0, 0, 0, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    --ui-dock-blur: blur(24px) saturate(160%);
+    /* o fio de accent no topo do dock — none o desliga */
+    --ui-dock-hairline: block;
+
+    /* play e demais botões do dock */
+    --ui-play-bg: linear-gradient(135deg, var(--accent, #22d3ee), color-mix(in srgb, var(--accent, #22d3ee) 55%, #04141a));
+    --ui-play-border: 1px solid rgba(255, 255, 255, 0.35);
+    --ui-play-shadow: 0 10px 30px color-mix(in srgb, var(--accent, #22d3ee) 50%, transparent);
+    --ui-play-radius: 50%;
+    --ui-btn-bg: rgba(255, 255, 255, 0.07);
+    --ui-btn-border: 1px solid rgba(255, 255, 255, 0.16);
+    --ui-btn-radius: 50%;
+    --ui-btn-shadow: none;
+    --ui-btn-hover-bg: rgba(255, 255, 255, 0.16);
+
+    /* capa e equalizador */
+    --ui-art-radius: 14px;
+    --ui-art-shadow: 0 0 0 2px color-mix(in srgb, var(--accent, #4dd7e0) 65%, transparent), 0 8px 22px rgba(0, 0, 0, 0.45);
+    --ui-viz-opacity: 0.14;
+}
+
+
+/* ============================================================
+   2. REGRAS COMPARTILHADAS — leem os tokens acima
+   ------------------------------------------------------------
+   Presas a [data-ui] para que uma página sem o atributo fique
+   intocada pelo arquivo inteiro.
+   ============================================================ */
+
+/* --- header --- */
+
+[data-ui] .site-header {
+    backdrop-filter: var(--ui-header-blur);
+    -webkit-backdrop-filter: var(--ui-header-blur);
+}
+
+/* --- cartões --- */
+
+[data-ui] .news-card,
+[data-ui] .video-card,
+[data-ui] .gallery-item,
+[data-ui] .schedule-item,
+[data-ui] .team-card,
+[data-ui] .contact-card,
+[data-ui] .listen-card,
+[data-ui] .map-card,
+[data-ui] .gen-section,
+[data-ui] .gen-item {
+    background: var(--ui-card-bg);
+    border: var(--ui-card-border);
+    border-radius: var(--ui-card-radius);
+    box-shadow: var(--ui-card-shadow);
+}
+
+[data-ui] .news-card:hover,
+[data-ui] .gallery-item:hover {
+    transform: var(--ui-card-hover-transform);
+    border-color: var(--ui-card-hover-border);
+    box-shadow: var(--ui-card-hover-shadow);
+}
+
+/* --- controles pequenos --- */
+
+[data-ui] .theme-toggle,
+[data-ui] .nav-toggle,
+[data-ui] .header-weather,
+[data-ui] .header-install,
+[data-ui] .team-arrow,
+[data-ui] .site-social-item,
+[data-ui] .schedule-tab,
+[data-ui] .hero-badge,
+[data-ui] .gen-secondary,
+[data-ui] .gen-add {
+    background: var(--ui-control-bg);
+    border: var(--ui-control-border);
+    box-shadow: var(--ui-control-shadow);
+}
+
+/* com rótulo: cápsula */
+[data-ui] .header-weather,
+[data-ui] .schedule-tab,
+[data-ui] .hero-badge,
+[data-ui] .gen-secondary,
+[data-ui] .gen-add {
+    border-radius: var(--ui-pill-radius);
+}
+
+/* só ícone: círculo */
+[data-ui] .theme-toggle,
+[data-ui] .nav-toggle,
+[data-ui] .header-install,
+[data-ui] .team-arrow,
+[data-ui] .site-social-item {
+    border-radius: var(--ui-round-radius);
+}
+
+[data-ui] .theme-toggle:hover,
+[data-ui] .nav-toggle:hover,
+[data-ui] .header-weather:hover,
+[data-ui] .header-install:hover,
+[data-ui] .team-arrow:hover:not(:disabled),
+[data-ui] .site-social-item:hover,
+[data-ui] .schedule-tab:hover,
+[data-ui] .gen-secondary:hover,
+[data-ui] .gen-add:hover {
+    background: var(--ui-control-hover-bg);
+}
+
+/* a aba ativa da programação continua sendo o accent chapado */
+[data-ui] .schedule-tab.is-active {
+    background: var(--site-accent);
+    border-color: var(--site-accent);
+    color: var(--site-accent-ink);
+}
+
+/* campos do gerador seguem a mesma família dos controles */
+[data-ui] .gen-field input,
+[data-ui] .gen-field select,
+[data-ui] .gen-field textarea,
+[data-ui] .gen-output textarea {
+    border: var(--ui-control-border);
+    border-radius: var(--ui-card-radius);
+    box-shadow: var(--ui-control-shadow);
+}
+
+/* --- botões de ação --- */
+
+[data-ui] .hero-cta,
+[data-ui] .header-donate,
+[data-ui] .listen-install,
+[data-ui] .gen-primary {
+    background: var(--ui-cta-bg);
+    border-radius: var(--ui-cta-radius);
+    box-shadow: var(--ui-cta-shadow);
+}
+
+[data-ui] .hero-cta:hover {
+    transform: var(--ui-cta-hover-transform);
+    box-shadow: var(--ui-cta-hover-shadow);
+}
+
+/* --- painéis do site --- */
+
+[data-ui] .news-modal-card,
+[data-ui] .video-dock {
+    border-radius: var(--ui-panel-radius);
+    box-shadow: var(--ui-panel-shadow);
+}
+
+[data-ui] .lightbox-figure img {
+    border-radius: var(--ui-panel-radius);
+    box-shadow: var(--ui-panel-shadow);
+}
+
+/* --- o dock do player --- */
+
+[data-ui] #app-player .player {
+    background-color: var(--ui-dock-tint);
+    border: var(--ui-dock-border);
+    border-radius: var(--ui-dock-radius);
+    box-shadow: var(--ui-dock-shadow);
+    backdrop-filter: var(--ui-dock-blur);
+    -webkit-backdrop-filter: var(--ui-dock-blur);
+}
+
+@media (max-width: 991px) {
+    [data-ui] #app-player .player {
+        border-radius: var(--ui-dock-radius-mobile);
+    }
+}
+
+/* o véu escuro que dá corpo ao dock (a camada de fundo de verdade:
+   é ele que fica opaco nos estilos que não usam vidro) */
+[data-ui] #app-player .player::before {
+    background: var(--ui-dock-veil);
+}
+
+[data-ui] #app-player .player > .player-wrapper::before {
+    display: var(--ui-dock-hairline);
+}
+
+[data-ui] #app-player .visualizer {
+    opacity: var(--ui-viz-opacity);
+}
+
+/* play */
+[data-ui] #app-player .player-button-play {
+    background: var(--ui-play-bg) !important; /* custom.css marca esta regra */
+    border: var(--ui-play-border);
+    border-radius: var(--ui-play-radius);
+    box-shadow: var(--ui-play-shadow);
+}
+
+/* demais botões do dock */
+[data-ui] #app-player .player-button-backward-step,
+[data-ui] #app-player .player-button-forward-step,
+[data-ui] #app-player .player-button-more,
+[data-ui] #app-player .player-right button.player-button,
+[data-ui] #app-player .player-right .player-button-volume-toggle {
+    background: var(--ui-btn-bg);
+    border: var(--ui-btn-border);
+    border-radius: var(--ui-btn-radius);
+    box-shadow: var(--ui-btn-shadow);
+}
+
+[data-ui] #app-player .player-button-alt {
+    background: var(--ui-btn-bg) !important; /* custom.css marca esta regra */
+    border: var(--ui-btn-border);
+    border-radius: var(--ui-btn-radius);
+    box-shadow: var(--ui-btn-shadow);
+}
+
+[data-ui] #app-player .player-button-backward-step:hover,
+[data-ui] #app-player .player-button-forward-step:hover,
+[data-ui] #app-player .player-button-more:hover,
+[data-ui] #app-player .player-right button.player-button:hover,
+[data-ui] #app-player .player-right .player-button-volume-toggle:hover {
+    background: var(--ui-btn-hover-bg);
+}
+
+[data-ui] #app-player .player-button-alt:hover {
+    background: var(--ui-btn-hover-bg) !important;
+}
+
+/* o wrapper do volume não é um botão: segue neutro em todos os estilos */
+[data-ui] #app-player .player-right .player-button-volume {
+    background: none;
+    border: none;
+    box-shadow: none;
+}
+
+/* capa */
+[data-ui] #app-player .player-artwork,
+[data-ui] #app-player .player-artwork img {
+    border-radius: var(--ui-art-radius);
+}
+
+[data-ui] #app-player .player-artwork {
+    box-shadow: var(--ui-art-shadow);
+}
+
+/* painéis do player (histórico, estações, volume, letra, compartilhar) */
+[data-ui] #app-player .offcanvas-player,
+[data-ui] #app-player .modal-content,
+[data-ui] #app-player .player-modal {
+    background: var(--ui-panel-bg);
+    border: var(--ui-panel-border);
+    border-radius: var(--ui-panel-radius);
+    box-shadow: var(--ui-panel-shadow);
+    backdrop-filter: var(--ui-panel-blur);
+    -webkit-backdrop-filter: var(--ui-panel-blur);
+}
+
+[data-ui] #app-player .dropdown {
+    background: var(--ui-panel-bg);
+    border: var(--ui-panel-border);
+    border-radius: var(--ui-card-radius);
+    backdrop-filter: var(--ui-panel-blur);
+    -webkit-backdrop-filter: var(--ui-panel-blur);
+}
+
+/* cartões dentro dos painéis: histórico, estações e a grade "mais" */
+[data-ui] #app-player .history-item,
+[data-ui] #app-player .station {
+    border: var(--ui-card-border);
+    border-radius: var(--ui-art-radius);
+    box-shadow: var(--ui-card-shadow);
+}
+
+[data-ui] #app-player .history-item::before {
+    background: var(--ui-card-bg);
+}
+
+@media (max-width: 991px) {
+    [data-ui] #app-player .player-right.is-active {
+        background: var(--ui-panel-bg);
+        border: var(--ui-panel-border);
+        border-radius: var(--ui-panel-radius);
+        box-shadow: var(--ui-panel-shadow);
+        backdrop-filter: var(--ui-panel-blur);
+        -webkit-backdrop-filter: var(--ui-panel-blur);
+    }
+
+    [data-ui] #app-player .player-right.is-active .player-button,
+    [data-ui] #app-player .player-right.is-active .player-button-alt {
+        background: var(--ui-btn-bg);
+        border: var(--ui-btn-border);
+        border-radius: var(--ui-art-radius);
+    }
+
+    [data-ui] #app-player .player-collapse {
+        background: var(--ui-panel-bg);
+        backdrop-filter: var(--ui-panel-blur);
+        -webkit-backdrop-filter: var(--ui-panel-blur);
+    }
+}
+
+
+/* ============================================================
+   3. CLAYMORPHISM — massa opaca, fofa, sem borda
+   ------------------------------------------------------------
+   Tudo aqui é volume: superfície OPACA (nenhum blur), cantos
+   muito arredondados e a sombra em três partes — a queda externa
+   difusa, um brilho interno em cima (a luz batendo na massa) e
+   uma sombra interna embaixo (a espessura). É o oposto do vidro:
+   em vez de deixar o fundo passar, os elementos o escondem.
+   ============================================================ */
+
+:root[data-ui="clay"],
+[data-ui="clay"] {
+    /* a paleta sai do preto para um azul-ardósia, e a superfície fica
+       BEM mais clara que o fundo: sem esse degrau a massa não existe —
+       relevo é diferença de luz, e no quase-preto não há luz para
+       diferenciar */
+    --site-bg: #12151f;
+    --site-surface: #2b3246;
+    --site-surface-strong: #363e56;
+    --site-border: rgba(255, 255, 255, 0.05);
+    --site-radius: 30px;
+    --site-header-bg: #1b2030;
+    /* a massa é opaca: os brilhos radiais do fundo sumiriam por baixo
+       dela de qualquer jeito (e o site.js escreve --site-glow-1 num
+       <style> próprio, por isso o seletor precisa do :root para vencer) */
+    --site-glow-1: transparent;
+    --site-glow-2: transparent;
+
+    --ui-header-blur: none;
+
+    --ui-card-radius: 30px;
+    --ui-card-border: 1px solid transparent;
+    --ui-card-shadow:
+        12px 14px 30px rgba(0, 0, 0, 0.5),
+        inset -7px -7px 14px rgba(0, 0, 0, 0.32),
+        inset 7px 7px 14px rgba(255, 255, 255, 0.13);
+    --ui-card-hover-transform: translateY(-4px);
+    --ui-card-hover-border: transparent;
+    --ui-card-hover-shadow:
+        14px 20px 38px rgba(0, 0, 0, 0.55),
+        inset -7px -7px 14px rgba(0, 0, 0, 0.32),
+        inset 7px 7px 14px rgba(255, 255, 255, 0.16);
+
+    --ui-control-bg: #2f3750;
+    --ui-control-border: 1px solid transparent;
+    --ui-control-shadow:
+        6px 7px 14px rgba(0, 0, 0, 0.45),
+        inset -4px -4px 8px rgba(0, 0, 0, 0.3),
+        inset 4px 4px 8px rgba(255, 255, 255, 0.14);
+    --ui-control-hover-bg: #3a4360;
+
+    --ui-panel-bg: #2b3246;
+    --ui-panel-border: 1px solid transparent;
+    --ui-panel-radius: 32px;
+    --ui-panel-blur: none;
+    --ui-panel-shadow:
+        16px 20px 44px rgba(0, 0, 0, 0.6),
+        inset -7px -7px 14px rgba(0, 0, 0, 0.32),
+        inset 7px 7px 14px rgba(255, 255, 255, 0.12);
+
+    --ui-cta-shadow:
+        8px 10px 20px rgba(0, 0, 0, 0.4),
+        inset -3px -3px 8px color-mix(in srgb, var(--site-accent) 40%, #000),
+        inset 3px 3px 8px rgba(255, 255, 255, 0.35);
+    --ui-cta-hover-transform: translateY(-2px);
+    --ui-cta-hover-shadow:
+        10px 14px 26px rgba(0, 0, 0, 0.45),
+        inset -3px -3px 8px color-mix(in srgb, var(--site-accent) 40%, #000),
+        inset 3px 3px 8px rgba(255, 255, 255, 0.35);
+
+    /* dock: um bloco de massa, sem vidro nenhum */
+    --ui-dock-blur: none;
+    --ui-dock-veil: #2b3246;
+    --ui-dock-border: 1px solid transparent;
+    --ui-dock-radius: 34px;
+    --ui-dock-radius-mobile: 30px;
+    --ui-dock-shadow:
+        0 24px 50px rgba(0, 0, 0, 0.55),
+        inset -8px -8px 16px rgba(0, 0, 0, 0.32),
+        inset 8px 8px 16px rgba(255, 255, 255, 0.13);
+    --ui-dock-hairline: none;
+
+    --ui-play-bg: var(--accent, #22d3ee);
+    --ui-play-border: 1px solid transparent;
+    --ui-play-shadow:
+        7px 9px 18px rgba(0, 0, 0, 0.5),
+        inset -5px -5px 10px color-mix(in srgb, var(--accent, #22d3ee) 40%, #000),
+        inset 5px 5px 10px rgba(255, 255, 255, 0.5);
+
+    --ui-btn-bg: #353d56;
+    --ui-btn-border: 1px solid transparent;
+    --ui-btn-hover-bg: #414b69;
+    --ui-btn-shadow:
+        5px 6px 12px rgba(0, 0, 0, 0.45),
+        inset -4px -4px 8px rgba(0, 0, 0, 0.3),
+        inset 4px 4px 8px rgba(255, 255, 255, 0.15);
+
+    --ui-art-radius: 22px;
+    --ui-art-shadow: 7px 9px 18px rgba(0, 0, 0, 0.5), 0 0 0 3px color-mix(in srgb, var(--accent, #4dd7e0) 40%, transparent);
+    --ui-viz-opacity: 0.06;
+}
+
+/* massa é volume: o dock ganha corpo e as bordas ficam mais gordas */
+[data-ui="clay"] #app-player .player {
+    padding: 13px 20px;
+}
+
+/* no claro a massa vira porcelana: superfície branca, sombra
+   colorida embaixo e luz forte em cima (o neumorfismo clássico) */
+:root[data-theme="light"][data-ui="clay"],
+[data-theme="light"] [data-ui="clay"] {
+    --site-bg: #e9ebf5;
+    --site-surface: #f4f5fb;
+    --site-surface-strong: #ffffff;
+    --site-border: rgba(20, 24, 33, 0.04);
+    --site-header-bg: #f1f2f9;
+    /* idem minimal: o site.js reescreve os brilhos, este seletor os vence */
+    --site-glow-1: transparent;
+    --site-glow-2: transparent;
+
+    --ui-card-shadow:
+        10px 12px 26px rgba(88, 96, 138, 0.28),
+        inset -5px -5px 12px rgba(88, 96, 138, 0.12),
+        inset 5px 5px 12px rgba(255, 255, 255, 0.95);
+    --ui-card-hover-shadow:
+        12px 16px 32px rgba(88, 96, 138, 0.34),
+        inset -5px -5px 12px rgba(88, 96, 138, 0.12),
+        inset 5px 5px 12px rgba(255, 255, 255, 0.95);
+
+    --ui-control-bg: #f4f5fb;
+    --ui-control-hover-bg: #ffffff;
+    --ui-control-shadow:
+        5px 6px 12px rgba(88, 96, 138, 0.24),
+        inset -3px -3px 7px rgba(88, 96, 138, 0.1),
+        inset 3px 3px 7px rgba(255, 255, 255, 0.95);
+
+    --ui-panel-bg: #f4f5fb;
+    --ui-panel-shadow:
+        14px 18px 40px rgba(88, 96, 138, 0.3),
+        inset -5px -5px 12px rgba(88, 96, 138, 0.1),
+        inset 5px 5px 12px rgba(255, 255, 255, 0.95);
+
+    --ui-cta-shadow:
+        8px 10px 20px rgba(88, 96, 138, 0.3),
+        inset -3px -3px 8px color-mix(in srgb, var(--site-accent) 45%, #000),
+        inset 3px 3px 8px rgba(255, 255, 255, 0.45);
+    --ui-cta-hover-shadow:
+        10px 14px 26px rgba(88, 96, 138, 0.35),
+        inset -3px -3px 8px color-mix(in srgb, var(--site-accent) 45%, #000),
+        inset 3px 3px 8px rgba(255, 255, 255, 0.45);
+
+    --ui-btn-bg: #eceefa;
+    --ui-btn-hover-bg: #ffffff;
+    --ui-btn-shadow:
+        4px 5px 10px rgba(88, 96, 138, 0.25),
+        inset -3px -3px 7px rgba(88, 96, 138, 0.1),
+        inset 3px 3px 7px rgba(255, 255, 255, 0.95);
+}
+
+/* o dock não segue o tema claro: ele fica sobre a página inteira e
+   precisa de contraste próprio — massa escura, como no vidro */
+
+/* apertar afunda a massa: a sombra externa some e a interna cresce.
+   É o gesto que dá o "fofo" ao clay — sem ele o botão é só um
+   retângulo colorido */
+[data-ui="clay"] .hero-cta:active,
+[data-ui="clay"] .header-donate:active,
+[data-ui="clay"] .listen-install:active,
+[data-ui="clay"] .gen-primary:active,
+[data-ui="clay"] .theme-toggle:active,
+[data-ui="clay"] .site-social-item:active,
+[data-ui="clay"] .schedule-tab:active,
+[data-ui="clay"] #app-player .player-button-play:active,
+[data-ui="clay"] #app-player .player-button:active,
+[data-ui="clay"] #app-player .player-button-alt:active {
+    transform: translateY(2px) scale(0.97);
+    box-shadow:
+        inset -4px -4px 10px rgba(0, 0, 0, 0.3),
+        inset 4px 4px 10px rgba(255, 255, 255, 0.08);
+}
+
+
+/* ============================================================
+   4. MINIMALISMO — plano, fio de 1px, zero sombra
+   ------------------------------------------------------------
+   Nada de blur, sombra, degradê ou movimento decorativo. A
+   hierarquia vem do espaço, do peso da tipografia e de um fio de
+   1px. O accent aparece só onde é informação (estado ativo, link,
+   ao vivo) — não como enfeite.
+   ============================================================ */
+
+:root[data-ui="minimal"],
+[data-ui="minimal"] {
+    --site-bg: #0d0f13;
+    --site-surface: transparent;
+    --site-surface-strong: rgba(255, 255, 255, 0.06);
+    --site-border: rgba(255, 255, 255, 0.16);
+    --site-radius: 8px;
+    --site-glow-1: transparent;
+    --site-glow-2: transparent;
+    --site-header-bg: #0d0f13;
+
+    --ui-header-blur: none;
+
+    --ui-card-bg: transparent;
+    --ui-card-radius: 8px;
+    --ui-card-shadow: none;
+    /* sem levitar: no plano, o que muda no hover é o fio */
+    --ui-card-hover-transform: none;
+    --ui-card-hover-border: var(--site-accent);
+    --ui-card-hover-shadow: none;
+
+    --ui-control-bg: transparent;
+    --ui-control-hover-bg: rgba(255, 255, 255, 0.07);
+    --ui-control-shadow: none;
+    /* cápsulas e círculos são forma decorativa: aqui tudo é retângulo */
+    --ui-pill-radius: 6px;
+    --ui-round-radius: 6px;
+
+    --ui-panel-bg: #14171d;
+    --ui-panel-border: 1px solid rgba(255, 255, 255, 0.16);
+    --ui-panel-radius: 10px;
+    --ui-panel-shadow: none;
+    --ui-panel-blur: none;
+
+    /* botão de ação: cor chapada, sem degradê nem halo */
+    --ui-cta-bg: var(--site-accent);
+    --ui-cta-radius: 8px;
+    --ui-cta-shadow: none;
+    --ui-cta-hover-transform: none;
+    --ui-cta-hover-shadow: none;
+
+    --ui-dock-blur: none;
+    --ui-dock-veil: #14171d;
+    --ui-dock-border: 1px solid rgba(255, 255, 255, 0.16);
+    --ui-dock-radius: 0px;
+    --ui-dock-radius-mobile: 0px;
+    --ui-dock-shadow: none;
+    --ui-dock-hairline: none;
+
+    --ui-play-bg: var(--accent, #22d3ee);
+    --ui-play-border: none;
+    --ui-play-shadow: none;
+
+    --ui-btn-bg: transparent;
+    --ui-btn-border: 1px solid rgba(255, 255, 255, 0.18);
+    --ui-btn-radius: 6px;
+    --ui-btn-hover-bg: rgba(255, 255, 255, 0.09);
+    --ui-btn-shadow: none;
+
+    --ui-art-radius: 4px;
+    --ui-art-shadow: none;
+    --ui-viz-opacity: 0.04;
+}
+
+/* A ilha flutuante é um gesto decorativo — no minimalismo o dock volta
+   a ser o que ele é: uma barra colada no rodapé, de ponta a ponta,
+   separada da página por um fio. Nada de margem, raio ou sombra.
+   O play continua redondo: ele é o alvo de toque, não enfeite. */
+[data-ui="minimal"] #app-player .player {
+    inset: auto 0 0;
+    width: 100%;
+    border-width: 1px 0 0;
+    animation: none; /* sem a entrada deslizante do dock */
+}
+
+@media (max-width: 991px) {
+    [data-ui="minimal"] #app-player .player {
+        inset: auto 0 0;
+        width: 100%;
+        padding-bottom: max(12px, env(safe-area-inset-bottom));
+    }
+
+    /* a alça de recolher acompanha: encostada, sem cantos */
+    [data-ui="minimal"] #app-player .player-collapse {
+        border-radius: 0;
+        border-width: 1px 1px 0;
+    }
+}
+
+:root[data-theme="light"][data-ui="minimal"],
+[data-theme="light"] [data-ui="minimal"] {
+    --site-bg: #ffffff;
+    --site-surface: transparent;
+    --site-surface-strong: rgba(20, 24, 33, 0.06);
+    --site-border: rgba(20, 24, 33, 0.18);
+    --site-header-bg: #ffffff;
+    /* o site.js escreve os brilhos do fundo num <style> próprio — só um
+       seletor com tema E estilo tem força para apagá-los */
+    --site-glow-1: transparent;
+    --site-glow-2: transparent;
+
+    --ui-control-hover-bg: rgba(20, 24, 33, 0.06);
+    --ui-panel-bg: #ffffff;
+    --ui-panel-border: 1px solid rgba(20, 24, 33, 0.18);
+}
+
+/* o dock continua escuro no tema claro (ele flutua sobre a página
+   toda e precisa de contraste próprio), mas perde o vidro */
+[data-theme="light"] [data-ui="minimal"],
+:root[data-theme="light"][data-ui="minimal"] {
+    --ui-dock-veil: #14171d;
+}
+
+/* sem cantos redondos gratuitos: no minimalismo o retângulo é
+   assumido, e a foto encosta na borda do cartão */
+[data-ui="minimal"] .news-card img,
+[data-ui="minimal"] .video-thumb img,
+[data-ui="minimal"] .gallery-item img {
+    border-radius: 0;
+}
+
+/* o selo do hero perde a cápsula e vira só um rótulo */
+[data-ui="minimal"] .hero-badge {
+    border: none;
+    padding: 0;
+    letter-spacing: 0.22em;
+}
+
+/* o anel pulsando na logo é enfeite: no minimalismo basta o ponto
+   vermelho de "ao vivo". O data-ui vive no <html>, então ele precisa
+   vir ANTES do body.is-playing que liga a animação no custom.css —
+   é o que dá a este seletor a especificidade para vencer. */
+[data-ui="minimal"] body.is-playing #app-player .player-station::after {
+    animation: none;
+    opacity: 0;
+}
+
+/* a marca d'água de tipografia do minimalismo: títulos mais firmes,
+   linhas de seção mais discretas */
+[data-ui="minimal"] .site-section-title::after {
+    opacity: 0.5;
+}
+
+
+/* ============================================================
+   5. LIQUID GLASS — vidro espesso, borda especular
+   ------------------------------------------------------------
+   O vidro do começo levado ao extremo: blur bem maior, superfície
+   mais clara (o vidro reflete luz, não escurece), cantos em
+   cápsula e — a assinatura — a BORDA ESPECULAR: uma linha branca
+   forte no topo e uma fraca embaixo, como a luz batendo na
+   espessura de uma lente. O dock ganha um reflexo que atravessa
+   devagar enquanto a rádio toca.
+   ============================================================ */
+
+:root[data-ui="liquid"],
+[data-ui="liquid"] {
+    --site-surface: rgba(255, 255, 255, 0.11);
+    --site-surface-strong: rgba(255, 255, 255, 0.18);
+    --site-border: rgba(255, 255, 255, 0.22);
+    --site-radius: 24px;
+
+    --ui-header-blur: blur(36px) saturate(190%);
+
+    --ui-card-radius: 24px;
+    --ui-card-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.45),
+        inset 0 -1px 0 rgba(255, 255, 255, 0.12),
+        0 16px 40px rgba(0, 0, 0, 0.35);
+    --ui-card-hover-transform: translateY(-3px) scale(1.01);
+    --ui-card-hover-border: rgba(255, 255, 255, 0.4);
+    --ui-card-hover-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.6),
+        inset 0 -1px 0 rgba(255, 255, 255, 0.16),
+        0 22px 55px rgba(0, 0, 0, 0.42);
+
+    --ui-control-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4);
+
+    --ui-panel-bg: rgba(30, 36, 48, 0.55);
+    --ui-panel-border: 1px solid rgba(255, 255, 255, 0.25);
+    --ui-panel-radius: 30px;
+    --ui-panel-blur: blur(44px) saturate(190%);
+    --ui-panel-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.5),
+        inset 0 -1px 0 rgba(255, 255, 255, 0.14),
+        0 30px 70px rgba(0, 0, 0, 0.5);
+
+    --ui-cta-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.55),
+        0 14px 34px color-mix(in srgb, var(--site-accent) 40%, transparent);
+    --ui-cta-hover-transform: scale(1.05);
+
+    /* cápsula: com ~83px de altura, o raio grande fecha as pontas */
+    --ui-dock-radius: 999px;
+    --ui-dock-radius-mobile: 34px;
+    --ui-dock-tint: rgba(255, 255, 255, 0.1);
+    /* véu bem mais leve que no vidro fosco: a lente REFLETE luz, ela não
+       escurece o que está atrás */
+    --ui-dock-veil: linear-gradient(140deg, rgba(16, 22, 34, 0.3) 0%, rgba(10, 14, 22, 0.52) 100%);
+    --ui-dock-border: 1px solid rgba(255, 255, 255, 0.3);
+    --ui-dock-blur: blur(44px) saturate(190%) brightness(1.08);
+    --ui-dock-shadow:
+        inset 0 1.5px 0 rgba(255, 255, 255, 0.55),
+        inset 0 -1.5px 0 rgba(255, 255, 255, 0.16),
+        inset 0 0 40px rgba(255, 255, 255, 0.07),
+        0 26px 60px rgba(0, 0, 0, 0.5);
+    --ui-dock-hairline: none; /* a borda especular já é a identidade */
+
+    --ui-play-shadow:
+        inset 0 1.5px 0 rgba(255, 255, 255, 0.6),
+        0 12px 32px color-mix(in srgb, var(--accent, #22d3ee) 55%, transparent);
+    --ui-play-border: 1px solid rgba(255, 255, 255, 0.45);
+
+    --ui-btn-bg: rgba(255, 255, 255, 0.13);
+    --ui-btn-border: 1px solid rgba(255, 255, 255, 0.28);
+    --ui-btn-hover-bg: rgba(255, 255, 255, 0.24);
+    --ui-btn-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.45);
+
+    --ui-art-radius: 18px;
+    --ui-art-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.5),
+        0 0 0 1.5px rgba(255, 255, 255, 0.35),
+        0 10px 26px rgba(0, 0, 0, 0.45);
+    --ui-viz-opacity: 0.1;
+}
+
+:root[data-theme="light"][data-ui="liquid"],
+[data-theme="light"] [data-ui="liquid"] {
+    --site-surface: rgba(255, 255, 255, 0.6);
+    --site-surface-strong: rgba(255, 255, 255, 0.85);
+    --site-border: rgba(255, 255, 255, 0.9);
+
+    --ui-card-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.9),
+        0 16px 40px rgba(70, 80, 110, 0.16);
+    --ui-card-hover-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 1),
+        0 22px 55px rgba(70, 80, 110, 0.22);
+    --ui-card-hover-border: #ffffff;
+
+    --ui-panel-bg: rgba(255, 255, 255, 0.7);
+    --ui-panel-border: 1px solid rgba(255, 255, 255, 0.9);
+    --ui-panel-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 1),
+        0 30px 70px rgba(70, 80, 110, 0.22);
+
+    /* o dock NÃO clareia junto: o texto dele é branco e ele flutua sobre
+       a página toda — sobre fundo claro, um véu leve o deixaria ilegível.
+       O vidro continua (o blur atravessa), só o véu volta a ser escuro. */
+    --ui-dock-tint: rgba(255, 255, 255, 0.05);
+    --ui-dock-veil: linear-gradient(140deg, rgba(14, 20, 32, 0.62) 0%, rgba(8, 12, 20, 0.8) 100%);
+}
+
+/* o reflexo que atravessa o dock — só enquanto a rádio toca, para
+   que o movimento signifique alguma coisa. Fica no ::after do
+   wrapper (o ::before já é o fio de accent) e é recortado pelo
+   overflow do próprio pseudo-elemento. */
+[data-ui="liquid"] #app-player .player > .player-wrapper::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: linear-gradient(
+        105deg,
+        transparent 35%,
+        rgba(255, 255, 255, 0.14) 48%,
+        rgba(255, 255, 255, 0.24) 50%,
+        rgba(255, 255, 255, 0.14) 52%,
+        transparent 65%
+    );
+    background-size: 260% 100%;
+    background-position: 140% 0;
+    pointer-events: none;
+    opacity: 0;
+}
+
+[data-ui="liquid"] body.is-playing #app-player .player > .player-wrapper::after {
+    opacity: 1;
+    animation: liquid-sheen 7s linear infinite;
+}
+
+@keyframes liquid-sheen {
+    from { background-position: 140% 0; }
+    to   { background-position: -60% 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    [data-ui="liquid"] #app-player .player > .player-wrapper::after {
+        animation: none !important;
+        opacity: 0.35;
+        background-position: 45% 0;
+    }
+}
+
+/* apertar "afunda" na lente: o vidro clareia e encolhe de leve */
+[data-ui="liquid"] .hero-cta:active,
+[data-ui="liquid"] #app-player .player-button:active,
+[data-ui="liquid"] #app-player .player-button-alt:active {
+    transform: scale(0.96);
+    filter: brightness(1.15);
+}
+
+
+/* ============================================================
+   6. SPATIAL UI — objetos flutuando num espaço
+   ------------------------------------------------------------
+   A referência é o visionOS: o vidro aqui é NEUTRO (satura pouco,
+   quase não colore) e o que carrega a informação é a PROFUNDIDADE
+   — sombras muito amplas, como as de um objeto pairando longe da
+   parede, e uma reação de elevação ao passar o mouse ("o objeto
+   percebe o olhar"). Formas grandes, uniformes e generosas.
+   ============================================================ */
+
+:root[data-ui="spatial"],
+[data-ui="spatial"] {
+    --site-bg: #05070c;
+    --site-surface: rgba(255, 255, 255, 0.11);
+    --site-surface-strong: rgba(255, 255, 255, 0.18);
+    --site-border: rgba(255, 255, 255, 0.2);
+    --site-radius: 32px;
+    --site-header-bg: rgba(12, 15, 22, 0.55);
+
+    --ui-header-blur: blur(40px) saturate(115%);
+
+    --ui-card-radius: 32px;
+    --ui-card-border: 1px solid rgba(255, 255, 255, 0.16);
+    --ui-card-shadow:
+        inset 0 0 0 1px rgba(255, 255, 255, 0.05),
+        0 2px 6px rgba(0, 0, 0, 0.35),
+        0 30px 70px rgba(0, 0, 0, 0.5);
+    /* elevar de verdade: sobe, cresce e a sombra abre junto */
+    --ui-card-hover-transform: translateY(-6px) scale(1.015);
+    --ui-card-hover-border: rgba(255, 255, 255, 0.34);
+    --ui-card-hover-shadow:
+        inset 0 0 0 1px rgba(255, 255, 255, 0.1),
+        0 4px 10px rgba(0, 0, 0, 0.4),
+        0 45px 95px rgba(0, 0, 0, 0.6);
+
+    --ui-control-bg: rgba(255, 255, 255, 0.1);
+    --ui-control-border: 1px solid rgba(255, 255, 255, 0.18);
+    --ui-control-hover-bg: rgba(255, 255, 255, 0.2);
+    --ui-control-shadow: 0 10px 26px rgba(0, 0, 0, 0.4);
+
+    --ui-panel-bg: rgba(22, 26, 34, 0.62);
+    --ui-panel-border: 1px solid rgba(255, 255, 255, 0.2);
+    --ui-panel-radius: 34px;
+    --ui-panel-blur: blur(50px) saturate(115%);
+    --ui-panel-shadow:
+        inset 0 0 0 1px rgba(255, 255, 255, 0.06),
+        0 4px 12px rgba(0, 0, 0, 0.4),
+        0 50px 110px rgba(0, 0, 0, 0.62);
+
+    --ui-cta-shadow:
+        0 4px 10px rgba(0, 0, 0, 0.35),
+        0 26px 60px color-mix(in srgb, var(--site-accent) 30%, transparent);
+    --ui-cta-hover-transform: translateY(-3px) scale(1.03);
+    --ui-cta-hover-shadow:
+        0 6px 14px rgba(0, 0, 0, 0.4),
+        0 34px 75px color-mix(in srgb, var(--site-accent) 40%, transparent);
+
+    --ui-dock-radius: 38px;
+    --ui-dock-radius-mobile: 32px;
+    --ui-dock-veil: linear-gradient(140deg, rgba(24, 29, 40, 0.5) 0%, rgba(12, 15, 22, 0.68) 100%);
+    --ui-dock-border: 1px solid rgba(255, 255, 255, 0.2);
+    --ui-dock-blur: blur(50px) saturate(115%);
+    --ui-dock-shadow:
+        inset 0 0 0 1px rgba(255, 255, 255, 0.06),
+        inset 0 1px 0 rgba(255, 255, 255, 0.16),
+        0 6px 16px rgba(0, 0, 0, 0.45),
+        0 60px 120px rgba(0, 0, 0, 0.7);
+    --ui-dock-hairline: none;
+
+    --ui-play-bg: linear-gradient(160deg, color-mix(in srgb, var(--accent, #22d3ee) 92%, #fff), color-mix(in srgb, var(--accent, #22d3ee) 60%, #04141a));
+    --ui-play-border: 1px solid rgba(255, 255, 255, 0.3);
+    --ui-play-shadow:
+        0 3px 8px rgba(0, 0, 0, 0.4),
+        0 18px 40px color-mix(in srgb, var(--accent, #22d3ee) 45%, transparent);
+
+    --ui-btn-bg: rgba(255, 255, 255, 0.1);
+    --ui-btn-border: 1px solid rgba(255, 255, 255, 0.18);
+    --ui-btn-hover-bg: rgba(255, 255, 255, 0.22);
+    --ui-btn-shadow: 0 6px 18px rgba(0, 0, 0, 0.4);
+
+    --ui-art-radius: 20px;
+    --ui-art-shadow:
+        0 0 0 1px rgba(255, 255, 255, 0.2),
+        0 14px 34px rgba(0, 0, 0, 0.6);
+    --ui-viz-opacity: 0.08;
+}
+
+:root[data-theme="light"][data-ui="spatial"],
+[data-theme="light"] [data-ui="spatial"] {
+    --site-bg: #dfe3ec;
+    --site-surface: rgba(255, 255, 255, 0.55);
+    --site-surface-strong: rgba(255, 255, 255, 0.8);
+    --site-border: rgba(255, 255, 255, 0.7);
+    --site-header-bg: rgba(255, 255, 255, 0.55);
+
+    /* mesma razão do liquid: o dock guarda o próprio contraste */
+    --ui-dock-veil: linear-gradient(140deg, rgba(20, 25, 36, 0.72) 0%, rgba(10, 13, 20, 0.86) 100%);
+
+    --ui-card-border: 1px solid rgba(255, 255, 255, 0.75);
+    --ui-card-shadow:
+        inset 0 0 0 1px rgba(255, 255, 255, 0.5),
+        0 2px 6px rgba(60, 70, 100, 0.12),
+        0 30px 70px rgba(60, 70, 100, 0.22);
+    --ui-card-hover-shadow:
+        inset 0 0 0 1px rgba(255, 255, 255, 0.7),
+        0 4px 10px rgba(60, 70, 100, 0.16),
+        0 45px 95px rgba(60, 70, 100, 0.3);
+    --ui-card-hover-border: #ffffff;
+
+    --ui-control-bg: rgba(255, 255, 255, 0.6);
+    --ui-control-hover-bg: rgba(255, 255, 255, 0.9);
+    --ui-control-shadow: 0 10px 26px rgba(60, 70, 100, 0.18);
+
+    --ui-panel-bg: rgba(255, 255, 255, 0.72);
+    --ui-panel-border: 1px solid rgba(255, 255, 255, 0.85);
+    --ui-panel-shadow:
+        inset 0 0 0 1px rgba(255, 255, 255, 0.6),
+        0 4px 12px rgba(60, 70, 100, 0.16),
+        0 50px 110px rgba(60, 70, 100, 0.28);
+}
+
+/* o dock se DESCOLA do rodapé e ganha a sombra de um objeto que paira
+   longe da parede. É o que separa "painel colado na tela" de "objeto
+   flutuando no espaço" — a distância é a informação.
+   Só a altura muda: a LARGURA do dock é intocável em todos os estilos.
+   No desktop o transporte (prev/play/next) é posicionado em absoluto no
+   centro do dock, fora do fluxo — estreitar a caixa não empurra nada,
+   apenas traz o grupo da direita para cima dos botões centrais. */
+[data-ui="spatial"] #app-player .player {
+    inset: auto 0 30px;
+}
+
+@media (max-width: 991px) {
+    [data-ui="spatial"] #app-player .player {
+        inset: auto 0 max(16px, env(safe-area-inset-bottom));
+    }
+}
+
+/* a profundidade precisa de um "fundo": uma vinheta escura nas
+   bordas afasta a página e faz os cartões parecerem à frente dela */
+[data-ui="spatial"] body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background: radial-gradient(120% 90% at 50% 0%, transparent 35%, rgba(0, 0, 0, 0.55) 100%);
+}
+
+:root[data-theme="light"][data-ui="spatial"] body::before {
+    background: radial-gradient(120% 90% at 50% 0%, transparent 35%, rgba(60, 70, 100, 0.22) 100%);
+}
+
+/* texto sobre vidro neutro: uma sombra mínima garante a leitura
+   sem depender da cor que estiver por trás */
+[data-ui="spatial"] .site-section-title,
+[data-ui="spatial"] .hero h1,
+[data-ui="spatial"] .hero-slide h1 {
+    text-shadow: 0 2px 12px rgba(0, 0, 0, 0.45);
+}
+
+[data-theme="light"] [data-ui="spatial"] .site-section-title,
+[data-theme="light"] [data-ui="spatial"] .hero h1,
+[data-theme="light"] [data-ui="spatial"] .hero-slide h1,
+:root[data-theme="light"][data-ui="spatial"] .site-section-title,
+:root[data-theme="light"][data-ui="spatial"] .hero h1,
+:root[data-theme="light"][data-ui="spatial"] .hero-slide h1 {
+    text-shadow: none;
+}
+
+/* os controles do dock deixam de ser furos na superfície e viram
+   objetos próprios, cada um com a sua sombra de contato */
+[data-ui="spatial"] #app-player .player-button-backward-step,
+[data-ui="spatial"] #app-player .player-button-forward-step,
+[data-ui="spatial"] #app-player .player-button-more,
+[data-ui="spatial"] #app-player .player-right button.player-button,
+[data-ui="spatial"] #app-player .player-button-alt {
+    transition: transform 0.2s cubic-bezier(0.2, 0.75, 0.2, 1), background 0.2s ease;
+}
+
+[data-ui="spatial"] #app-player .player-button-backward-step:hover,
+[data-ui="spatial"] #app-player .player-button-forward-step:hover,
+[data-ui="spatial"] #app-player .player-button-more:hover,
+[data-ui="spatial"] #app-player .player-right button.player-button:hover,
+[data-ui="spatial"] #app-player .player-button-alt:hover {
+    transform: translateY(-2px) scale(1.06);
+}
+
+[data-ui="spatial"] .team-card:hover,
+[data-ui="spatial"] .contact-card:hover,
+[data-ui="spatial"] .listen-card:hover,
+[data-ui="spatial"] .schedule-item:hover {
+    transform: var(--ui-card-hover-transform);
+    box-shadow: var(--ui-card-hover-shadow);
+    transition: transform 0.25s cubic-bezier(0.2, 0.75, 0.2, 1), box-shadow 0.25s ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    [data-ui="spatial"] {
+        --ui-card-hover-transform: none;
+        --ui-cta-hover-transform: none;
+    }
+}
+
+
+/* ============================================================
+   7. MINIATURA DE PRÉVIA (usada no gerador)
+   ------------------------------------------------------------
+   Um dock em miniatura desenhado com os MESMOS tokens do dock de
+   verdade: cada cartão do seletor de estilo carrega um data-ui e
+   se pinta sozinho. Se um token mudar lá em cima, a prévia muda
+   junto — não existe cópia de valores para desatualizar.
+   ============================================================ */
+
+.style-preview {
+    display: block;
+    padding: 18px 14px;
+    border-radius: 14px;
+    /* o fundo da miniatura é o --site-bg DO ESTILO que ela representa (o
+       data-ui está neste próprio elemento): assim a prévia mostra também
+       a página em que aquelas superfícies vão viver, não só as peças */
+    background:
+        linear-gradient(135deg, color-mix(in srgb, var(--site-accent) 28%, transparent), transparent 70%),
+        var(--site-bg);
+    overflow: hidden;
+}
+
+.style-preview-dock {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    padding: 9px 11px;
+    /* só o véu: no dock de verdade ele mora num ::before por cima do tint,
+       e aqui as duas camadas caem no mesmo elemento — declarar as duas faria
+       o background-color do tint apagar um véu de cor chapada (o do clay e
+       o do minimalismo). O tint é um clareamento sutil; o véu é a identidade. */
+    background: var(--ui-dock-veil);
+    border: var(--ui-dock-border);
+    border-radius: min(var(--ui-dock-radius), 22px);
+    box-shadow: var(--ui-dock-shadow);
+    backdrop-filter: var(--ui-dock-blur);
+    -webkit-backdrop-filter: var(--ui-dock-blur);
+}
+
+.style-preview-art {
+    flex: none;
+    width: 26px;
+    height: 26px;
+    border-radius: min(var(--ui-art-radius), 13px);
+    box-shadow: var(--ui-art-shadow);
+    background: linear-gradient(140deg, var(--site-accent), color-mix(in srgb, var(--site-accent) 40%, #12161f));
+}
+
+.style-preview-lines {
+    flex: 1;
+    min-width: 0;
+    display: grid;
+    gap: 5px;
+}
+
+.style-preview-lines i {
+    display: block;
+    height: 5px;
+    border-radius: 3px;
+    background: rgba(255, 255, 255, 0.75);
+}
+
+.style-preview-lines i + i {
+    width: 55%;
+    background: rgba(255, 255, 255, 0.35);
+}
+
+.style-preview-btn {
+    flex: none;
+    width: 20px;
+    height: 20px;
+    border: var(--ui-btn-border);
+    border-radius: min(var(--ui-btn-radius), 10px);
+    background: var(--ui-btn-bg);
+    box-shadow: var(--ui-btn-shadow);
+}
+
+.style-preview-play {
+    flex: none;
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: var(--ui-play-border);
+    border-radius: min(var(--ui-play-radius), 14px);
+    background: var(--ui-play-bg);
+    box-shadow: var(--ui-play-shadow);
+    color: #fff;
+    font-size: 9px;
+    line-height: 1;
+}
+
+/* o cartãozinho de conteúdo acima do dock, para mostrar como o
+   estilo trata as superfícies do SITE (e não só o player) */
+.style-preview-card {
+    margin-bottom: 10px;
+    padding: 10px 11px;
+    display: grid;
+    gap: 6px;
+    background: var(--ui-card-bg);
+    border: var(--ui-card-border);
+    border-radius: min(var(--ui-card-radius), 16px);
+    box-shadow: var(--ui-card-shadow);
+}
+
+.style-preview-card i {
+    display: block;
+    height: 5px;
+    border-radius: 3px;
+    background: rgba(255, 255, 255, 0.55);
+}
+
+.style-preview-card i:first-child {
+    width: 40%;
+    background: var(--site-accent);
+}
+
+.style-preview-card i:last-child {
+    width: 70%;
+    background: rgba(255, 255, 255, 0.25);
+}

@@ -16,15 +16,25 @@
     <link rel="icon" href="assets/favicon.png">
     <link rel="apple-touch-icon" href="assets/pwa/icon-192.png">
 
+    <!-- Conteúdo do site (edite o content.js). Vem no <head> porque o
+         pré-boot abaixo lê dele o ESTILO VISUAL — aplicá-lo só no fim da
+         página faria o vidro piscar antes do estilo escolhido. -->
+    <script src="content.js"></script>
     <script>
-        // Aplica o tema salvo antes do primeiro paint (evita flash)
+        // Aplica o tema salvo e o estilo visual antes do primeiro paint
         (function () {
             var theme = localStorage.getItem("site:theme");
             if (!theme) theme = matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark";
             document.documentElement.dataset.theme = theme;
+
+            // glass (padrão) | clay | minimal | liquid | spatial
+            var content = window.siteContent || {};
+            document.documentElement.dataset.ui = (content.theme || {}).style || "glass";
         })();
     </script>
     <link rel="stylesheet" href="site.css">
+    <!-- Estilos visuais alternativos (só agem se houver data-ui no <html>) -->
+    <link rel="stylesheet" href="css/ui-styles.css">
 </head>
 
 <body>
@@ -72,8 +82,7 @@
 
     </div>
 
-    <!-- Conteúdo do site (edite o content.js) -->
-    <script src="content.js"></script>
+    <!-- o content.js é carregado no <head> (o pré-boot depende dele) -->
     <script src="site.js"></script>
 
     <!-- PWA (opcional): registra o service worker e o botão "Instalar app" -->

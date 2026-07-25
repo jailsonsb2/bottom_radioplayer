@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <script src="content.js"></script>
+    <script>
+        (function () {
+            var q = new URLSearchParams(location.search);
+            document.documentElement.dataset.theme = "dark";
+            document.documentElement.dataset.ui = q.get("ui") || "glass";
+        })();
+    </script>
+    <link rel="stylesheet" href="site.css">
+    <link rel="stylesheet" href="css/ui-styles.css">
+</head>
+<body>
+    <pre id="log" style="position:fixed;top:6px;left:6px;z-index:9999;background:#000;color:#0f0;padding:8px;font:13px monospace"></pre>
+    <script src="config.js"></script>
+    <script src="js/radioplayer.js"></script>
+    <script>
+    (function () {
+        const q = new URLSearchParams(location.search);
+        setTimeout(function () {
+            const root = window.RadioPlayer && window.RadioPlayer.root;
+            if (!root) { document.getElementById("log").textContent = "player não montou"; return; }
+            // injeta o botão de clipe, como o site.js faz quando a música tem vídeo
+            const right = root.querySelector(".player-right");
+            const lyr = root.querySelector(".player-button-lyrics");
+            if (q.get("clip") && right && lyr) {
+                const b = document.createElement("button");
+                b.className = "player-button player-button-clip";
+                b.innerHTML = '<svg class="i" viewBox="0 0 24 24"><rect width="20" height="16" x="2" y="4" rx="3"></rect><path d="m10 9 5 3-5 3z"></path></svg>Clipe';
+                right.insertBefore(b, lyr);
+            }
+            setTimeout(function () {
+                const dock = root.querySelector(".player");
+                const c = root.querySelector(".player-controller").getBoundingClientRect();
+                const r = right.getBoundingClientRect();
+                const l = root.querySelector(".player-left").getBoundingClientRect();
+                const d = dock.getBoundingClientRect();
+                const cs = getComputedStyle(dock);
+                document.getElementById("log").textContent =
+                    "ui=" + (document.documentElement.dataset.ui) +
+                    "  janela=" + innerWidth + "  dock=" + Math.round(d.width) +
+                    "  padding=" + cs.paddingLeft + "/" + cs.paddingRight +
+                    "\nesquerda->transporte: " + Math.round(c.left - l.right) + "px" +
+                    "\ntransporte->direita: " + Math.round(r.left - c.right) + "px" +
+                    ((r.left - c.right) < 0 ? "   << SOBREPOSTO" : "");
+            }, 300);
+        }, 1200);
+    })();
+    </script>
+</body>
+</html>
