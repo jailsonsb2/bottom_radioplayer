@@ -25,10 +25,18 @@ window.siteContent = {
     //   "minimal"  plano: fio de 1px, zero sombra, dock colado no rodapé
     //   "liquid"   vidro espesso, borda especular, dock em cápsula
     //   "spatial"  objetos flutuando: sombras amplas e profundidade
+    //
+    // scrollDuration é o TETO, em milissegundos, da viagem até a seção
+    // quando alguém clica no menu (padrão 1100). Não é tempo fixo: o
+    // percurso curto chega em meio segundo, só o fim da página gasta o
+    // teto inteiro. Aumente para uma rolagem mais contemplativa, diminua
+    // para uma mais direta. Quem pediu menos movimento no sistema vai
+    // direto para a seção, seja qual for o valor.
     theme: {
         accent: "#38b6ff",
         accentLight: "#80daff",
-        style: "liquid",
+        style: "spatial",
+        scrollDuration: 1300,
     },
 
     // Ordem das seções na home (e dos links do menu). O topo (slides) fica

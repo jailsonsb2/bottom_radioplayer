@@ -1079,4 +1079,227 @@
         const link = navLinkFor(id);
         if (link) link.hidden = empty;
     });
+
+    // --- rolagem das âncoras, com duração própria --------------------------
+    //
+    // O scroll-behavior: smooth do CSS já suaviza, mas a DURAÇÃO é do
+    // navegador e não se configura: o Chrome despacha qualquer distância em
+    // ~300ms, o que numa página longa lê como corte seco. Por isso a
+    // animação vem para cá, com o tempo proporcional ao caminho.
+    //
+    // A regra do CSS fica onde está de propósito: continua valendo para o
+    // que não passa por aqui (voltar pelo histórico, âncora aberta direto
+    // pela URL) e é a rede de segurança se este script não rodar.
+
+    const querMenosMovimento = matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    // dá para afinar pelo content.js: theme.scrollDuration em milissegundos
+    const DURACAO_MAX = Number((content.theme || {}).scrollDuration) || 1100;
+    const DURACAO_MIN = Math.min(500, DURACAO_MAX);
+
+    // Milissegundos por pixel percorrido. Sai do teto em vez de ser um número
+    // fixo para o ajuste responder na faixa inteira: com um fator fixo, subir
+    // o scrollDuration acima da duração natural do trecho mais longo da
+    // página não mudava nada, e quem pedisse "mais devagar" não veria efeito.
+    // O divisor é a página de referência (1800px de percurso); no padrão de
+    // 1100 dá ~0,61 ms/px, que é o ritmo que estas seções já tinham.
+    const RITMO = DURACAO_MAX / 1800;
+
+    // acelera e freia simétrico (easeInOutCubic)
+    const suavizar = (t) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
+
+    if (window.__rolagemFrame) {
+        cancelAnimationFrame(window.__rolagemFrame);
+        window.__rolagemFrame = null;
+    }
+
+    // devolve a duração escolhida — quem chama usa para casar a trava do
+    // destaque do menu com o tempo real da viagem
+    function rolarAte(destinoY) {
+        if (window.__rolagemFrame) cancelAnimationFrame(window.__rolagemFrame);
+
+        const partida = window.scrollY;
+        const teto = document.documentElement.scrollHeight - window.innerHeight;
+        const distancia = Math.max(0, Math.min(destinoY, teto)) - partida;
+        const duracao = Math.min(Math.max(Math.abs(distancia) * RITMO, DURACAO_MIN), DURACAO_MAX);
+
+        if (querMenosMovimento || !distancia) {
+            // "instant" aqui e no laço abaixo é obrigatório: sem ele o
+            // scroll-behavior do CSS suavizaria cada passo da nossa própria
+            // animação, e as duas suavizações brigariam
+            window.scrollTo({ top: partida + distancia, behavior: "instant" });
+            return 0;
+        }
+
+        // rolar no meio do caminho cancela a viagem: insistir seria brigar
+        // com quem está tentando rolar na mão
+        const desligar = () => {
+            window.removeEventListener("wheel", cancelar);
+            window.removeEventListener("touchstart", cancelar);
+            window.removeEventListener("keydown", cancelar);
+        };
+        function cancelar() {
+            if (window.__rolagemFrame) cancelAnimationFrame(window.__rolagemFrame);
+            window.__rolagemFrame = null;
+            desligar();
+        }
+        window.addEventListener("wheel", cancelar, { passive: true });
+        window.addEventListener("touchstart", cancelar, { passive: true });
+        window.addEventListener("keydown", cancelar);
+
+        const inicio = performance.now();
+        const passo = (agora) => {
+            const t = Math.min((agora - inicio) / duracao, 1);
+            window.scrollTo({ top: partida + distancia * suavizar(t), behavior: "instant" });
+            if (t < 1) {
+                window.__rolagemFrame = requestAnimationFrame(passo);
+            } else {
+                window.__rolagemFrame = null;
+                desligar();
+            }
+        };
+        window.__rolagemFrame = requestAnimationFrame(passo);
+        return duracao;
+    }
+
+    // onde a seção deve parar: lê o scroll-padding-top do CSS em vez de
+    // repetir o número aqui, para o recuo ter uma fonte só
+    const recuoDoHeader = () =>
+        parseFloat(getComputedStyle(document.documentElement).scrollPaddingTop) || 0;
+
+    // --- menu: destaca a seção em que o visitante está ---------------------
+    //
+    // Uma faixa logo abaixo do header (o rootMargin recorta a viewport entre
+    // 88px e 40% da altura) funciona de leitor: a seção que a cruza é a
+    // atual. Vai depois do bloco acima de propósito — seção escondida não
+    // entra na conta, senão marcaria um link que nem está no menu.
+    //
+    // Precisa da limpeza no topo porque a navegação seamless reexecuta este
+    // script: sem desconectar, o observer da página anterior continuaria
+    // vivo apontando para DOM removido (mesmo motivo do __heroSliderTimer).
+
+    if (window.__navSpy) {
+        window.__navSpy.disconnect();
+        window.__navSpy = null;
+    }
+    if (window.__navSpyClick) {
+        document.removeEventListener("click", window.__navSpyClick);
+        window.__navSpyClick = null;
+    }
+
+    const spySections = sectionOrder
+        .map((id) => document.getElementById(id))
+        .filter((section) => section && !section.hidden);
+
+    if (siteNav && spySections.length && "IntersectionObserver" in window) {
+        // o clique trava a marcação por um instante: a rolagem suave
+        // atravessa as seções do caminho e, sem a trava, o destaque piscava
+        // em cada uma delas até assentar no destino
+        let lockedUntil = 0;
+
+        const markActive = (id) => {
+            const current = id ? navLinkFor(id) : null;
+            siteNav.querySelectorAll("a").forEach((link) => {
+                link.classList.toggle("is-active", link === current);
+            });
+        };
+
+        const crossing = new Set();
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach((entry) => {
+                if (entry.isIntersecting) crossing.add(entry.target.id);
+                else crossing.delete(entry.target.id);
+            });
+            if (Date.now() < lockedUntil) return;
+            // a faixa é alta e pode pegar duas seções: vale a de cima
+            const current = spySections.find((section) => crossing.has(section.id));
+            markActive(current ? current.id : null);
+        }, { rootMargin: "-88px 0px -60% 0px" });
+
+        spySections.forEach((section) => observer.observe(section));
+        window.__navSpy = observer;
+
+        // delegado no document (e não link.onclick) para não sobrescrever o
+        // onclick que o menu mobile já usa para fechar o painel
+        window.__navSpyClick = (event) => {
+            if (event.defaultPrevented || event.button !== 0) return;
+            if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+
+            const link = event.target.closest(".site-nav a");
+            if (!link) return;
+            const href = link.getAttribute("href") || "";
+            const id = href.split("#")[1];
+            const alvo = id && document.getElementById(id);
+            if (!alvo) return;
+
+            // só a âncora desta mesma página; "index.html#videos" clicado de
+            // uma interna é troca de página, assunto do roteador do player
+            const mesmaPagina = href.startsWith("#") ||
+                new URL(href, location.href).pathname === location.pathname;
+            if (!mesmaPagina) return;
+
+            // preventDefault antes de rolar: sem isso o salto nativo do
+            // navegador aconteceria junto e chegaríamos lá antes de animar.
+            // O roteador do player ignora eventos já cancelados, então ele
+            // também não se mete.
+            event.preventDefault();
+            const duracao = rolarAte(alvo.getBoundingClientRect().top + window.scrollY - recuoDoHeader());
+            history.pushState(null, "", "#" + id);
+
+            // a trava acompanha a viagem real: se o percurso é longo, ela
+            // dura mais; se é curto, solta antes
+            lockedUntil = Date.now() + duracao + 120;
+            markActive(id);
+        };
+        document.addEventListener("click", window.__navSpyClick);
+    }
+
+    // --- entrada dos cartões ao rolar --------------------------------------
+    //
+    // Observer separado do __navSpy porque a faixa de leitura é outra: o spy
+    // quer uma tira estreita no topo, a revelação quer disparar quando o
+    // cartão está entrando na tela.
+    //
+    // Revela uma vez e para de observar: com a rolagem suave das âncoras,
+    // clicar num item do menu atravessa várias seções em ~1s — se elas
+    // reanimassem a cada passagem, o resultado seria pisca-pisca.
+    //
+    // Mesma limpeza do __navSpy (a navegação seamless reexecuta o script).
+
+    if (window.__revealObserver) {
+        window.__revealObserver.disconnect();
+        window.__revealObserver = null;
+    }
+
+    if (!querMenosMovimento && "IntersectionObserver" in window) {
+        // Os cartões das grades verticais entram um a um. A equipe entra
+        // inteira, como bloco: é carrossel horizontal, e cartão parado fora
+        // da faixa visível dele nunca cruzaria a viewport — ficaria invisível
+        // até alguém rolar o carrossel de lado.
+        const alvos = [
+            ...document.querySelectorAll(".news-grid > *, .videos-grid > *, .gallery-grid > *"),
+            ...document.querySelectorAll(".team-carousel"),
+        ];
+
+        const observer = new IntersectionObserver((entries, obs) => {
+            entries.forEach((entry) => {
+                if (!entry.isIntersecting) return;
+                entry.target.classList.add("is-in");
+                obs.unobserve(entry.target);
+            });
+        }, { rootMargin: "0px 0px -40px 0px" });
+
+        alvos.forEach((alvo) => {
+            if (alvo.classList.contains("is-in")) return; // já revelado antes
+            // escadinha curta: o ciclo de 4 dá a cascata dentro da linha da
+            // grade sem que o último cartão de uma lista longa fique meio
+            // segundo esperando a vez
+            const irmaos = alvo.parentNode ? [...alvo.parentNode.children] : [alvo];
+            alvo.style.animationDelay = (irmaos.indexOf(alvo) % 4) * 60 + "ms";
+            alvo.classList.add("reveal");
+            observer.observe(alvo);
+        });
+
+        window.__revealObserver = observer;
+    }
 })();

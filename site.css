@@ -41,6 +41,26 @@
 html {
     scrollbar-width: thin;
     scrollbar-color: var(--site-surface-strong) transparent;
+
+    /* Rolagem suave nas âncoras do menu. Precisa estar no <html> (e não só
+       no scrollIntoView do roteador seamless): clicar em "#videos" já
+       estando na home não passa pelo roteador — é o navegador que rola, e
+       sem isto o salto era seco. Com a regra aqui, os dois caminhos
+       (mesma página e index.html#videos vindo de outra) ficam iguais. */
+    scroll-behavior: smooth;
+
+    /* onde a âncora para: abaixo do header sticky, para a seção não nascer
+       escondida atrás dele. No <html> vale para toda âncora da página — não
+       só as .site-section, que era o alcance do scroll-margin-top antigo.
+       (embaixo o dock do player já tem folga: .site-container tem
+       padding-bottom) */
+    scroll-padding-top: 84px;
+}
+
+/* rolagem suave enjoa quem tem sensibilidade vestibular: quando o sistema
+   pede menos movimento, a âncora volta a saltar direto */
+@media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
 }
 
 ::-webkit-scrollbar {
@@ -73,6 +93,40 @@ body {
 }
 
 img { max-width: 100%; display: block; }
+
+/* --- entrada dos cartões ao rolar -------------------------------------- */
+/*
+   Por que @keyframes e não transition, que seria o óbvio: os cartões já têm
+   transition própria (.news-card e .gallery-item declaram o atalho
+   `transition: transform ..., border-color ...`) na MESMA especificidade e
+   mais abaixo no arquivo. O atalho deles substituiria o meu inteiro e a
+   opacidade apareceria de estalo, sem animar. Animação é outro mecanismo:
+   não disputa com a propriedade transition.
+
+   O ganho de brinde é o transform não ficar grudado no elemento depois. Sem
+   fill-mode forwards, ao terminar o cartão volta ao transform que as regras
+   dele mandam — então o :hover que levanta 3px continua funcionando. Um
+   `transform: none` fixo aqui mataria esse levantar.
+
+   O backwards existe para a escadinha: durante o animation-delay o cartão
+   segura o estado `from` em vez de piscar visível antes de começar.
+
+   Quem põe a classe .reveal é o site.js, nunca o HTML: se o script falhar,
+   o conteúdo aparece normal em vez de ficar preso em opacity 0 — página sem
+   graça é melhor que página em branco. E quando o sistema pede menos
+   movimento o script nem chega a marcar (lá não há o que reverter).
+*/
+.reveal { opacity: 0; }
+
+.reveal.is-in {
+    opacity: 1;
+    animation: reveal-in 0.35s ease backwards;
+}
+
+@keyframes reveal-in {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: none; }
+}
 
 .site-container {
     max-width: 1120px;
@@ -368,6 +422,15 @@ img { max-width: 100%; display: block; }
     color: var(--site-text);
 }
 
+/* seção em que o visitante está agora (o site.js marca conforme a rolagem).
+   Cor + peso, e não só cor: quem não distingue bem matiz ainda enxerga qual
+   é o item ativo */
+.site-nav a.is-active {
+    color: var(--site-accent);
+    background: var(--site-surface);
+    font-weight: 800;
+}
+
 /* botão hambúrguer — aparece quando o menu não cabe mais na linha */
 .nav-toggle {
     display: none;
@@ -596,10 +659,9 @@ img { max-width: 100%; display: block; }
 
 /* --- seções --- */
 
-.site-section {
-    margin-top: 72px;
-    scroll-margin-top: 84px; /* âncoras não ficam escondidas sob o header fixo */
-}
+/* o recuo da âncora sob o header vive no scroll-padding-top do <html> —
+   repeti-lo aqui como scroll-margin-top somaria com ele */
+.site-section { margin-top: 72px; }
 
 .site-section-title {
     display: flex;
