@@ -3,6 +3,18 @@ window.streams = {
     // Letras da música tocando: use false para ocultar o botão "Lyrics"
     // e desativar a busca de letras (lyrics.ovh / LRCLIB)
     lyrics: true,
+    // Bargraph atrás do player (as barras que dançam com o áudio).
+    // false não só esconde: nem chega a abrir o AudioContext.
+    visualizer: true,
+    // Barra de progresso da faixa. Três valores:
+    //   "wave"   → onda balançando na crista do preenchimento
+    //   "simple" → só o traço, sem animação
+    //   false    → desligada
+    // Com o bargraph ligado, "simple" combina melhor: a onda e as barras
+    // disputam a mesma faixa na base do dock e o rodapé fica poluído.
+    // Só aparece quando a API entrega o tempo da música (elapsed/duration);
+    // em stream ao vivo puro ela fica invisível de qualquer jeito.
+    progress: "simple",
     stations: [
         {
             name: "Jailson Webradio",

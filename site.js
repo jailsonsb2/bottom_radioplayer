@@ -144,6 +144,143 @@
         };
     }
 
+    // --- modo desenvolvedor: trocar o estilo visual sem editar o content ---
+    // Liga com ?dev=1 na URL e desliga com ?dev=0 — fica salvo, então a
+    // navegação seamless e os recarregamentos mantêm o botão na tela. Serve
+    // para conferir os 5 estilos no site de verdade; a escolha só vale nesta
+    // máquina (localStorage) e nunca toca no content.js, que segue mandando
+    // para todo mundo que não estiver em modo dev.
+    // O CSS vem junto, injetado só quando o modo está ligado: visitante comum
+    // não carrega nem um byte disto. E ele é deliberadamente cru (cores fixas,
+    // nada de tokens do site) para o painel não mudar de cara junto com o
+    // estilo que está sendo testado.
+
+    const DEV_KEY = "site:dev";
+    const DEV_UI_KEY = "site:ui";
+    const DEV_STYLES = [
+        ["glass", "Glassmorphism"],
+        ["clay", "Claymorphism"],
+        ["minimal", "Minimalismo"],
+        ["liquid", "Liquid Glass"],
+        ["spatial", "Spatial UI"],
+    ];
+    const DEV_CSS = `
+        #dev-ui-switch { position: fixed; z-index: 2147483000; right: 12px; top: 50%;
+            transform: translateY(-50%); font: 500 13px/1.3 system-ui, sans-serif;
+            color: #e8eaf0; display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }
+        #dev-ui-switch button { font: inherit; color: inherit; cursor: pointer;
+            border: 1px solid rgba(255,255,255,.18); background: #171b24; border-radius: 10px;
+            padding: 8px 12px; text-align: left; box-shadow: 0 10px 30px rgba(0,0,0,.45); }
+        #dev-ui-switch button:hover { background: #222836; }
+        #dev-ui-switch .dev-toggle { border-radius: 999px; display: flex; align-items: center; gap: 6px; }
+        #dev-ui-switch .dev-toggle b { font-weight: 700; }
+        #dev-ui-switch .dev-panel { display: none; flex-direction: column; gap: 4px;
+            background: #0f131b; border: 1px solid rgba(255,255,255,.14); border-radius: 12px;
+            padding: 8px; min-width: 190px; box-shadow: 0 18px 50px rgba(0,0,0,.55); }
+        #dev-ui-switch.is-open .dev-panel { display: flex; }
+        #dev-ui-switch .dev-panel-title { font-size: 11px; letter-spacing: .08em;
+            text-transform: uppercase; opacity: .55; padding: 2px 4px 6px; }
+        #dev-ui-switch .dev-panel button { width: 100%; border-color: transparent;
+            background: transparent; box-shadow: none; padding: 7px 10px; }
+        #dev-ui-switch .dev-panel button:hover { background: #222836; }
+        #dev-ui-switch .dev-panel button[aria-pressed="true"] { background: #2b6cb0; }
+        #dev-ui-switch .dev-panel hr { border: 0; border-top: 1px solid rgba(255,255,255,.12); margin: 6px 4px; }
+        #dev-ui-switch .dev-exit { opacity: .6; font-size: 12px; }
+    `;
+
+    (function devUiSwitch() {
+        const params = new URLSearchParams(location.search);
+        if (params.has("dev")) {
+            if (params.get("dev") === "0") {
+                // Sair do modo dev também solta o estilo: senão a máquina
+                // ficaria presa num visual que não é o do content.js
+                localStorage.removeItem(DEV_KEY);
+                localStorage.removeItem(DEV_UI_KEY);
+                document.documentElement.dataset.ui = (content.theme || {}).style || "glass";
+            } else {
+                localStorage.setItem(DEV_KEY, "1");
+            }
+        }
+
+        const antigo = document.getElementById("dev-ui-switch");
+        if (antigo) antigo.remove(); // este script reexecuta a cada página seamless
+        if (localStorage.getItem(DEV_KEY) !== "1") return;
+
+        const style = el("style");
+        style.id = "dev-ui-switch-css";
+        style.textContent = DEV_CSS;
+        const cssAntigo = document.getElementById("dev-ui-switch-css");
+        if (cssAntigo) cssAntigo.remove();
+        document.head.appendChild(style);
+
+        const caixa = el("div");
+        caixa.id = "dev-ui-switch";
+
+        const painel = el("div", "dev-panel");
+        const toggle = el("button", "dev-toggle");
+        toggle.type = "button";
+
+        const doContent = () => (content.theme || {}).style || "glass";
+        const atual = () => document.documentElement.dataset.ui || "glass";
+        const nomeDe = (chave) => {
+            const achado = DEV_STYLES.find(([k]) => k === chave);
+            return achado ? achado[1] : chave;
+        };
+
+        function pintar() {
+            toggle.innerHTML = "";
+            toggle.appendChild(document.createTextNode("🎨 "));
+            const nome = el("b", null, nomeDe(atual()));
+            toggle.appendChild(nome);
+            painel.querySelectorAll("button[data-ui-key]").forEach((botao) => {
+                botao.setAttribute("aria-pressed", botao.dataset.uiKey === atual() ? "true" : "false");
+            });
+        }
+
+        function aplicar(chave, salvar) {
+            document.documentElement.dataset.ui = chave;
+            if (salvar) {
+                localStorage.setItem(DEV_UI_KEY, chave);
+            } else {
+                localStorage.removeItem(DEV_UI_KEY);
+            }
+            pintar();
+        }
+
+        painel.appendChild(el("div", "dev-panel-title", "Estilo visual"));
+        DEV_STYLES.forEach(([chave, nome]) => {
+            const botao = el("button", null, nome);
+            botao.type = "button";
+            botao.dataset.uiKey = chave;
+            botao.onclick = () => aplicar(chave, true);
+            painel.appendChild(botao);
+        });
+
+        painel.appendChild(el("hr"));
+        const usarContent = el("button", "dev-exit", "Usar o do content.js (" + nomeDe(doContent()) + ")");
+        usarContent.type = "button";
+        usarContent.onclick = () => aplicar(doContent(), false);
+        painel.appendChild(usarContent);
+
+        const sair = el("button", "dev-exit", "Sair do modo dev");
+        sair.type = "button";
+        sair.onclick = () => {
+            localStorage.removeItem(DEV_KEY);
+            localStorage.removeItem(DEV_UI_KEY);
+            document.documentElement.dataset.ui = doContent();
+            caixa.remove();
+            style.remove();
+        };
+        painel.appendChild(sair);
+
+        toggle.onclick = () => caixa.classList.toggle("is-open");
+
+        caixa.appendChild(painel);
+        caixa.appendChild(toggle);
+        document.body.appendChild(caixa);
+        pintar();
+    })();
+
     // --- menu mobile (hambúrguer) ------------------------------------------
     // Em telas pequenas o .site-nav vira um painel colapsável; o botão
     // alterna a classe nav-open no header. onclick (e não addEventListener)

@@ -4,6 +4,8 @@
 [![No API Key](https://img.shields.io/badge/API_key-not_required-orange)](#)
 [![Drop--in Component](https://img.shields.io/badge/component-2_script_tags-5A0FC8)](#)
 
+**English** · [Português](README.pt.md) · [Español](README.es.md) · [Italiano](README.it.md)
+
 **[▶ Try the live demo](https://jailsonsb2.github.io/bottom_radioplayer/)** — click play, then navigate between the pages: the music never stops.
 
 ### Description
@@ -20,6 +22,7 @@ A bottom-bar **HTML5 radio player** that works as a **drop-in JavaScript compone
 - **Audio playback** with play/pause, volume and station switching, plus smooth volume fade in/out (no audio "pop").
 - **Loading spinner** while the stream buffers and **automatic reconnection** with backoff when the network drops.
 - **Dynamic audio visualizer** that reacts to the music in real time (off on mobile to save battery; paused when the tab is hidden).
+- **Track progress bar** along the bottom edge of the dock, in two flavours: a plain line, or a liquid wave riding the crest of the fill. It is clipped by the dock's own rounded shape, so it follows the corner in every visual style, and only appears when the metadata API reports the track's time.
 - **Now playing metadata** via the twj.es API — cover art comes straight from the API payload, with search.php + iTunes (music-only) as fallbacks.
 - **Station list** with thumbnails and information.
 - **Song history** with covers (up to 10 recently played tracks).
@@ -160,6 +163,20 @@ The demo site ships as an installable app: `manifest.json`, icons in `assets/pwa
 
 - **Images:** Replace the images in the `assets` folder with your own.
 - **Lyrics:** the "Lyrics" button shows the current song's lyrics (lyrics.ovh with LRCLIB fallback). To turn the feature off, set `lyrics: false` in `config.js` (`window.streams.lyrics = false`) — the button and modal disappear and no lyrics request is ever made.
+- **Dock effects (bargraph and progress bar):** two decorations, both set in `config.js` and both on by default.
+
+  | field | values |
+  |---|---|
+  | `visualizer` | `true` (default) / `false` — `false` doesn't merely hide the bars: the element never reaches the DOM, so the `AudioContext` is never opened. |
+  | `progress` | `"wave"` (default) / `"simple"` / `false`. `true` is still accepted as an alias for `"wave"`, so older config files keep working. |
+
+  The progress bar only shows up when the metadata API reports `now_playing.elapsed` and `now_playing.duration` — on a pure live stream it stays invisible whatever you set. Between polls (10 s apart) it advances on a local clock anchored to the last known `elapsed`; without that it would lurch forward once every ten seconds. `"wave"` puts two SVG sine layers on the crest of the fill, running at different lengths and speeds — the mismatch between them is what reads as liquid. `"simple"` leaves the plain line and builds no SVG and no animation at all.
+
+  **With the bargraph on, `"simple"` is the better pairing:** the wave and the bars fight over the same 16 px band at the bottom of the dock. Keep `"wave"` for docks with `visualizer: false`.
+
+  The bar is clipped by a frame that inherits the dock's own `border-radius`, so it follows the corner in every visual style — including the 999 px capsule of `liquid`, where insetting the bar by the radius would have collapsed it to nothing.
+
+  In the generator this is the **"Efeitos do player"** section, which writes `theme: { visualizer, progress }` into `content.js`. That is only a fallback: **`config.js` always wins**, because a player embedded on someone else's site has no `content.js` at all.
 - **Visual style (5 design languages):** the whole thing — site *and* player dock — can switch design language with one field: `theme: { style: "clay" }` in `content.js`, or the picker at the top of `gerador.html`, which shows a live miniature of each option and repaints the generator page as you click.
 
   | `style` | Looks like |
@@ -171,6 +188,7 @@ The demo site ships as an installable app: `manifest.json`, icons in `assets/pwa
   | `spatial` | Spatial UI: neutral glass, wide ambient shadows, larger radii, and a dock that floats clear of the bottom edge. |
 
   Everything lives in `css/ui-styles.css` as a layer of `--ui-*` tokens whose defaults *are* the current glass values, applied only when a `data-ui` attribute is present on `<html>` — so a site that never sets `style` (or never loads the file) renders exactly as before. Each style also has its own light-theme palette; the dock always keeps a dark surface, since it floats over the whole page and carries white text. To tune one, edit its token block in `css/ui-styles.css` — the generator's preview reads the same tokens and follows along.
+- **Developer mode (try the 5 styles on the live site):** add `?dev=1` to any page URL and a floating 🎨 button appears, listing the five design languages; picking one repaints the site *and* the dock immediately. It exists because comparing styles otherwise means re-editing `content.js` and reloading for every one of them. The choice is remembered in `localStorage`, so it survives seamless navigation and full reloads — the pre-boot script in each page's `<head>` reads it before the first paint, otherwise the picked style would flash back to the configured one on every page. Turn it off from the panel ("Sair do modo dev") or with `?dev=0`; both also release the style override, so the machine can't get stuck on a look that isn't the site's real one. It lives in `site.js` and injects its own CSS **only when enabled**, so ordinary visitors download nothing extra — and since it is per browser, nobody else ever sees the button. The panel is deliberately styled with fixed colours rather than site tokens, so it doesn't change shape along with the style you are judging.
 - **Site accent color:** one field does it — `theme: { accent: "#4dd7e0", accentLight: "" }` in `content.js`, or the color picker in `gerador.html` (live preview). From that single colour `site.js` derives the button gradient (`--site-accent-2`), the background glow (`--site-glow-1`), the text colour used on top of the accent (`--site-accent-ink`, picked by WCAG luminance so labels stay readable) and the player's starting accent (`--accent`, until the cover art sets its own). Leave `accentLight` empty and the light theme darkens the colour only as much as contrast requires.
 - **Menu scroll speed:** clicking a menu item glides to the section instead of jumping, and `theme: { scrollDuration: 1100 }` in `content.js` sets how long the longest trip may take, in milliseconds (default `1100`). The actual duration scales with the distance travelled — a nearby section lands in about half a second, the far end of the page takes the full budget — so raise it for a slower, more deliberate glide and lower it for a snappier one. This exists because the CSS `scroll-behavior: smooth` alone gives you no control over timing: the browser picks it (Chrome spends roughly 300 ms on *any* distance), which on a long page reads as a hard cut. `site.js` animates the trip itself instead, easing in and out, and stops immediately if the visitor scrolls by hand mid-flight. Visitors whose system asks for reduced motion always jump straight to the section, whatever the value.
 - **Languages (pt / en / es / it):** the whole interface switches language from a picker in the header — section titles, menu, weekday tabs, buttons, accessibility labels, the PWA prompts and the player's own controls (Lyrics, History, Stations, Share). Everything lives in `js/i18n.js`: one dictionary per language, plus `data-i18n` attributes on the static HTML. **Only the chrome is translated** — the news, programmes, team names and slides you write in `content.js` come out exactly as you wrote them, because they're your content, not the frame. A visitor gets their browser's language when it's one of the four, otherwise the `theme: { language: "pt" }` default from `content.js`; their pick is remembered in `localStorage` and wins from then on. Switching language re-renders the page through the player's seamless navigation, so **the music doesn't stop**. Dates follow the language too (`10 de julho de 2026` → `July 10, 2026`). To add a fifth language, copy one dictionary block in `js/i18n.js`, translate the values and add the code to `LANGS`; any key you miss falls back to Portuguese instead of showing a raw key. Drop `js/i18n.js` from the pages and the site is byte for byte the Portuguese-only one it was — every `t()` call carries the original string as its fallback.

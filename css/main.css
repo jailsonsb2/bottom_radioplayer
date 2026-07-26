@@ -929,6 +929,78 @@ body, html {
   display: none;
 }
 
+/* Barra de progresso da faixa: o preenchimento é o ::before (largura =
+   --song-progress) e, colada na crista dele, correm duas ondas SVG em
+   velocidades diferentes — o descompasso entre as camadas é o que dá a
+   leitura de líquido subindo, em vez de uma barra chapada. */
+/* A moldura cobre o dock inteiro só para HERDAR o raio dele e recortar:
+   a barra encosta na borda de baixo de ponta a ponta, e nos estilos de
+   dock arredondado (o "pill" chega a 999px) ela é cortada exatamente
+   pela curva, em vez de escapar pelos cantos. */
+#app-player .progress-bar {
+  --song-progress: 0%;
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  overflow: hidden;
+  pointer-events: none;
+}
+/* Sem elapsed/duration da API (stream ao vivo puro) não há o que mostrar */
+#app-player .progress-bar:not(.has-time-data) {
+  display: none;
+}
+#app-player .progress-bar-track {
+  position: absolute;
+  inset: auto 0 0;
+  height: 4px;
+  background-color: rgba(255, 255, 255, 0.2);
+}
+#app-player .progress-bar-track::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: var(--song-progress);
+  background-color: var(--accent, var(--player-primary));
+  transition: background-color var(--duration);
+}
+/* Recorta as ondas na mesma largura do preenchimento: elas só existem
+   sobre a parte já tocada. O SVG dentro é mais largo e fica preso à
+   esquerda, então o comprimento de onda não estica com o progresso. */
+#app-player .progress-bar-waves {
+  position: absolute;
+  inset: auto auto calc(100% - 1px) 0;
+  width: var(--song-progress);
+  height: 16px;
+  overflow: hidden;
+}
+#app-player .progress-bar-wave {
+  position: absolute;
+  inset: auto auto 0 0;
+  color: var(--accent, var(--player-primary));
+  animation: player-wave var(--wave-speed, 5s) linear infinite;
+}
+#app-player .progress-bar-wave svg {
+  display: block;
+}
+#app-player .progress-bar-wave path {
+  fill: currentColor;
+}
+/* Desloca exatamente um comprimento de onda: o laço fecha sem emenda */
+@keyframes player-wave {
+  to {
+    transform: translateX(calc(var(--wave-length, 48px) * -1));
+  }
+}
+/* Player parado, água parada */
+body:not(.is-playing) #app-player .progress-bar-wave {
+  animation-play-state: paused;
+}
+@media (prefers-reduced-motion: reduce) {
+  #app-player .progress-bar-wave {
+    animation: none;
+  }
+}
+
 .modal {
   position: fixed;
   max-width: 900px;

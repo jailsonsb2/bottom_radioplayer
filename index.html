@@ -40,7 +40,11 @@
 
             // glass (padrão) | clay | minimal | liquid | spatial
             var content = window.siteContent || {};
-            document.documentElement.dataset.ui = (content.theme || {}).style || "glass";
+            // O modo dev (?dev=1, veja o site.js) troca o estilo só nesta
+            // máquina. Precisa ser lido aqui, antes do primeiro paint, ou o
+            // visual escolhido piscaria de volta ao do content a cada página.
+            var uiDev = localStorage.getItem("site:dev") === "1" ? localStorage.getItem("site:ui") : null;
+            document.documentElement.dataset.ui = uiDev || (content.theme || {}).style || "glass";
 
             // theme.hoverZoom: false desliga o crescer ao passar o mouse
             if ((content.theme || {}).hoverZoom === false) {

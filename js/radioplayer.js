@@ -32,6 +32,29 @@
   const SEAMLESS = CONFIG.seamless !== false;
   const LYRICS_ENABLED = CONFIG.lyrics !== false;
 
+  // Bargraph e barra de progresso podem ser desligados. O config.js manda,
+  // porque é o arquivo do player; o content.js entra como segunda opção só
+  // porque é ele que o gerador escreve — quem embute apenas o player nem tem
+  // content.js na página, e aí o config.js segue sendo a única fonte.
+  const SITE_THEME = (window.siteContent || {}).theme || {};
+  const opcao = (chave) => {
+      if (typeof CONFIG[chave] === "boolean") return CONFIG[chave];
+      if (typeof SITE_THEME[chave] === "boolean") return SITE_THEME[chave];
+      return true;
+  };
+  const VISUALIZER_ENABLED = opcao("visualizer");
+
+  // A barra de progresso tem dois desenhos: "wave" põe a onda na crista do
+  // preenchimento, "simple" deixa só o traço. Com o bargraph ligado os dois
+  // efeitos disputam a mesma faixa na base do dock e o rodapé fica poluído —
+  // daí a escolha existir em vez de ser só liga/desliga.
+  const PROGRESS_MODE = (() => {
+      const bruto = CONFIG.progress !== undefined ? CONFIG.progress : SITE_THEME.progress;
+      if (bruto === false) return "off";
+      if (bruto === "simple") return "simple";
+      return "wave"; // true, ausente ou valor desconhecido
+  })();
+
   // --- [CONFIGURAÇÕES] -----------------------------------------------
 
   // Endpoint de consulta única (cache compartilhado de 5s no Redis,
@@ -50,6 +73,15 @@
                     <button class="player-collapse" type="button" aria-label="Recolher o player" data-i18n-aria-label="player.collapse" aria-expanded="true">
                         <svg class="i i-chevron-down" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"></path></svg>
                     </button>
+                    <!-- Progresso da faixa: fica escondido até a API entregar
+                         elapsed/duration (classe has-time-data). Vem ANTES do
+                         conteúdo para as ondas passarem por baixo dos controles.
+                         As ondas em si são montadas no JS (buildWaves). -->
+                    <div class="progress-bar" aria-hidden="true">
+                        <div class="progress-bar-track">
+                            <div class="progress-bar-waves"></div>
+                        </div>
+                    </div>
                     <div class="player-wrapper">
                         <div class="player-cover flex items-center justify-center g-2 items-center">
                             <div class="player-left flex items-center">
@@ -323,6 +355,21 @@
           if (lyricsButton) lyricsButton.remove();
           if (lyricsModal) lyricsModal.remove();
       }
+      // Arrancados do DOM em vez de escondidos por CSS: sem o elemento, o
+      // resto do código já não liga o AudioContext nem o tique do progresso
+      if (!VISUALIZER_ENABLED) {
+          const viz = root.querySelector(".visualizer");
+          if (viz) viz.remove();
+      }
+      if (PROGRESS_MODE === "off") {
+          const barra = root.querySelector(".progress-bar");
+          if (barra) barra.remove();
+      } else if (PROGRESS_MODE === "simple") {
+          // Sem a caixa das ondas o buildWaves() já não tem onde desenhar:
+          // o traço fica sozinho, sem custo de animação nenhum
+          const ondas = root.querySelector(".progress-bar-waves");
+          if (ondas) ondas.remove();
+      }
       document.body.appendChild(root);
       if (window.SiteI18n) window.SiteI18n.apply(root);
   }
@@ -574,6 +621,111 @@
 
       audio.addEventListener("error", handleConnectionDrop);
       audio.addEventListener("stalled", handleConnectionDrop);
+
+      // --- [BARRA DE PROGRESSO DA FAIXA] --------------------------------
+      // A API entrega elapsed/duration só a cada poll (10s). Entre um poll
+      // e outro a barra anda sozinha, contando o tempo local a partir do
+      // último elapsed conhecido — sem isso ela avançaria aos solavancos.
+
+      const progressBar = $(".progress-bar");
+      const progressWaves = $(".progress-bar-waves");
+
+      // Cada camada é uma senoide desenhada em SVG. O CSS desloca a onda em
+      // exatamente um comprimento, então o laço fecha sem emenda; o
+      // descompasso entre as duas velocidades é o que dá o balanço líquido.
+      const WAVE_LAYERS = [
+          { length: 48, amplitude: 3, speed: "5s", opacity: 0.5 },
+          { length: 72, amplitude: 4, speed: "3.2s", opacity: 0.85 },
+      ];
+      const WAVE_BOX = 16;
+
+      // Uma quadrática por meio comprimento de onda. O controle vai ao DOBRO
+      // da amplitude porque o pico da curva fica na média entre as pontas e
+      // o controle — com a amplitude crua a onda sairia pela metade da altura.
+      function wavePath(length, amplitude, tiles) {
+          const total = length * tiles;
+          const half = length / 2;
+          const quarter = length / 4;
+          const crest = `q${quarter} ${-amplitude * 2} ${half} 0`;
+          const trough = `q${quarter} ${amplitude * 2} ${half} 0`;
+          let d = `M0 ${WAVE_BOX - amplitude}`;
+          for (let i = 0; i < tiles; i++) {
+              d += crest + trough;
+          }
+          // Fecha o contorno até a base: a onda é uma massa preenchida que
+          // encosta na barra, não um traço solto.
+          return `${d}L${total} ${WAVE_BOX}L0 ${WAVE_BOX}Z`;
+      }
+
+      function buildWaves() {
+          if (!progressBar || !progressWaves) return;
+          // A caixa das ondas é recortada pelo progresso, mas o SVG precisa
+          // cobrir a barra inteira MAIS um comprimento de onda — que é o
+          // quanto a animação desloca antes de reiniciar.
+          const barWidth = progressBar.clientWidth || window.innerWidth;
+          progressWaves.innerHTML = "";
+          WAVE_LAYERS.forEach((layer) => {
+              const tiles = Math.ceil((barWidth + layer.length) / layer.length);
+              const total = tiles * layer.length;
+              const wave = document.createElement("div");
+              wave.className = "progress-bar-wave";
+              wave.style.setProperty("--wave-length", layer.length + "px");
+              wave.style.setProperty("--wave-speed", layer.speed);
+              wave.style.opacity = layer.opacity;
+              wave.innerHTML =
+                  `<svg width="${total}" height="${WAVE_BOX}" viewBox="0 0 ${total} ${WAVE_BOX}">` +
+                  `<path d="${wavePath(layer.length, layer.amplitude, tiles)}"></path></svg>`;
+              progressWaves.appendChild(wave);
+          });
+      }
+
+      let progressState = null;
+
+      function renderProgress() {
+          if (!progressState || !progressBar) return;
+          const drift = (Date.now() - progressState.at) / 1000;
+          const percent = Math.min(100, ((progressState.elapsed + drift) / progressState.duration) * 100);
+          progressBar.style.setProperty("--song-progress", percent.toFixed(2) + "%");
+      }
+
+      function setProgressData(res) {
+          if (!progressBar) return;
+          const nowPlaying = (res && res.now_playing) || {};
+          const duration = Number(nowPlaying.duration);
+          const elapsed = Number(nowPlaying.elapsed);
+          // Stream ao vivo (sem duração) não tem progresso a mostrar
+          if (!duration || duration <= 0 || !isFinite(elapsed)) {
+              progressState = null;
+              progressBar.classList.remove("has-time-data");
+              return;
+          }
+          progressState = { elapsed: Math.max(0, elapsed), duration, at: Date.now() };
+          if (!progressBar.classList.contains("has-time-data")) {
+              progressBar.classList.add("has-time-data");
+              // As ondas só são montadas quando a barra vai realmente aparecer:
+              // a largura do SVG depende da barra já ter medida em tela
+              buildWaves();
+          }
+          renderProgress();
+      }
+
+      function resetProgress() {
+          progressState = null;
+          if (progressBar) progressBar.classList.remove("has-time-data");
+      }
+
+      if (progressBar) {
+          setInterval(() => {
+              if (!document.hidden) renderProgress();
+          }, 250);
+
+          let waveResizeTimer = null;
+          window.addEventListener("resize", () => {
+              if (!progressBar.classList.contains("has-time-data")) return;
+              clearTimeout(waveResizeTimer);
+              waveResizeTimer = setTimeout(buildWaves, 200);
+          });
+      }
 
       // --- [VISUALIZADOR] ----------------------------------------------
 
@@ -1551,6 +1703,11 @@
                   // anterior repintava capa, título e histórico da rádio velha
                   if (requestId !== metadataRequestId) return;
 
+                  // Fora do bloco de troca de música abaixo: o progresso
+                  // precisa ser reancorado a CADA poll, inclusive quando a
+                  // faixa é a mesma (é justamente aí que ele avança)
+                  setProgressData(res);
+
                   const current = normalizeTitle(res);
                   const title = current.title;
 
@@ -1636,6 +1793,9 @@
 
       createStations(stations, currentStation, audio, (station) => {
           currentStation = station;
+          // Zera o progresso na troca: o tempo da estação anterior não vale
+          // mais e a barra ficaria correndo com dado velho até o próximo poll
+          resetProgress();
           initStream(station);
       });
 

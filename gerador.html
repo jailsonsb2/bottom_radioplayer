@@ -298,6 +298,15 @@
         </section>
 
         <section class="gen-section">
+            <h2>Efeitos do player</h2>
+            <p class="gen-hint">Os dois enfeites do dock. Desligar não muda o áudio nem os controles — só tira o
+               movimento, o que ajuda em máquina fraca. Quem embute o player em outro site pode dizer o mesmo
+               direto no <code>config.js</code> (<code>visualizer</code> e <code>progress</code>), que tem a
+               palavra final sobre o que for gerado aqui.</p>
+            <div id="gen-player-fx"></div>
+        </section>
+
+        <section class="gen-section">
             <h2>Cor do site</h2>
             <p class="gen-hint">A cor de destaque manda nos botões, links, selos e no degradê. O site deriva sozinho o
                brilho do fundo e a cor do texto sobre ela — a prévia abaixo já muda enquanto você escolhe.</p>
@@ -697,6 +706,48 @@
                 aplicarHoverZoom();
             }
 
+            // --- efeitos do player ---
+            // Moram no theme junto com o estilo porque são a mesma decisão de
+            // aparência. O radioplayer.js lê primeiro o config.js e só cai
+            // aqui quando aquele não disser nada — daí o padrão ser ligado.
+
+            function renderPlayerFx() {
+                const root = document.getElementById("gen-player-fx");
+                root.innerHTML = "";
+                root.appendChild(checkbox(
+                    "Bargraph atrás do player (as barras que dançam com o áudio)",
+                    data.theme.visualizer !== false,
+                    (marcado) => { data.theme.visualizer = marcado; }
+                ));
+                const campo = el("div", "gen-field");
+                const rotulo = document.createElement("label");
+                rotulo.textContent = "Barra de progresso da faixa";
+                campo.appendChild(rotulo);
+                const escolha = document.createElement("select");
+                [
+                    ["wave", "Com onda balançando na crista"],
+                    ["simple", "Simples — só o traço"],
+                    ["off", "Desligada"],
+                ].forEach(([valor, texto]) => {
+                    const opcao = document.createElement("option");
+                    opcao.value = valor;
+                    opcao.textContent = texto;
+                    escolha.appendChild(opcao);
+                });
+                escolha.value = data.theme.progress === false ? "off"
+                    : data.theme.progress === "simple" ? "simple" : "wave";
+                escolha.onchange = () => {
+                    data.theme.progress = escolha.value === "off" ? false : escolha.value;
+                };
+                campo.appendChild(escolha);
+                root.appendChild(campo);
+
+                root.appendChild(el("p", "gen-hint",
+                    "Com o bargraph ligado, a opção simples combina melhor: a onda e as barras " +
+                    "disputam a mesma faixa na base do dock. E a barra toda depende da API entregar " +
+                    "o tempo da música — em stream ao vivo puro ela não aparece de jeito nenhum."));
+            }
+
             function aplicarHoverZoom() {
                 if (data.theme.hoverZoom) delete document.documentElement.dataset.hoverZoom;
                 else document.documentElement.dataset.hoverZoom = "off";
@@ -920,6 +971,11 @@
                 if (!out.theme.style || out.theme.style === "glass") delete out.theme.style;
                 // idem para o zoom ligado — só a recusa precisa ir para o arquivo
                 if (out.theme.hoverZoom !== false) delete out.theme.hoverZoom;
+                // e para os efeitos do player, ligados por padrão
+                if (out.theme.visualizer !== false) delete out.theme.visualizer;
+                // a onda é o padrão do player: só "simple" e false vão ao arquivo
+                if (out.theme.progress === undefined || out.theme.progress === true
+                    || out.theme.progress === "wave") delete out.theme.progress;
                 if (!Object.keys(out.theme).length) delete out.theme;
                 Object.keys(out.schedule).forEach((day) => {
                     out.schedule[day] = (out.schedule[day] || []).filter((s) => s.time && s.name);
@@ -973,6 +1029,7 @@
             // --- primeira renderização ---
             renderStyle();
             renderHoverZoom();
+            renderPlayerFx();
             renderTheme();
             renderOrder();
             renderSlides();
