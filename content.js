@@ -32,11 +32,18 @@ window.siteContent = {
     // teto inteiro. Aumente para uma rolagem mais contemplativa, diminua
     // para uma mais direta. Quem pediu menos movimento no sistema vai
     // direto para a seção, seja qual for o valor.
+    //
+    // hoverZoom liga o CRESCER ao passar o mouse (padrão true): o cartão
+    // que aumenta um tico, a foto da galeria e a miniatura de vídeo que
+    // dão um zoom por baixo da moldura, o botão de ação que incha. Com
+    // false só o crescer sai — o levantar de cada estilo, a troca de
+    // borda e a sombra continuam, então o hover segue respondendo.
     theme: {
         accent: "#38b6ff",
         accentLight: "#80daff",
         style: "spatial",
         scrollDuration: 1300,
+        hoverZoom: true,
     },
 
     // Ordem das seções na home (e dos links do menu). O topo (slides) fica

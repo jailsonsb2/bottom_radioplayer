@@ -92,6 +92,17 @@
     const uiStyle = String((content.theme || {}).style || "glass");
     document.documentElement.dataset.ui = UI_STYLES.includes(uiStyle) ? uiStyle : "glass";
 
+    // --- zoom no hover (content.theme.hoverZoom) ---------------------------
+    // Só o crescer é opcional; o levantar e a borda que acende ficam. Marcamos
+    // apenas a RECUSA (data-hover-zoom="off") em vez de escrever "on" no caso
+    // normal: sem o atributo o CSS é byte a byte o de sempre, e quem nunca
+    // ouviu falar deste campo não paga nada por ele.
+    if ((content.theme || {}).hoverZoom === false) {
+        document.documentElement.dataset.hoverZoom = "off";
+    } else {
+        delete document.documentElement.dataset.hoverZoom;
+    }
+
     // --- marca do header (logo substitui o texto quando configurado) ------
 
     const brand = content.brand || {};

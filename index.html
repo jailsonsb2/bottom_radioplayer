@@ -39,6 +39,11 @@
             // glass (padrão) | clay | minimal | liquid | spatial
             var content = window.siteContent || {};
             document.documentElement.dataset.ui = (content.theme || {}).style || "glass";
+
+            // theme.hoverZoom: false desliga o crescer ao passar o mouse
+            if ((content.theme || {}).hoverZoom === false) {
+                document.documentElement.dataset.hoverZoom = "off";
+            }
         })();
     </script>
     <link rel="stylesheet" href="site.css">

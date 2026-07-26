@@ -1075,7 +1075,12 @@
     transition: transform 0.25s cubic-bezier(0.2, 0.75, 0.2, 1), box-shadow 0.25s ease;
 }
 
+/* O :root aqui não é enfeite: os tokens do spatial são declarados em
+   :root[data-ui="spatial"] (0,2,0) e especificidade ganha de ordem — sem
+   ele esta regra (0,1,0) nunca chegava a valer na página de verdade, e
+   quem pediu menos movimento continuava vendo o cartão crescer. */
 @media (prefers-reduced-motion: reduce) {
+    :root[data-ui="spatial"],
     [data-ui="spatial"] {
         --ui-card-hover-transform: none;
         --ui-cta-hover-transform: none;
@@ -1204,4 +1209,87 @@
 .style-preview-card i:last-child {
     width: 70%;
     background: rgba(255, 255, 255, 0.25);
+}
+
+
+/* ============================================================
+   8. SEM ZOOM NO HOVER — content.theme.hoverZoom: false
+   ------------------------------------------------------------
+   Passar o mouse faz duas coisas diferentes que o olho lê como
+   uma só: LEVANTAR (translateY, borda que acende, sombra que
+   abre) e CRESCER (scale). Quem pede "tira o zoom" quase sempre
+   quer só a segunda fora — sem ela o hover continua respondendo,
+   e é isso que este bloco faz.
+
+   Por que no FIM do arquivo: os tokens de cada estilo moram em
+   :root[data-ui="x"], que empata em especificidade (0,2,0) com o
+   :root[data-hover-zoom="off"] daqui. Empate quem decide é a
+   ordem — então este bloco precisa vir depois de todos eles.
+
+   Por que redeclarar o levantar em vez de zerar o transform: o
+   scale vem GRUDADO no mesmo valor do token (spatial pede
+   translateY(-6px) scale(1.015)), e não há como remover uma
+   função de transform sem reescrever a lista. Um "none" geral
+   levaria o levantar junto, que não é o que foi pedido.
+   ============================================================ */
+
+/* --- cartões: só liquid e spatial crescem --- */
+
+:root[data-ui="liquid"][data-hover-zoom="off"] {
+    --ui-card-hover-transform: translateY(-3px);
+}
+
+:root[data-ui="spatial"][data-hover-zoom="off"] {
+    --ui-card-hover-transform: translateY(-6px);
+}
+
+/* --- botões de ação (ouvir agora, doar, instalar) --- */
+
+:root[data-hover-zoom="off"] {
+    --ui-cta-hover-transform: none;
+}
+
+:root[data-ui="clay"][data-hover-zoom="off"] {
+    --ui-cta-hover-transform: translateY(-2px);
+}
+
+:root[data-ui="spatial"][data-hover-zoom="off"] {
+    --ui-cta-hover-transform: translateY(-3px);
+}
+
+/* O .hero-cta do site.css tem um scale(1.04) próprio, fora do token. Onde há
+   data-ui os tokens acima já resolvem; o :not é o que impede esta regra de
+   atropelá-los e levar junto o levantar do clay e do spatial. */
+:root[data-hover-zoom="off"]:not([data-ui]) .hero-cta:hover {
+    transform: none;
+}
+
+/* --- foto e miniatura que dão zoom POR BAIXO da moldura ---
+   Estes não passam por token: são regras do site.css e acontecem em
+   qualquer estilo, inclusive no minimal, que não cresce em mais nada. */
+
+:root[data-hover-zoom="off"] .gallery-item:hover img,
+:root[data-hover-zoom="off"] .video-thumb:hover img,
+:root[data-hover-zoom="off"] .video-thumb:hover::after {
+    transform: none;
+}
+
+/* --- botões do dock no spatial --- */
+
+:root[data-hover-zoom="off"][data-ui="spatial"] #app-player .player-button-backward-step:hover,
+:root[data-hover-zoom="off"][data-ui="spatial"] #app-player .player-button-forward-step:hover,
+:root[data-hover-zoom="off"][data-ui="spatial"] #app-player .player-button-more:hover,
+:root[data-hover-zoom="off"][data-ui="spatial"] #app-player .player-right button.player-button:hover,
+:root[data-hover-zoom="off"][data-ui="spatial"] #app-player .player-button-alt:hover {
+    transform: translateY(-2px);
+}
+
+/* Quem pediu menos movimento no sistema E desligou o zoom não quer nem o
+   levantar. Precisa estar aqui no fim porque as regras acima (0,3,0) passam
+   por cima do @media do spatial (0,2,0), que é o único a tratar disto. */
+@media (prefers-reduced-motion: reduce) {
+    :root[data-hover-zoom="off"][data-ui] {
+        --ui-card-hover-transform: none;
+        --ui-cta-hover-transform: none;
+    }
 }
