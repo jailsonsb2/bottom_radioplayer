@@ -31,7 +31,7 @@ A bottom-bar **HTML5 radio player** that works as a **drop-in JavaScript compone
 - **Marquee for long titles** — song and artist names that don't fit slide instead of being cut off, and only while they overflow.
 - **Integrated social sharing** for Facebook, Twitter, and WhatsApp.
 - **Media Session integration** (lock screen / notification controls) routed through the same play/pause path as the dock button, so fade, persisted state and the video rule apply there too.
-- **Mobile-first dock** — on phones the song title gets the space (no cramped 24px column): cover · "on air + station" · title · artist · one big play button, extra controls in a labeled sheet, a handle to collapse the dock out of the way, and safe-area padding for iPhones. Tapping the cover opens the station list.
+- **Mobile-first dock** — on phones the song title gets the space (no cramped 24px column): cover · "on air + station" · title · artist · one big play button, extra controls in a labeled sheet, and safe-area padding for iPhones. A handle on top of the dock collapses it out of the way — on desktop too. Tapping the cover opens the station list.
 - **Photo gallery** with lightbox (arrows, keyboard, swipe) on the demo site.
 - **"How to listen" card** with the official app badges (Google Play / App Store) and the Alexa phrase.
 - **Installable (PWA)** — manifest, icons, offline shell via service worker and an "install app" button.
@@ -102,7 +102,7 @@ Most listeners arrive on a phone, so the dock is laid out for that screen first 
 - **The title owns the width.** Previous/next switch *stations*, so on phones they leave the bar (they come back on tablets, ≥768px) and the cover becomes the shortcut to the station list — a chevron badge marks it. With a single station in `config.js` the player gets a `single-station` class and those buttons disappear at every size.
 - **Context line** — `● AO VIVO · Station name` above the song, so the station is still identifiable while a track plays.
 - **Extra controls with labels** — the "…" button opens a 3-column sheet (TV, Clip, History, Share, Lyrics, Stations). Silent icons in circles told nobody what they did; volume is left out (hardware buttons own it, and iOS ignores `audio.volume`).
-- **Collapse handle** — the tab on top of the dock slides it off-screen so the page is fully readable; the audio keeps playing and the state survives seamless navigation.
+- **Collapse handle** (*at every width*) — the tab on top of the dock slides it off-screen so the page is fully readable; the audio keeps playing and the state survives seamless navigation. How far it has to travel comes from `--dock-bottom` on `#app-player .player`, so a visual style that lifts or flattens the dock only has to restate that variable.
 - **Safe area** — the dock offset uses `env(safe-area-inset-bottom)`, clearing the iPhone home bar.
 - History and stations open as a full-width sheet above the dock instead of a narrow right-anchored panel.
 

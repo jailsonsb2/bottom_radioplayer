@@ -14,7 +14,11 @@
 /* sem overflow:hidden no dock — ele cortaria o dropdown de volume, que abre
    para cima; o recorte dos cantos é feito elemento a elemento logo abaixo */
 #app-player .player {
-    inset: auto 0 18px;
+    /* distância do dock até o rodapé — cada estilo (minimal, spatial...) e o
+       celular reescrevem só esta variável, e o recolher acompanha sozinho:
+       é ela que diz o quanto ainda falta descer para sumir da tela */
+    --dock-bottom: 18px;
+    inset: auto 0 var(--dock-bottom);
     margin: 0 auto;
     width: min(1240px, calc(100% - 32px));
     padding: 10px 16px;
@@ -24,6 +28,9 @@
     backdrop-filter: blur(24px) saturate(160%);
     -webkit-backdrop-filter: blur(24px) saturate(160%);
     animation: dock-in 0.6s cubic-bezier(0.2, 0.75, 0.2, 1) both;
+    /* translate (e não transform) para não brigar com a animação de
+       entrada do dock, que já usa transform */
+    transition: translate 0.35s cubic-bezier(0.2, 0.75, 0.2, 1);
 }
 
 /* recorta nos cantos do dock as camadas internas de fundo */
@@ -43,11 +50,67 @@
     from { transform: translateY(140%); }
 }
 
-/* a alça de recolher e a linha "Ao vivo · estação" são exclusivas do celular,
-   onde espaço e contexto são escassos */
-#app-player .player-collapse,
+/* a linha "Ao vivo · estação" é exclusiva do celular: no desktop o nome da
+   estação já aparece inteiro ao lado da capa */
 #app-player .player-meta {
     display: none;
+}
+
+/* --- alça de recolher (padrão bottom sheet) ---
+   Uma abinha no topo do dock, centralizada, que desliza ele para fora da
+   tela — o áudio continua tocando. Vale em qualquer largura: no desktop o
+   dock também cobre o rodapé da página. */
+
+#app-player .player-collapse {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: absolute;
+    top: -25px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 62px;
+    height: 26px;
+    padding: 0;
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    border-bottom: none;
+    border-radius: 14px 14px 0 0;
+    background: rgba(11, 14, 19, 0.92);
+    backdrop-filter: blur(20px) saturate(160%);
+    -webkit-backdrop-filter: blur(20px) saturate(160%);
+    color: rgba(255, 255, 255, 0.75);
+    --i-size: 16px;
+    cursor: pointer;
+    transition: color 0.2s ease, border-color 0.2s ease;
+}
+
+/* o hover mexe só na cor do ícone e da borda: o FUNDO é do estilo visual
+   ativo (ui-styles.css o repinta), e disputar essa propriedade aqui
+   apagaria o painel do clay/minimal/spatial na hora do mouse passar */
+#app-player .player-collapse:hover,
+#app-player .player-collapse:focus-visible {
+    color: #fff;
+    border-color: rgba(255, 255, 255, 0.32);
+}
+
+/* o dock é escuro em qualquer tema — a alça, que é a tampa dele, também.
+   Sem isto o estilo visual ativo pintaria a alça de branco no tema claro e
+   o chevron (branco) sumiria dentro dela */
+html[data-theme="light"] #app-player .player-collapse {
+    background: rgba(11, 14, 19, 0.96) !important;
+}
+
+#app-player .player-collapse svg {
+    transition: transform 0.3s ease;
+}
+
+/* recolhido: o dock inteiro desce para fora da tela e sobra só a alça */
+#app-player .player.is-collapsed {
+    translate: 0 calc(100% + var(--dock-bottom));
+}
+
+#app-player .player.is-collapsed .player-collapse svg {
+    transform: rotate(180deg);
 }
 
 /* com uma estação só, anterior/próxima não levam a lugar nenhum (a classe
@@ -91,50 +154,10 @@
 @media (max-width: 991px) {
     #app-player .player {
         /* respeita a barra de gestos do iPhone */
-        inset: auto 0 max(10px, env(safe-area-inset-bottom));
+        --dock-bottom: max(10px, env(safe-area-inset-bottom));
         width: calc(100% - 16px);
         padding: 12px 14px;
         border-radius: 22px;
-        /* translate (e não transform) para não brigar com a animação de
-           entrada do dock, que já usa transform */
-        transition: translate 0.35s cubic-bezier(0.2, 0.75, 0.2, 1);
-    }
-
-    /* --- alça de recolher (padrão bottom sheet) --- */
-
-    #app-player .player-collapse {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        position: absolute;
-        top: -25px;
-        left: 50%;
-        transform: translateX(-50%);
-        width: 62px;
-        height: 26px;
-        padding: 0;
-        border: 1px solid rgba(255, 255, 255, 0.16);
-        border-bottom: none;
-        border-radius: 14px 14px 0 0;
-        background: rgba(11, 14, 19, 0.92);
-        backdrop-filter: blur(20px) saturate(160%);
-        -webkit-backdrop-filter: blur(20px) saturate(160%);
-        color: rgba(255, 255, 255, 0.75);
-        --i-size: 16px;
-        cursor: pointer;
-    }
-
-    #app-player .player-collapse svg {
-        transition: transform 0.3s ease;
-    }
-
-    /* recolhido: o dock inteiro desce para fora da tela e sobra só a alça */
-    #app-player .player.is-collapsed {
-        translate: 0 calc(100% + max(10px, env(safe-area-inset-bottom)));
-    }
-
-    #app-player .player.is-collapsed .player-collapse svg {
-        transform: rotate(180deg);
     }
 
     /* --- bloco da esquerda: capa + textos --- */
@@ -310,7 +333,6 @@
     html[data-theme="light"] #app-player .player-right.is-active,
     html[data-theme="light"] #app-player .offcanvas-player,
     html[data-theme="light"] #app-player .dropdown,
-    html[data-theme="light"] #app-player .player-collapse,
     html[data-theme="light"] #app-player .player-modal {
         background: rgba(11, 14, 19, 0.96) !important;
         border-color: rgba(255, 255, 255, 0.14) !important;

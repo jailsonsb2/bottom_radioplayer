@@ -379,11 +379,13 @@
         border-radius: var(--ui-art-radius);
     }
 
-    [data-ui] #app-player .player-collapse {
-        background: var(--ui-panel-bg);
-        backdrop-filter: var(--ui-panel-blur);
-        -webkit-backdrop-filter: var(--ui-panel-blur);
-    }
+}
+
+/* a alça de recolher é parte do dock: veste o mesmo painel do estilo ativo */
+[data-ui] #app-player .player-collapse {
+    background: var(--ui-panel-bg);
+    backdrop-filter: var(--ui-panel-blur);
+    -webkit-backdrop-filter: var(--ui-panel-blur);
 }
 
 
@@ -647,23 +649,22 @@
    separada da página por um fio. Nada de margem, raio ou sombra.
    O play continua redondo: ele é o alvo de toque, não enfeite. */
 [data-ui="minimal"] #app-player .player {
-    inset: auto 0 0;
+    --dock-bottom: 0px; /* colado no rodapé: recolher só precisa da própria altura */
     width: 100%;
     border-width: 1px 0 0;
     animation: none; /* sem a entrada deslizante do dock */
 }
 
+/* a alça de recolher acompanha: encostada, sem cantos */
+[data-ui="minimal"] #app-player .player-collapse {
+    border-radius: 0;
+    border-width: 1px 1px 0;
+}
+
 @media (max-width: 991px) {
     [data-ui="minimal"] #app-player .player {
-        inset: auto 0 0;
         width: 100%;
         padding-bottom: max(12px, env(safe-area-inset-bottom));
-    }
-
-    /* a alça de recolher acompanha: encostada, sem cantos */
-    [data-ui="minimal"] #app-player .player-collapse {
-        border-radius: 0;
-        border-width: 1px 1px 0;
     }
 }
 
@@ -1010,12 +1011,12 @@
    centro do dock, fora do fluxo — estreitar a caixa não empurra nada,
    apenas traz o grupo da direita para cima dos botões centrais. */
 [data-ui="spatial"] #app-player .player {
-    inset: auto 0 30px;
+    --dock-bottom: 30px;
 }
 
 @media (max-width: 991px) {
     [data-ui="spatial"] #app-player .player {
-        inset: auto 0 max(16px, env(safe-area-inset-bottom));
+        --dock-bottom: max(16px, env(safe-area-inset-bottom));
     }
 }
 

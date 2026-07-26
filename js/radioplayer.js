@@ -46,7 +46,7 @@
         <div id="jp_container_rcast" class="np__global_player">
             <div class="app-player" id="app-player">
                 <div class="player song-now flex column">
-                    <!-- alça de recolher: no celular o dock desce e libera a tela -->
+                    <!-- alça de recolher: o dock desce e libera a tela (qualquer largura) -->
                     <button class="player-collapse" type="button" aria-label="Recolher o player" data-i18n-aria-label="player.collapse" aria-expanded="true">
                         <svg class="i i-chevron-down" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"></path></svg>
                     </button>
@@ -1439,8 +1439,9 @@
       }
 
       // --- [RECOLHER O DOCK] --------------------------------------------
-      // No celular a barra cobre parte da página; a alça no topo do dock
-      // desliza ele para baixo (o áudio continua tocando) e traz de volta.
+      // A barra cobre o rodapé da página em qualquer largura; a alça no topo
+      // do dock desliza ele para baixo (o áudio continua tocando) e traz de
+      // volta. Quem decide o quanto descer é o CSS (--dock-bottom).
 
       const collapseButton = $(".player-collapse");
       if (collapseButton && playerBox) {
