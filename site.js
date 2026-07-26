@@ -997,6 +997,7 @@
     // por .header-extras evita reinjeção na navegação seamless.
     const HEART_ICON = '<svg viewBox="0 0 24 24"><path d="M12 21s-7-4.35-9.5-8.5A5.5 5.5 0 0 1 12 6a5.5 5.5 0 0 1 9.5 6.5C19 16.65 12 21 12 21Z"></path></svg>';
     const GLOBE_ICON = '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"></circle><path d="M3 12h18M12 3a15 15 0 0 1 0 18 15 15 0 0 1 0-18"></path></svg>';
+    const CARET_ICON = '<svg viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"></path></svg>';
 
     document.querySelectorAll(".site-header-inner").forEach((headerInner) => {
         if (headerInner.querySelector(".header-extras")) return;
@@ -1045,36 +1046,101 @@
         }
 
         // seletor de idioma (só existe se o js/i18n.js estiver na página)
+        //
+        // Um <select> nativo resolveria em cinco linhas, mas a lista que ele
+        // abre é desenhada pelo SISTEMA: um menu cinza de caixa quadrada no
+        // meio de um site de cantos redondos e vidro. Como só a lista destoa
+        // (o botão fechado já era estilizável), a troca é por um painel nosso
+        // — que de quebra lê os mesmos tokens --ui-panel-* dos painéis do
+        // player e acompanha os cinco estilos visuais.
+        //
+        // O que o <select> dava de graça e é reposto na mão logo abaixo:
+        // papéis de listbox/option para o leitor de tela, navegação por
+        // setas/Home/End, Esc e clique fora para fechar, e o foco voltando
+        // para o botão ao fechar.
         if (i18n) {
-            const picker = el("label", "header-lang");
-            picker.setAttribute("title", t("a11y.language", "Idioma"));
+            const picker = el("div", "header-lang");
+
+            // O botão fechado mostra a SIGLA: com "Português" por extenso
+            // (132px) o menu de sete itens não cabia na linha do cabeçalho.
+            // Na lista aberta cabe o nome inteiro, que é onde ele faz falta.
+            const botao = el("button", "header-lang-button");
+            botao.type = "button";
+            botao.setAttribute("aria-haspopup", "listbox");
+            botao.setAttribute("aria-expanded", "false");
+            botao.setAttribute("aria-label", t("a11y.language", "Idioma"));
+            botao.title = t("a11y.language", "Idioma");
 
             const globo = el("span", "header-lang-icon");
             globo.innerHTML = GLOBE_ICON;
             globo.setAttribute("aria-hidden", "true");
 
-            // <select> de verdade, e não um menu desenhado por nós: no celular
-            // ele abre a roleta nativa do sistema, já vem navegável por teclado
-            // e o leitor de tela anuncia sozinho quantas opções existem.
-            //
-            // O rótulo é a SIGLA, não "Português" por extenso: o cabeçalho tem
-            // 1120px para o menu de sete itens mais os chips, e o nome inteiro
-            // (132px) empurrava "Sobre" para uma segunda linha. Com a sigla
-            // sobra espaço, e quem precisa do nome tem o globo ao lado, o
-            // title e o aria-label — a sigla nunca fica sozinha como pista.
-            const select = el("select");
-            select.setAttribute("aria-label", t("a11y.language", "Idioma"));
-            i18n.LANGS.forEach((lang) => {
-                const option = el("option", null, lang.code.toUpperCase());
-                option.value = lang.code;
-                option.title = lang.label;
-                if (lang.code === i18n.get()) option.selected = true;
-                select.appendChild(option);
-            });
-            select.onchange = () => i18n.set(select.value);
+            const sigla = el("span", "header-lang-code", i18n.get().toUpperCase());
+            const seta = el("span", "header-lang-caret");
+            seta.innerHTML = CARET_ICON;
+            seta.setAttribute("aria-hidden", "true");
 
-            picker.appendChild(globo);
-            picker.appendChild(select);
+            botao.appendChild(globo);
+            botao.appendChild(sigla);
+            botao.appendChild(seta);
+
+            const lista = el("div", "header-lang-list");
+            lista.setAttribute("role", "listbox");
+            lista.setAttribute("aria-label", t("a11y.language", "Idioma"));
+            lista.hidden = true;
+
+            const itens = i18n.LANGS.map((lang) => {
+                const item = el("button", "header-lang-option");
+                item.type = "button";
+                item.setAttribute("role", "option");
+                item.dataset.code = lang.code;
+                const atual = lang.code === i18n.get();
+                item.setAttribute("aria-selected", atual ? "true" : "false");
+                if (atual) item.classList.add("is-active");
+                item.appendChild(el("span", "header-lang-option-code", lang.code.toUpperCase()));
+                item.appendChild(el("span", "header-lang-option-name", lang.label));
+                item.onclick = () => i18n.set(lang.code);
+                lista.appendChild(item);
+                return item;
+            });
+
+            const abrir = (aberto) => {
+                lista.hidden = !aberto;
+                picker.classList.toggle("is-open", aberto);
+                botao.setAttribute("aria-expanded", aberto ? "true" : "false");
+                if (aberto) (itens.find((i) => i.classList.contains("is-active")) || itens[0]).focus();
+            };
+
+            botao.onclick = () => abrir(lista.hidden);
+
+            // Setas andam pela lista; Home/End vão às pontas; Esc devolve o
+            // foco ao botão (senão ele cairia no começo da página).
+            lista.onkeydown = (event) => {
+                const i = itens.indexOf(document.activeElement);
+                if (event.key === "Escape") { abrir(false); botao.focus(); }
+                else if (event.key === "ArrowDown") { event.preventDefault(); itens[(i + 1) % itens.length].focus(); }
+                else if (event.key === "ArrowUp") { event.preventDefault(); itens[(i - 1 + itens.length) % itens.length].focus(); }
+                else if (event.key === "Home") { event.preventDefault(); itens[0].focus(); }
+                else if (event.key === "End") { event.preventDefault(); itens[itens.length - 1].focus(); }
+            };
+
+            botao.onkeydown = (event) => {
+                if (event.key === "ArrowDown") { event.preventDefault(); abrir(true); }
+            };
+
+            // Clique fora e foco que sai do conjunto fecham o painel. O
+            // onclick no documento (e não addEventListener) é o mesmo motivo
+            // do resto do arquivo: a navegação seamless reexecuta o script, e
+            // atribuir substitui em vez de empilhar.
+            document.onclick = (event) => {
+                if (!picker.contains(event.target) && !lista.hidden) abrir(false);
+            };
+            picker.onfocusout = (event) => {
+                if (!picker.contains(event.relatedTarget) && !lista.hidden) abrir(false);
+            };
+
+            picker.appendChild(botao);
+            picker.appendChild(lista);
             extras.appendChild(picker);
         }
 

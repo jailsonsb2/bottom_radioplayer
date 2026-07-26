@@ -152,7 +152,7 @@
 [data-ui] .theme-toggle,
 [data-ui] .nav-toggle,
 [data-ui] .header-weather,
-[data-ui] .header-lang,
+[data-ui] .header-lang-button,
 [data-ui] .header-install,
 [data-ui] .team-arrow,
 [data-ui] .site-social-item,
@@ -167,7 +167,7 @@
 
 /* com rótulo: cápsula */
 [data-ui] .header-weather,
-[data-ui] .header-lang,
+[data-ui] .header-lang-button,
 [data-ui] .schedule-tab,
 [data-ui] .hero-badge,
 [data-ui] .gen-secondary,
@@ -187,7 +187,7 @@
 [data-ui] .theme-toggle:hover,
 [data-ui] .nav-toggle:hover,
 [data-ui] .header-weather:hover,
-[data-ui] .header-lang:hover,
+[data-ui] .header-lang-button:hover,
 [data-ui] .header-install:hover,
 [data-ui] .team-arrow:hover:not(:disabled),
 [data-ui] .site-social-item:hover,

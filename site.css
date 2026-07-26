@@ -192,10 +192,17 @@ img { max-width: 100%; display: block; }
     transition: background 0.2s ease;
 }
 
-/* seletor de idioma — mesma pílula do chip de clima, com um <select> nativo
-   por dentro. O select fica sem moldura própria para não desenhar uma caixa
-   dentro da outra; quem dá a forma é o label. */
+/* --- seletor de idioma ---
+   Botão fechado: a mesma pílula do chip de clima. Lista aberta: um painel
+   nosso, e não o menu do sistema — que vinha quadrado, cinza e alheio ao
+   tema. Os tokens --ui-panel-* são os mesmos dos painéis do player, então a
+   lista acompanha os cinco estilos visuais sem regra extra. */
 .header-lang {
+    position: relative;
+    flex: none;
+}
+
+.header-lang-button {
     display: flex;
     align-items: center;
     gap: 6px;
@@ -205,58 +212,131 @@ img { max-width: 100%; display: block; }
     border: 1px solid var(--site-border);
     background: var(--site-surface);
     color: var(--site-text);
+    font-family: inherit;
     cursor: pointer;
     transition: background 0.2s ease;
 }
 
-.header-lang:hover { background: var(--site-surface-strong); }
+.header-lang-button:hover,
+.header-lang.is-open .header-lang-button { background: var(--site-surface-strong); }
 
-.header-lang-icon {
-    display: flex;
-    width: 16px;
-    height: 16px;
-    flex: none;
+.header-lang-button:focus-visible { outline: 2px solid var(--site-accent); outline-offset: 3px; }
+
+.header-lang-code {
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
 }
 
-.header-lang-icon svg {
+.header-lang-icon,
+.header-lang-caret {
+    display: flex;
+    flex: none;
+    width: 16px;
+    height: 16px;
+}
+
+.header-lang-caret {
+    width: 13px;
+    height: 13px;
+    color: var(--site-muted);
+    transition: transform 0.2s ease;
+}
+
+.header-lang.is-open .header-lang-caret { transform: rotate(180deg); }
+
+.header-lang-icon svg,
+.header-lang-caret svg {
     width: 100%;
     height: 100%;
     fill: none;
     stroke: currentColor;
     stroke-width: 1.7;
+    stroke-linecap: round;
+    stroke-linejoin: round;
 }
 
-.header-lang select {
-    appearance: none;
-    -webkit-appearance: none;
+/* Alinhado pela direita: o chip fica no fim da fileira, e abrir para a
+   esquerda evita o painel passar da borda da tela.
+
+   A FORMA vem do estilo visual (--ui-panel-radius: cápsula no liquid, quina
+   quase reta no minimal); as CORES vêm do tema do site, não dos tokens de
+   painel. Os painéis --ui-panel-* são do dock, que é sempre escuro e leva
+   texto claro por definição — aqui, no tema claro, três dos cinco estilos
+   pintam esse painel de branco, e o texto claro sumiria dentro dele. */
+.header-lang-list {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    z-index: 60;
+    min-width: 172px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 6px;
+    border-radius: var(--ui-panel-radius, 16px);
+    border: 1px solid var(--site-border);
+    background: var(--site-bg);
+    box-shadow: 0 20px 44px rgba(0, 0, 0, 0.35);
+    animation: header-lang-in 0.16s ease;
+}
+
+/* O CSS acima declara display: flex, que ganha do display: none que o
+   navegador dá a [hidden] — sem esta linha o painel nascia aberto e nunca
+   fechava. */
+.header-lang-list[hidden] { display: none; }
+
+@keyframes header-lang-in {
+    from { opacity: 0; transform: translateY(-6px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .header-lang-list { animation: none; }
+    .header-lang-caret { transition: none; }
+}
+
+.header-lang-option {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 9px 12px;
     border: 0;
+    border-radius: 10px;
     background: transparent;
-    color: inherit;
+    color: var(--site-text);
     font-family: inherit;
-    font-size: 13px;
-    font-weight: 700;
+    font-size: 13.5px;
+    text-align: left;
     cursor: pointer;
-    /* a seta do sistema sai; a nossa é desenhada no padding com um SVG */
-    padding: 0 18px 0 0;
-    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="%238a94a6" stroke-width="2.4" stroke-linecap="round"><path d="m6 9 6 6 6-6"/></svg>');
-    background-repeat: no-repeat;
-    background-position: right 0 center;
-    background-size: 12px;
+    transition: background 0.15s ease;
 }
 
-.header-lang select:focus-visible { outline: 2px solid var(--site-accent); outline-offset: 3px; }
-
-/* A lista aberta é desenhada pelo sistema, não pela página: sem estas duas
-   cores, no tema escuro o menu do Chrome sai branco com texto branco. */
-.header-lang select option {
-    background: #12161d;
-    color: #fff;
+.header-lang-option:hover,
+.header-lang-option:focus-visible {
+    background: var(--site-surface-strong);
+    outline: none;
 }
 
-:root[data-theme="light"] .header-lang select option {
-    background: #fff;
-    color: #11151c;
+/* Cor E peso E fundo, como o item ativo do menu já faz: o accent do tema
+   claro é uma cor clara sobre painel claro, então marcar só pela cor deixaria
+   o idioma atual difícil de achar. */
+.header-lang-option.is-active {
+    color: var(--site-accent);
+    font-weight: 700;
+    background: var(--site-surface);
 }
+
+.header-lang-option-code {
+    flex: none;
+    width: 26px;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    opacity: 0.65;
+}
+
+.header-lang-option.is-active .header-lang-option-code { opacity: 1; }
 
 .header-weather:hover { background: var(--site-surface-strong); }
 
@@ -671,16 +751,14 @@ img { max-width: 100%; display: block; }
 
     .header-extras { gap: 8px; }
 
-    .header-lang {
+    .header-lang-button {
         padding: 0 6px 0 8px;
         gap: 4px;
     }
 
-    .header-lang select {
-        font-size: 12px;
-        padding-right: 15px;
-        background-size: 11px;
-    }
+    .header-lang-code { font-size: 12px; }
+
+    .header-lang-caret { width: 12px; height: 12px; }
 }
 
 /* --- hero --- */
