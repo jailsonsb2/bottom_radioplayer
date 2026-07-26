@@ -294,6 +294,7 @@
                transparência e relevo. Esta página do gerador se repinta com o estilo escolhido — o que você vê
                aqui é o que o site vai ser.</p>
             <div class="style-picker" id="gen-style"></div>
+            <div id="gen-hover-zoom"></div>
         </section>
 
         <section class="gen-section">
@@ -396,6 +397,8 @@
             data.listen = data.listen || {};
             data.theme = data.theme || { accent: "#4dd7e0", accentLight: "" };
             data.theme.style = data.theme.style || "glass";
+            // ligado é o normal: só o false explícito desliga o crescer
+            data.theme.hoverZoom = data.theme.hoverZoom !== false;
             data.schedule = data.schedule || {};
             data.team = data.team || [];
             data.social = data.social || {};
@@ -671,6 +674,34 @@
                 });
             }
 
+            // --- zoom no hover ---
+            // Anda junto do estilo porque é dele que o efeito vem: liquid e
+            // spatial fazem o cartão crescer, os outros três não. Só a foto da
+            // galeria e a miniatura de vídeo dão zoom em qualquer estilo — daí
+            // o campo existir mesmo para quem escolheu o minimal.
+            function renderHoverZoom() {
+                const root = document.getElementById("gen-hover-zoom");
+                root.innerHTML = "";
+                root.appendChild(checkbox(
+                    "Crescer ao passar o mouse (cartões, fotos e botões)",
+                    data.theme.hoverZoom,
+                    (marcado) => {
+                        data.theme.hoverZoom = marcado;
+                        aplicarHoverZoom();
+                    }
+                ));
+                const dica = el("p", "gen-hint",
+                    "Desmarque para tirar só o crescer: o levantar, a borda que acende e a " +
+                    "sombra continuam, então o cartão segue respondendo ao mouse.");
+                root.appendChild(dica);
+                aplicarHoverZoom();
+            }
+
+            function aplicarHoverZoom() {
+                if (data.theme.hoverZoom) delete document.documentElement.dataset.hoverZoom;
+                else document.documentElement.dataset.hoverZoom = "off";
+            }
+
             // --- ordem das seções ---
             // A lista gerada aqui é lida pelo site.js, que reordena os blocos
             // da home e os links do menu. O topo (slides) e o rodapé não
@@ -887,6 +918,8 @@
                 if (!out.theme.accent) delete out.theme.accent;
                 // "glass" é o padrão do site: gravar o campo só ruído no arquivo
                 if (!out.theme.style || out.theme.style === "glass") delete out.theme.style;
+                // idem para o zoom ligado — só a recusa precisa ir para o arquivo
+                if (out.theme.hoverZoom !== false) delete out.theme.hoverZoom;
                 if (!Object.keys(out.theme).length) delete out.theme;
                 Object.keys(out.schedule).forEach((day) => {
                     out.schedule[day] = (out.schedule[day] || []).filter((s) => s.time && s.name);
@@ -939,6 +972,7 @@
 
             // --- primeira renderização ---
             renderStyle();
+            renderHoverZoom();
             renderTheme();
             renderOrder();
             renderSlides();
