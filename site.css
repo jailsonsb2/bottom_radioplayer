@@ -192,6 +192,72 @@ img { max-width: 100%; display: block; }
     transition: background 0.2s ease;
 }
 
+/* seletor de idioma — mesma pílula do chip de clima, com um <select> nativo
+   por dentro. O select fica sem moldura própria para não desenhar uma caixa
+   dentro da outra; quem dá a forma é o label. */
+.header-lang {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    height: 38px;
+    padding: 0 8px 0 10px;
+    border-radius: 999px;
+    border: 1px solid var(--site-border);
+    background: var(--site-surface);
+    color: var(--site-text);
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.header-lang:hover { background: var(--site-surface-strong); }
+
+.header-lang-icon {
+    display: flex;
+    width: 16px;
+    height: 16px;
+    flex: none;
+}
+
+.header-lang-icon svg {
+    width: 100%;
+    height: 100%;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.7;
+}
+
+.header-lang select {
+    appearance: none;
+    -webkit-appearance: none;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    /* a seta do sistema sai; a nossa é desenhada no padding com um SVG */
+    padding: 0 18px 0 0;
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="%238a94a6" stroke-width="2.4" stroke-linecap="round"><path d="m6 9 6 6 6-6"/></svg>');
+    background-repeat: no-repeat;
+    background-position: right 0 center;
+    background-size: 12px;
+}
+
+.header-lang select:focus-visible { outline: 2px solid var(--site-accent); outline-offset: 3px; }
+
+/* A lista aberta é desenhada pelo sistema, não pela página: sem estas duas
+   cores, no tema escuro o menu do Chrome sai branco com texto branco. */
+.header-lang select option {
+    background: #12161d;
+    color: #fff;
+}
+
+:root[data-theme="light"] .header-lang select option {
+    background: #fff;
+    color: #11151c;
+}
+
 .header-weather:hover { background: var(--site-surface-strong); }
 
 .header-weather-icon { font-size: 18px; line-height: 1; }
@@ -420,6 +486,23 @@ img { max-width: 100%; display: block; }
 .site-nav a:hover {
     background: var(--site-surface-strong);
     color: var(--site-text);
+}
+
+/* O seletor de idioma é mais um inquilino num cabeçalho que já estava cheio:
+   com ele, os sete itens do menu passavam de 1120px e "Sobre" caía para uma
+   segunda linha. Três pixels de cada lado em cada item devolvem os ~40px que
+   faltavam, sem mexer em tamanho de fonte nem em breakpoint.
+
+   O :has() é o que amarra isto ao seletor: quem não carrega o js/i18n.js não
+   tem .header-lang, não casa a regra e fica com o espaçamento de sempre. Em
+   navegador sem :has() a regra inteira é ignorada — volta a quebrar em duas
+   linhas, que era o comportamento antigo, não um layout novo quebrado. */
+.site-header-inner:has(.header-lang) .site-nav a {
+    padding-left: 6px;
+    padding-right: 6px;
+    /* meio ponto de fonte: some aos olhos e devolve os últimos ~20px de que o
+       espanhol e o italiano precisam ("Programación", "Palinsesto") */
+    font-size: 12.5px;
 }
 
 /* seção em que o visitante está agora (o site.js marca conforme a rolagem).
@@ -1138,6 +1221,9 @@ body.lightbox-open { overflow: hidden; }
 
 .schedule-tab:hover { background: var(--site-surface-strong); }
 
+/* No desktop sobra largura: mostra o nome inteiro. */
+.schedule-tab-short { display: none; }
+
 .schedule-tab.is-active {
     background: var(--site-accent);
     border-color: var(--site-accent);
@@ -1185,6 +1271,29 @@ body.lightbox-open { overflow: hidden; }
     border-radius: 14px;
 }
 
+/* Os sete dias em UMA linha no celular. Com o nome inteiro eles quebravam
+   em três fileiras e o bloco virava um paredão de pílulas antes de mostrar
+   qualquer horário; abreviados, cada aba fica com a mesma fatia da largura
+   (flex: 1) e a semana inteira cabe de uma vez. O nowrap é o que impede a
+   quebra de voltar quando o idioma escolhido tem palavra mais longa. */
+@media (max-width: 620px) {
+    .schedule-tabs {
+        flex-wrap: nowrap;
+        gap: 5px;
+    }
+
+    .schedule-tab {
+        flex: 1;
+        min-width: 0;
+        padding: 9px 2px;
+        font-size: 12px;
+        text-align: center;
+    }
+
+    .schedule-tab-long { display: none; }
+    .schedule-tab-short { display: inline; }
+}
+
 /* --- equipe --- */
 
 /* Carrossel: track rola na horizontal (scroll-snap), setas nas pontas.
@@ -1218,6 +1327,10 @@ body.lightbox-open { overflow: hidden; }
 
 .team-arrow:disabled { opacity: 0.35; cursor: default; }
 
+/* A rolagem continua existindo (é ela que faz o arrastar no celular e o
+   scroll-snap), mas some da vista: a barra desenhava um traço cinza sob os
+   cartões que lia como a moldura de uma caixa. Quem indica que há mais
+   gente são as setas. */
 .team-track {
     display: flex;
     gap: 20px;
@@ -1226,15 +1339,20 @@ body.lightbox-open { overflow: hidden; }
     scroll-behavior: smooth;
     flex: 1;
     min-width: 0;
-    padding-bottom: 4px;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
 }
 
-.team-track::-webkit-scrollbar { height: 6px; }
+.team-track::-webkit-scrollbar { width: 0; height: 0; }
 
+/* Cartão inteiro ou nenhum. A largura é a pista dividida por quantos cabem
+   (descontando os vãos), então a fileira fecha exata na borda e nunca sobra
+   aquele pedaço de cartão cortado que fazia o bloco parecer uma caixa mal
+   recortada. Quantos cabem é decidido nas media queries lá embaixo. */
 .team-card {
     flex: none;
-    width: 200px;
-    scroll-snap-align: start;
+    width: calc((100% - 60px) / 4);
+    scroll-snap-align: center;
     text-align: center;
     padding: 24px 16px;
     border-radius: var(--site-radius);
@@ -1254,6 +1372,40 @@ body.lightbox-open { overflow: hidden; }
 .team-card h3 { margin: 0 0 4px; font-size: 16px; }
 
 .team-card span { font-size: 12.5px; color: var(--site-muted); }
+
+/* Quantos cartões cabem por vez. A conta desconta os vãos: com 3 cartões
+   há 2 vãos de 20px, com 2 há 1, e sozinho o cartão ocupa a pista inteira.
+   O clique da seta anda a largura de um cartão, então cada passo troca a
+   fileira por inteiro. */
+@media (max-width: 1000px) {
+    .team-card { width: calc((100% - 40px) / 3); }
+}
+
+@media (max-width: 760px) {
+    .team-card { width: calc((100% - 20px) / 2); }
+}
+
+@media (max-width: 560px) {
+    /* Um por vez, ocupando a pista toda: no celular meio cartão não é
+       prévia, é cartão cortado. As setas ficam por cima das pontas para
+       não roubarem largura do que importa. */
+    .team-card { width: 100%; }
+
+    .team-carousel { gap: 0; }
+
+    .team-carousel.has-overflow .team-arrow {
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        z-index: 2;
+        background: var(--site-surface-strong);
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+    }
+
+    .team-arrow-prev { left: 4px; }
+    .team-arrow-next { right: 4px; }
+}
 
 /* --- sobre a rádio (história + contato) --- */
 

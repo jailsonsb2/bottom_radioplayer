@@ -38,12 +38,21 @@ window.siteContent = {
     // dão um zoom por baixo da moldura, o botão de ação que incha. Com
     // false só o crescer sai — o levantar de cada estilo, a troca de
     // borda e a sombra continuam, então o hover segue respondendo.
+    //
+    // language é o idioma de PARTIDA do site: "pt", "en", "es" ou "it".
+    // Não é uma trava — quem chega vê o próprio idioma se o navegador
+    // dele for um dos quatro, e a escolha no seletor do topo manda em
+    // tudo. Este campo é o desempate para o visitante cujo idioma o
+    // site não fala. Só a moldura (menus, títulos de seção, dias da
+    // semana, botões) muda de língua; as notícias, os programas e os
+    // nomes daqui de baixo saem como você escreveu.
     theme: {
         accent: "#38b6ff",
         accentLight: "#80daff",
         style: "spatial",
         scrollDuration: 1300,
         hoverZoom: true,
+        language: "pt",
     },
 
     // Ordem das seções na home (e dos links do menu). O topo (slides) fica

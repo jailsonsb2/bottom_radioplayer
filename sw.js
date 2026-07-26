@@ -22,7 +22,7 @@
    aparecer para quem já tem o site instalado.
    ============================================================ */
 
-const VERSION = "v3";
+const VERSION = "v4";
 const CACHE = "radiosite-" + VERSION;
 
 // Casca do site: o mínimo para a página abrir offline
@@ -33,6 +33,7 @@ const SHELL = [
     "./site.css",
     "./site.js",
     "./content.js",
+    "./js/i18n.js",
     "./config.js",
     "./js/radioplayer.js",
     "./css/main.css",

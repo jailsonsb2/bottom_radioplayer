@@ -12,6 +12,15 @@
 
     const content = window.siteContent || {};
 
+    // --- idioma ------------------------------------------------------------
+    // O js/i18n.js é opcional: sem ele o site inteiro fica no português que
+    // está escrito no HTML e nas chamadas abaixo. Por isso todo t() carrega o
+    // texto original como segundo argumento — ele não é "a tradução default",
+    // é o que aparece quando a camada de idiomas não está na página.
+    const i18n = window.SiteI18n || null;
+    const t = (chave, padrao, ...args) => (i18n ? i18n.t(chave, ...args) : padrao);
+    if (i18n) i18n.apply(document);
+
     function el(tag, className, text) {
         const node = document.createElement(tag);
         if (className) node.className = className;
@@ -146,7 +155,7 @@
         const setOpen = (open) => {
             header.classList.toggle("nav-open", open);
             navToggle.setAttribute("aria-expanded", open ? "true" : "false");
-            navToggle.setAttribute("aria-label", open ? "Fechar menu" : "Abrir menu");
+            navToggle.setAttribute("aria-label", open ? t("a11y.menuClose", "Fechar menu") : t("a11y.menuOpen", "Abrir menu"));
         };
         navToggle.onclick = () => setOpen(!header.classList.contains("nav-open"));
         // clicar num link do menu fecha o painel (âncoras não recarregam a página)
@@ -214,7 +223,7 @@
     // --- hero: slider com autoavanço ---------------------------------------
 
     const heroRoot = document.getElementById("site-hero");
-    const slides = content.slides || (content.hero ? [{ ...content.hero, button: { label: "▶ Ouvir agora", action: "play" } }] : []);
+    const slides = content.slides || (content.hero ? [{ ...content.hero, button: { label: t("hero.listen", "▶ Ouvir agora"), action: "play" } }] : []);
     if (heroRoot && slides.length) {
         // navegação seamless reexecuta este script: derruba o timer da página
         // anterior para não acumular intervalos apontando para DOM removido
@@ -278,7 +287,7 @@
 
             const dot = el("button", "hero-dot");
             dot.type = "button";
-            dot.setAttribute("aria-label", "Slide " + (index + 1));
+            dot.setAttribute("aria-label", t("hero.slide", "Slide " + (index + 1), index + 1));
             dot.addEventListener("click", () => {
                 show(index);
                 restart();
@@ -320,7 +329,8 @@
 
     function formatDate(iso) {
         const date = new Date(iso + "T00:00:00");
-        return date.toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" });
+        // a data acompanha o idioma: "26 de julho de 2026" vira "July 26, 2026"
+        return date.toLocaleDateString(i18n ? i18n.locale() : "pt-BR", { day: "2-digit", month: "long", year: "numeric" });
     }
 
     // Modal com o conteúdo completo da notícia (fecha por X, overlay ou Esc)
@@ -330,7 +340,7 @@
 
         const closeButton = el("button", "news-modal-close", "✕");
         closeButton.type = "button";
-        closeButton.setAttribute("aria-label", "Fechar");
+        closeButton.setAttribute("aria-label", t("a11y.close", "Fechar"));
         card.appendChild(closeButton);
 
         if (item.image) {
@@ -397,7 +407,7 @@
             if (item.date) body.appendChild(el("div", "news-card-date", formatDate(item.date)));
             body.appendChild(el("h3", null, item.title));
             body.appendChild(el("p", null, item.excerpt || ""));
-            body.appendChild(el("span", "news-card-more", "Ler mais →"));
+            body.appendChild(el("span", "news-card-more", t("news.more", "Ler mais →")));
             card.appendChild(body);
 
             newsGrid.appendChild(card);
@@ -481,7 +491,7 @@
             header.appendChild(el("span", "video-dock-title"));
             const close = el("button", "video-dock-close", "✕");
             close.type = "button";
-            close.setAttribute("aria-label", "Fechar vídeo");
+            close.setAttribute("aria-label", t("video.close", "Fechar vídeo"));
             close.addEventListener("click", closeVideoDock);
             header.appendChild(close);
 
@@ -546,8 +556,8 @@
 
         const button = el("button", "player-button player-button-clip");
         button.type = "button";
-        button.title = "Modo clipe: mostra o clipe da música que está tocando";
-        button.innerHTML = '<svg class="i" viewBox="0 0 24 24"><rect width="20" height="16" x="2" y="4" rx="3"></rect><path d="m10 9 5 3-5 3z"></path></svg>Clipe';
+        button.title = t("video.clipTitle", "Modo clipe: mostra o clipe da música que está tocando");
+        button.innerHTML = '<svg class="i" viewBox="0 0 24 24"><rect width="20" height="16" x="2" y="4" rx="3"></rect><path d="m10 9 5 3-5 3z"></path></svg>' + t("video.clip", "Clipe");
         button.classList.toggle("is-active", clipModeOn());
 
         button.addEventListener("click", () => {
@@ -599,7 +609,7 @@
 
             const thumb = el("button", "video-thumb");
             thumb.type = "button";
-            thumb.setAttribute("aria-label", "Assistir: " + video.title);
+            thumb.setAttribute("aria-label", t("video.watch", "Assistir: " + video.title, video.title));
 
             const img = el("img");
             img.src = `https://i.ytimg.com/vi/${video.id}/hqdefault.jpg`;
@@ -631,15 +641,15 @@
 
         const closeButton = el("button", "lightbox-close", "✕");
         closeButton.type = "button";
-        closeButton.setAttribute("aria-label", "Fechar");
+        closeButton.setAttribute("aria-label", t("a11y.close", "Fechar"));
 
         const prevButton = el("button", "lightbox-nav lightbox-prev", "‹");
         prevButton.type = "button";
-        prevButton.setAttribute("aria-label", "Foto anterior");
+        prevButton.setAttribute("aria-label", t("gallery.prev", "Foto anterior"));
 
         const nextButton = el("button", "lightbox-nav lightbox-next", "›");
         nextButton.type = "button";
-        nextButton.setAttribute("aria-label", "Próxima foto");
+        nextButton.setAttribute("aria-label", t("gallery.next", "Próxima foto"));
 
         figure.appendChild(img);
         figure.appendChild(caption);
@@ -710,7 +720,8 @@
         photos.forEach((photo, index) => {
             const item = el("button", "gallery-item");
             item.type = "button";
-            item.setAttribute("aria-label", "Ampliar: " + (photo.caption || "foto " + (index + 1)));
+            const descricao = photo.caption || t("gallery.photo", "foto " + (index + 1), index + 1);
+            item.setAttribute("aria-label", t("gallery.zoom", "Ampliar: " + descricao, descricao));
 
             const img = el("img");
             img.src = photo.thumb || photo.image;
@@ -730,13 +741,13 @@
     const scheduleRoot = document.getElementById("site-schedule");
     if (scheduleRoot && content.schedule) {
         const DAYS = [
-            { key: "seg", label: "Segunda" },
-            { key: "ter", label: "Terça" },
-            { key: "qua", label: "Quarta" },
-            { key: "qui", label: "Quinta" },
-            { key: "sex", label: "Sexta" },
-            { key: "sab", label: "Sábado" },
-            { key: "dom", label: "Domingo" },
+            { key: "seg", label: t("day.seg", "Segunda"), short: t("day.short.seg", "Seg") },
+            { key: "ter", label: t("day.ter", "Terça"), short: t("day.short.ter", "Ter") },
+            { key: "qua", label: t("day.qua", "Quarta"), short: t("day.short.qua", "Qua") },
+            { key: "qui", label: t("day.qui", "Quinta"), short: t("day.short.qui", "Qui") },
+            { key: "sex", label: t("day.sex", "Sexta"), short: t("day.short.sex", "Sex") },
+            { key: "sab", label: t("day.sab", "Sábado"), short: t("day.short.sab", "Sáb") },
+            { key: "dom", label: t("day.dom", "Domingo"), short: t("day.short.dom", "Dom") },
         ];
         const WEEKDAY_KEYS = ["dom", "seg", "ter", "qua", "qui", "sex", "sab"];
         const todayKey = WEEKDAY_KEYS[new Date().getDay()];
@@ -748,7 +759,7 @@
             list.innerHTML = "";
             const slots = content.schedule[key] || [];
             if (!slots.length) {
-                list.appendChild(el("div", "schedule-empty", "Programação musical contínua."));
+                list.appendChild(el("div", "schedule-empty", t("schedule.empty", "Programação musical contínua.")));
                 return;
             }
             slots.forEach((slot) => {
@@ -760,8 +771,15 @@
             });
         }
 
+        // Os dois rótulos saem juntos no HTML e quem escolhe é o CSS: no
+        // desktop cabe "Segunda", no celular só "Seg" — sete abas em uma
+        // linha só, sem a segunda fileira quebrada que sobrava antes. Fazer
+        // isto por media query, e não medindo a tela no script, é o que
+        // mantém o rótulo certo quando a pessoa vira o aparelho.
         DAYS.forEach((day) => {
-            const tab = el("button", "schedule-tab", day.label);
+            const tab = el("button", "schedule-tab");
+            tab.appendChild(el("span", "schedule-tab-long", day.label));
+            tab.appendChild(el("span", "schedule-tab-short", day.short));
             tab.type = "button";
             if (day.key === todayKey) tab.classList.add("is-active");
             tab.addEventListener("click", () => {
@@ -804,11 +822,11 @@
 
         const prevButton = el("button", "team-arrow team-arrow-prev", "‹");
         prevButton.type = "button";
-        prevButton.setAttribute("aria-label", "Membro anterior");
+        prevButton.setAttribute("aria-label", t("team.prev", "Membro anterior"));
 
         const nextButton = el("button", "team-arrow team-arrow-next", "›");
         nextButton.type = "button";
-        nextButton.setAttribute("aria-label", "Próximo membro");
+        nextButton.setAttribute("aria-label", t("team.next", "Próximo membro"));
 
         wrap.appendChild(prevButton);
         wrap.appendChild(teamGrid);
@@ -892,6 +910,7 @@
     // header por JS para valer nas duas páginas sem duplicar HTML; o guard
     // por .header-extras evita reinjeção na navegação seamless.
     const HEART_ICON = '<svg viewBox="0 0 24 24"><path d="M12 21s-7-4.35-9.5-8.5A5.5 5.5 0 0 1 12 6a5.5 5.5 0 0 1 9.5 6.5C19 16.65 12 21 12 21Z"></path></svg>';
+    const GLOBE_ICON = '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"></circle><path d="M3 12h18M12 3a15 15 0 0 1 0 18 15 15 0 0 1 0-18"></path></svg>';
 
     document.querySelectorAll(".site-header-inner").forEach((headerInner) => {
         if (headerInner.querySelector(".header-extras")) return;
@@ -904,7 +923,7 @@
             weather.href = "https://wttr.in/" + encodeURIComponent(about.city);
             weather.target = "_blank";
             weather.rel = "noopener";
-            weather.title = "Previsão do tempo em " + about.city;
+            weather.title = t("about.weather", "Previsão do tempo em " + about.city, about.city);
             const icon = el("span", "header-weather-icon", "🌡️");
             const info = el("span", "header-weather-info");
             info.appendChild(el("span", "header-weather-city", about.city));
@@ -935,8 +954,42 @@
             const heart = el("span", "header-donate-icon");
             heart.innerHTML = HEART_ICON;
             donate.appendChild(heart);
-            donate.appendChild(el("span", null, about.donation.label || "Doar"));
+            donate.appendChild(el("span", null, about.donation.label || t("about.donate", "Doar")));
             extras.appendChild(donate);
+        }
+
+        // seletor de idioma (só existe se o js/i18n.js estiver na página)
+        if (i18n) {
+            const picker = el("label", "header-lang");
+            picker.setAttribute("title", t("a11y.language", "Idioma"));
+
+            const globo = el("span", "header-lang-icon");
+            globo.innerHTML = GLOBE_ICON;
+            globo.setAttribute("aria-hidden", "true");
+
+            // <select> de verdade, e não um menu desenhado por nós: no celular
+            // ele abre a roleta nativa do sistema, já vem navegável por teclado
+            // e o leitor de tela anuncia sozinho quantas opções existem.
+            //
+            // O rótulo é a SIGLA, não "Português" por extenso: o cabeçalho tem
+            // 1120px para o menu de sete itens mais os chips, e o nome inteiro
+            // (132px) empurrava "Sobre" para uma segunda linha. Com a sigla
+            // sobra espaço, e quem precisa do nome tem o globo ao lado, o
+            // title e o aria-label — a sigla nunca fica sozinha como pista.
+            const select = el("select");
+            select.setAttribute("aria-label", t("a11y.language", "Idioma"));
+            i18n.LANGS.forEach((lang) => {
+                const option = el("option", null, lang.code.toUpperCase());
+                option.value = lang.code;
+                option.title = lang.label;
+                if (lang.code === i18n.get()) option.selected = true;
+                select.appendChild(option);
+            });
+            select.onchange = () => i18n.set(select.value);
+
+            picker.appendChild(globo);
+            picker.appendChild(select);
+            extras.appendChild(picker);
         }
 
         if (extras.childNodes.length && themeToggle) headerInner.insertBefore(extras, themeToggle);
@@ -990,7 +1043,7 @@
         const listen = content.listen === undefined ? {} : content.listen;
         if (listen && (storeKeys.length || listen.alexaPhrase || appsData.alexa)) {
             const card = el("div", "listen-card");
-            card.appendChild(el("h3", null, listen.title || "Como nos ouvir?"));
+            card.appendChild(el("h3", null, listen.title || t("listen.title", "Como nos ouvir?")));
             if (listen.text) card.appendChild(el("p", "listen-text", listen.text));
 
             if (storeKeys.length) {
@@ -1000,7 +1053,7 @@
             }
 
             if (listen.alexaPhrase || appsData.alexa) {
-                card.appendChild(el("span", "listen-alexa-label", "Ou peça para a Alexa:"));
+                card.appendChild(el("span", "listen-alexa-label", t("listen.alexa", "Ou peça para a Alexa:")));
                 const chip = el(appsData.alexa ? "a" : "div", "listen-alexa");
                 if (appsData.alexa) {
                     chip.href = appsData.alexa;
@@ -1010,7 +1063,7 @@
                 const icon = el("span", "listen-alexa-icon");
                 icon.innerHTML = ALEXA_ICON;
                 chip.appendChild(icon);
-                chip.appendChild(el("span", null, "“" + (listen.alexaPhrase || "Alexa, tocar " + (brand.name || "a rádio")) + "”"));
+                chip.appendChild(el("span", null, "“" + (listen.alexaPhrase || t("listen.alexaPhrase", "Alexa, tocar " + (brand.name || "a rádio"), brand.name || t("listen.station", "a rádio"))) + "”"));
                 card.appendChild(chip);
             }
 
@@ -1027,7 +1080,7 @@
 
         if (items.length) {
             const card = el("div", "contact-card");
-            card.appendChild(el("h3", null, "Contato"));
+            card.appendChild(el("h3", null, t("contact.title", "Contato")));
             items.forEach((item) => {
                 const row = el(item.href ? "a" : "div", "contact-item");
                 if (item.href) {
@@ -1055,7 +1108,7 @@
             const iframe = el("iframe");
             iframe.src = `https://www.google.com/maps?q=${encodeURIComponent(mapQuery)}&output=embed`;
             iframe.loading = "lazy";
-            iframe.title = "Mapa: " + mapQuery;
+            iframe.title = t("about.map", "Mapa: " + mapQuery, mapQuery);
             mapCard.appendChild(iframe);
             aboutRoot.appendChild(mapCard);
         }

@@ -14,6 +14,9 @@
 (function () {
     "use strict";
 
+    // Como no player: sem o js/i18n.js na página, vale o português do código.
+    const t = (chave, padrao) => (window.SiteI18n ? window.SiteI18n.t(chave) : padrao);
+
     const SUPPORTED = "serviceWorker" in navigator &&
         (location.protocol === "https:" || location.hostname === "localhost" || location.hostname === "127.0.0.1");
 
@@ -34,9 +37,9 @@
 
         const toast = el("div", "pwa-toast");
         toast.setAttribute("data-seamless-keep", "");
-        toast.appendChild(el("span", "pwa-toast-text", "Nova versão disponível"));
+        toast.appendChild(el("span", "pwa-toast-text", t("pwa.update", "Nova versão disponível")));
 
-        const update = el("button", "pwa-toast-button", "Atualizar");
+        const update = el("button", "pwa-toast-button", t("pwa.updateAction", "Atualizar"));
         update.type = "button";
         update.addEventListener("click", () => {
             worker.postMessage({ type: "SKIP_WAITING" });
@@ -46,7 +49,7 @@
 
         const dismiss = el("button", "pwa-toast-close", "✕");
         dismiss.type = "button";
-        dismiss.setAttribute("aria-label", "Dispensar");
+        dismiss.setAttribute("aria-label", t("pwa.dismiss", "Dispensar"));
         dismiss.addEventListener("click", () => toast.remove());
         toast.appendChild(dismiss);
 
@@ -113,14 +116,14 @@
 
         const close = el("button", "news-modal-close", "✕");
         close.type = "button";
-        close.setAttribute("aria-label", "Fechar");
+        close.setAttribute("aria-label", t("a11y.close", "Fechar"));
         card.appendChild(close);
 
         const body = el("div", "news-modal-body");
-        body.appendChild(el("h2", null, "Instalar no iPhone/iPad"));
-        body.appendChild(el("p", null, "1. Toque no botão Compartilhar (o quadrado com a seta para cima), na barra do Safari."));
-        body.appendChild(el("p", null, "2. Escolha “Adicionar à Tela de Início”."));
-        body.appendChild(el("p", null, "3. Confirme em “Adicionar”. Pronto: a rádio abre como um aplicativo, em tela cheia."));
+        body.appendChild(el("h2", null, t("pwa.iosTitle", "Instalar no iPhone/iPad")));
+        body.appendChild(el("p", null, t("pwa.iosStep1", "1. Toque no botão Compartilhar (o quadrado com a seta para cima), na barra do Safari.")));
+        body.appendChild(el("p", null, t("pwa.iosStep2", "2. Escolha “Adicionar à Tela de Início”.")));
+        body.appendChild(el("p", null, t("pwa.iosStep3", "3. Confirme em “Adicionar”. Pronto: a rádio abre como um aplicativo, em tela cheia.")));
         card.appendChild(body);
 
         overlay.appendChild(card);
@@ -172,8 +175,8 @@
 
             const button = el("button", "header-install");
             button.type = "button";
-            button.title = "Instalar a rádio como aplicativo";
-            button.setAttribute("aria-label", "Instalar a rádio como aplicativo");
+            button.title = t("pwa.installLong", "Instalar a rádio como aplicativo");
+            button.setAttribute("aria-label", t("pwa.installLong", "Instalar a rádio como aplicativo"));
             button.innerHTML = INSTALL_ICON;
             button.addEventListener("click", () => runInstall(button));
 
@@ -192,7 +195,7 @@
             const icon = el("span", "listen-install-icon");
             icon.innerHTML = INSTALL_ICON;
             button.appendChild(icon);
-            button.appendChild(el("span", null, "Instalar como aplicativo"));
+            button.appendChild(el("span", null, t("pwa.installApp", "Instalar como aplicativo")));
             button.addEventListener("click", () => runInstall(button));
             card.appendChild(button);
         });

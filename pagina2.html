@@ -20,6 +20,8 @@
          pré-boot abaixo lê dele o ESTILO VISUAL — aplicá-lo só no fim da
          página faria o vidro piscar antes do estilo escolhido. -->
     <script src="content.js"></script>
+    <!-- Idiomas do site (pt/en/es/it). Fora daqui, tudo segue em português. -->
+    <script src="js/i18n.js"></script>
     <script>
         // Aplica o tema salvo e o estilo visual antes do primeiro paint
         (function () {
@@ -47,16 +49,16 @@
         <div class="site-header-inner">
             <a class="site-brand" href="index.html"><span class="site-brand-name">Minha Rádio</span></a>
             <nav class="site-nav">
-                <a href="index.html#noticias">Notícias</a>
-                <a href="index.html#videos">Vídeos</a>
-                <a href="index.html#galeria">Galeria</a>
-                <a href="index.html#programacao">Programação</a>
-                <a href="index.html#equipe">Equipe</a>
-                <a href="index.html#contato">Contato</a>
-                <a href="pagina2.html">Sobre</a>
+                <a href="index.html#noticias" data-i18n="nav.news">Notícias</a>
+                <a href="index.html#videos" data-i18n="nav.videos">Vídeos</a>
+                <a href="index.html#galeria" data-i18n="nav.gallery">Galeria</a>
+                <a href="index.html#programacao" data-i18n="nav.schedule">Programação</a>
+                <a href="index.html#equipe" data-i18n="nav.team">Equipe</a>
+                <a href="index.html#contato" data-i18n="nav.contact">Contato</a>
+                <a href="pagina2.html" data-i18n="nav.about">Sobre</a>
             </nav>
-            <button type="button" id="theme-toggle" class="theme-toggle" aria-label="Alternar tema claro/escuro"></button>
-            <button type="button" id="nav-toggle" class="nav-toggle" aria-label="Abrir menu" aria-expanded="false">
+            <button type="button" id="theme-toggle" class="theme-toggle" aria-label="Alternar tema claro/escuro" data-i18n-aria-label="a11y.theme"></button>
+            <button type="button" id="nav-toggle" class="nav-toggle" aria-label="Abrir menu" data-i18n-aria-label="a11y.menuOpen" aria-expanded="false">
                 <svg viewBox="0 0 24 24"><path d="M3 6h18M3 12h18M3 18h18"></path></svg>
             </button>
         </div>
@@ -65,9 +67,9 @@
     <div class="site-container">
 
         <section class="hero">
-            <span class="hero-badge"><span class="site-brand-dot"></span> Sobre nós</span>
-            <h1>Uma rádio que não para 🎶</h1>
-            <p>
+            <span class="hero-badge"><span class="site-brand-dot"></span> <span data-i18n="page.about.badge">Sobre nós</span></span>
+            <h1 data-i18n="page.about.heading">Uma rádio que não para 🎶</h1>
+            <p data-i18n="page.about.text">
                 Você navegou para outra página e a música continuou tocando — o player é um
                 componente que intercepta a navegação interna e troca só o conteúdo da página,
                 mantendo o áudio vivo.
@@ -75,14 +77,14 @@
         </section>
 
         <section class="site-section" id="contato">
-            <h2 class="site-section-title">Nossa história</h2>
+            <h2 class="site-section-title" data-i18n="section.history">Nossa história</h2>
             <div class="about-grid" id="site-about"></div>
         </section>
 
         <footer class="site-footer">
             <span id="site-footer-text"></span>
             <div id="site-social" class="footer-social"></div>
-            <span><a href="index.html">Voltar ao início</a></span>
+            <span><a href="index.html" data-i18n="footer.home">Voltar ao início</a></span>
         </footer>
 
     </div>

@@ -47,7 +47,7 @@
             <div class="app-player" id="app-player">
                 <div class="player song-now flex column">
                     <!-- alça de recolher: no celular o dock desce e libera a tela -->
-                    <button class="player-collapse" type="button" aria-label="Recolher o player" aria-expanded="true">
+                    <button class="player-collapse" type="button" aria-label="Recolher o player" data-i18n-aria-label="player.collapse" aria-expanded="true">
                         <svg class="i i-chevron-down" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"></path></svg>
                     </button>
                     <div class="player-wrapper">
@@ -58,7 +58,7 @@
                                 </div>
                                 <div class="player-cover-title uppercase fw-700 flex column">
                                     <div class="player-meta">
-                                        <span class="player-live"><i class="player-live-dot"></i>Ao vivo</span>
+                                        <span class="player-live"><i class="player-live-dot"></i><span data-i18n="player.onAir">Ao vivo</span></span>
                                         <span class="player-meta-station truncate"></span>
                                     </div>
                                     <div class="player-song-name">
@@ -75,22 +75,22 @@
                             <div class="player-controller">
                                 <!-- anterior/próxima trocam de ESTAÇÃO (não de faixa): o
                                      rótulo evita a leitura errada do ícone -->
-                                <button class="player-button player-button-backward-step" title="Estação anterior" aria-label="Estação anterior">
+                                <button class="player-button player-button-backward-step" title="Estação anterior" aria-label="Estação anterior" data-i18n-title="player.prevStation" data-i18n-aria-label="player.prevStation">
                                     <svg class="i i-backward-step" viewBox="0 0 24 24">
                                         <path d="M6 5v14M18 4v16L8 12Z"></path>
                                     </svg>
                                 </button>
-                                <button aria-label="Play/Pause" class="player-button player-button-play flex-none">
+                                <button aria-label="Play/Pause" data-i18n-aria-label="player.playPause" class="player-button player-button-play flex-none">
                                     <svg class="i i-play" viewBox="0 0 24 24">
                                         <path d="m7 3 14 9-14 9z"></path>
                                     </svg>
                                 </button>
-                                <button class="player-button player-button-forward-step" title="Próxima estação" aria-label="Próxima estação">
+                                <button class="player-button player-button-forward-step" title="Próxima estação" aria-label="Próxima estação" data-i18n-title="player.nextStation" data-i18n-aria-label="player.nextStation">
                                     <svg class="i i-forward-step" viewBox="0 0 24 24">
                                         <path d="M18 5v14M6 4v16l10-8Z"></path>
                                     </svg>
                                 </button>
-                                <button class="player-button player-button-more" data-outside="player-more" aria-label="Mais controles" title="Mais controles">
+                                <button class="player-button player-button-more" data-outside="player-more" aria-label="Mais controles" title="Mais controles" data-i18n-aria-label="player.more" data-i18n-title="player.more">
                                     <svg class="i i-dots" viewBox="0 0 24 24">
                                         <circle cx="5" cy="12" r="1"></circle>
                                         <circle cx="12" cy="12" r="1"></circle>
@@ -109,51 +109,51 @@
                                  5) Compartilhar e, por fim, a logo da estação -->
                             <div class="player-right flex items-center" id="player-more">
                                 <div class="player-button player-button-volume">
-                                    <button class="player-button player-button-volume-toggle" data-outside="player-volume" title="Volume">
+                                    <button class="player-button player-button-volume-toggle" data-outside="player-volume" title="Volume" data-i18n-title="player.volume">
                                         <svg class="i i-volume-high" viewBox="0 0 24 24">
                                             <path d="M6 9H2v6h4l5 4V5Zm9 7a5 5 0 0 0 0-8m3 12a10 10 0 0 0 0-16"></path>
                                         </svg>
-                                        Volume
+                                        <span data-i18n="player.volume">Volume</span>
                                     </button>
                                     <div class="dropdown" id="player-volume">
                                         <div class="player-range-wrapper">
-                                            <input aria-label="Volume" class="player-volume" max="100" min="0" name="player" type="range" value="100" />
+                                            <input aria-label="Volume" data-i18n-aria-label="player.volume" class="player-volume" max="100" min="0" name="player" type="range" value="100" />
                                             <div class="player-range-fill"></div>
                                             <div class="player-range-thumb"></div>
                                         </div>
                                     </div>
                                 </div>
-                                <button class="player-button player-button-lyrics" data-outside="modal-lyrics" title="Letra da música">
+                                <button class="player-button player-button-lyrics" data-outside="modal-lyrics" title="Letra da música" data-i18n-title="player.lyrics">
                                     <svg class="i i-list-music" viewBox="0 0 24 24">
                                         <path d="M16 8h6V3h-6v15M2 3h9M2 8h9m-9 5h3"></path>
                                         <circle cx="12" cy="18" r="4"></circle>
                                     </svg>
-                                    Letra
+                                    <span data-i18n="player.lyricsShort">Letra</span>
                                 </button>
-                                <button class="player-button player-button-history" data-outside="offcanvas-history" title="Músicas que já tocaram">
+                                <button class="player-button player-button-history" data-outside="offcanvas-history" title="Músicas que já tocaram" data-i18n-title="player.history">
                                     <svg class="i i-music" viewBox="0 0 24 24">
                                         <path d="M22 16V2L9 5v13"></path>
                                         <circle cx="5" cy="18" r="4"></circle>
                                         <circle cx="18" cy="16" r="4"></circle>
                                     </svg>
-                                    Histórico
+                                    <span data-i18n="player.historyShort">Histórico</span>
                                 </button>
                                 <div class="online-tv"></div>
-                                <button class="player-button-alt player-button-stations" data-outside="offcanvas-stations" title="Trocar de estação">
+                                <button class="player-button-alt player-button-stations" data-outside="offcanvas-stations" title="Trocar de estação" data-i18n-title="player.stations">
                                     <svg class="i i-radio" viewBox="0 0 24 24">
                                         <circle cx="12" cy="12" r="2"></circle>
                                         <path d="M5 4.9a10 10 0 0 0 0 14.2M7.8 7.7a6 6 0 0 0 0 8.6m8.4 0a6 6 0 0 0 0-8.6M19 19.1a10 10 0 0 0 0-14.2"></path>
                                     </svg>
-                                    Estações
+                                    <span data-i18n="player.stationsShort">Estações</span>
                                 </button>
-                                <button class="player-button player-button-share" data-outside="modal-share" title="Compartilhar">
+                                <button class="player-button player-button-share" data-outside="modal-share" title="Compartilhar" data-i18n-title="player.share">
                                     <svg class="i i-share" viewBox="0 0 24 24">
                                         <circle cx="18" cy="5" r="3"></circle>
                                         <circle cx="6" cy="12" r="3"></circle>
                                         <circle cx="18" cy="19" r="3"></circle>
                                         <path d="m8.5 13.5 7 4m0-11-7 4"></path>
                                     </svg>
-                                    Compartilhar
+                                    <span data-i18n="player.shareShort">Compartilhar</span>
                                 </button>
 
                                 <div class="player-station player-artwork-style relative">
@@ -181,7 +181,7 @@
                 <div class="modal" id="modal-lyrics">
                     <div class="modal-content">
                         <div class="modal-title color-title flex items-center justify-between">
-                            <h2 class="modal-title-text m:fs-3 fs-5 fw-500">Letra</h2>
+                            <h2 class="modal-title-text m:fs-3 fs-5 fw-500" data-i18n="player.lyricsShort">Letra</h2>
                             <button data-close aria-label="close">
                                 <svg class="i i-xmark" viewBox="0 0 24 24">
                                     <path d="M18 6 6 18M6 6l12 12"></path>
@@ -200,7 +200,7 @@
                       <path d="M18 6 6 18M6 6l12 12"></path>
                     </svg>
                   </button>
-                  <h2>Compartilhe nas redes sociais</h2>
+                  <h2 data-i18n="player.shareTitle">Compartilhe nas redes sociais</h2>
                   <img src="{{BASE}}assets/cover.png" alt="portada modal" class="player-modal-image" height="200px" width="200px" />
                   <div class="player-title song-name fw-500">Song</div>
                   <span class="player-text song-artist">Artist</span>
@@ -306,6 +306,11 @@
       });
   }
 
+  // O player é um componente solto: pode estar numa página que não carrega o
+  // js/i18n.js. Sem ele, o texto que já está no template (português) é o que
+  // vale — nada quebra, só não traduz.
+  const t = (chave, padrao) => (window.SiteI18n ? window.SiteI18n.t(chave) : padrao);
+
   function mountDom() {
       root = document.createElement("div");
       root.className = "msp_radio";
@@ -319,6 +324,7 @@
           if (lyricsModal) lyricsModal.remove();
       }
       document.body.appendChild(root);
+      if (window.SiteI18n) window.SiteI18n.apply(root);
   }
 
   // --- [LÓGICA DO PLAYER] ----------------------------------------------
@@ -852,7 +858,7 @@
                   }
               } catch (error) {}
 
-              return "Letra não disponível";
+              return t("player.noLyrics", "Letra não disponível");
           };
 
           const promise = fetchLyrics();
@@ -976,7 +982,7 @@
       function createOpenTvButton(url) {
           const $button = document.createElement("button");
           $button.classList.add("player-button", "player-button-tv");
-          $button.title = "Assistir ao vivo";
+          $button.title = t("player.live", "Assistir ao vivo");
           $button.innerHTML = icons.tv + "Tv";
 
           const modalBody = playerTvModal.querySelector(".modal-body-video");
@@ -1337,7 +1343,7 @@
 
       function setHistory(data, current, server) {
           if (!historyElement) return;
-          historyElement.innerHTML = historyTemplate.replace("{{art}}", pixel).replace("{{song}}", "Carregando histórico...").replace("{{artist}}", "Artista").replace("{{stream_url}}", "#not-found");
+          historyElement.innerHTML = historyTemplate.replace("{{art}}", pixel).replace("{{song}}", t("player.loadingHistory", "Carregando histórico...")).replace("{{artist}}", t("player.artist", "Artista")).replace("{{stream_url}}", "#not-found");
           if (!data) return;
 
           data = data.slice(0, 10);
@@ -1421,7 +1427,7 @@
               const openStations = () => setTimeout(() => stationsButton.click(), 0);
               artwork.setAttribute("role", "button");
               artwork.setAttribute("tabindex", "0");
-              artwork.setAttribute("aria-label", "Trocar de estação");
+              artwork.setAttribute("aria-label", t("player.stations", "Trocar de estação"));
               artwork.addEventListener("click", openStations);
               artwork.addEventListener("keydown", (event) => {
                   if (event.key === "Enter" || event.key === " ") {
@@ -1441,7 +1447,7 @@
           collapseButton.addEventListener("click", () => {
               const collapsed = playerBox.classList.toggle("is-collapsed");
               collapseButton.setAttribute("aria-expanded", collapsed ? "false" : "true");
-              collapseButton.setAttribute("aria-label", collapsed ? "Mostrar o player" : "Recolher o player");
+              collapseButton.setAttribute("aria-label", collapsed ? t("player.expand", "Mostrar o player") : t("player.collapse", "Recolher o player"));
               // recolher com o painel "mais" aberto deixaria o painel solto
               if (collapsed) {
                   const more = $("#player-more");
@@ -1681,6 +1687,14 @@
           play: () => { isIntentionalPause = false; play(audio); },
           pause: () => { isIntentionalPause = true; pause(audio); },
           toggle: handlePlayPause,
+          // Remonta a página atual pelo mesmo caminho da navegação entre
+          // páginas: o conteúdo é buscado e trocado, o player fica de pé e o
+          // áudio não pisca. Com a navegação seamless desligada não há esse
+          // caminho, e aí é recarga mesmo.
+          reload: () => {
+              if (seamlessLoad) seamlessLoad(location.href, false);
+              else location.reload();
+          },
       };
 
       document.dispatchEvent(new CustomEvent("radioplayer:ready"));
@@ -1691,6 +1705,11 @@
   // o conteúdo do <body> mantendo o player (e o áudio) intactos.
   // Limitação: as páginas devem compartilhar o mesmo layout base; folhas de
   // estilo novas do <head> da página de destino são adotadas automaticamente.
+
+  // Guarda o loadPage para fora do setup: é ele que a API pública expõe como
+  // reload(), o jeito de remontar a página sem parar a música (o seletor de
+  // idioma usa isto — trocar de língua não deveria custar o áudio).
+  let seamlessLoad = null;
 
   function setupSeamlessNavigation() {
       if (!SEAMLESS || !window.history || !window.DOMParser) return;
@@ -1805,6 +1824,8 @@
       window.addEventListener("popstate", () => {
           loadPage(location.href, false);
       });
+
+      seamlessLoad = loadPage;
   }
 
   // --- [BOOT] -----------------------------------------------------------
