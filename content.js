@@ -109,7 +109,7 @@ window.siteContent = {
         // já cobre esse mesmo link; os dois convivem sem conflito.
         donation: {
             url: "https://ko-fi.com/C1C1ZZ2EP",
-            label: "Apoiar no Ko-fi",
+            label: "Apoiar",
         },
     },
 
