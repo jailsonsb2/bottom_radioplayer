@@ -445,9 +445,21 @@ img { max-width: 100%; display: block; }
     gap: 10px;
 }
 
+/* O flex encolhe o item que pode encolher, e a marca era o único: os chips
+   do topo têm largura própria, o logo não. Sobrando pouco espaço, a caixa
+   da imagem estreitava mas a altura ficava presa em 38px — e o logo saía
+   achatado, esticado na vertical.
+
+   object-fit resolve pela raiz: se a caixa apertar, a imagem encolhe
+   inteira, proporcional, em vez de deformar. É a rede de segurança; o que
+   evita chegar nesse ponto são os ajustes de espaço no bloco do celular
+   mais abaixo. */
 .site-brand-logo {
     height: 38px;
     width: auto;
+    max-width: 100%;
+    object-fit: contain;
+    object-position: left center;
     display: block;
 }
 
@@ -590,6 +602,34 @@ img { max-width: 100%; display: block; }
         padding: 12px 14px;
         font-size: 14px;
         border-radius: 12px;
+    }
+}
+
+/* No celular o menu já virou hambúrguer, mas a fileira do topo continua com
+   marca + doar + idioma + tema + hambúrguer. O seletor de idioma trouxe mais
+   um chip para essa fila, e o que sobrava para a marca ficou pequeno demais.
+   Os quatro ajustes abaixo devolvem ~80px sem tirar nada da tela: as bordas
+   do header, o vão entre os itens, a altura do logo e o aperto do chip de
+   idioma. */
+@media (max-width: 620px) {
+    .site-header-inner {
+        padding: 12px 16px;
+        gap: 10px;
+    }
+
+    .site-brand-logo { height: 32px; }
+
+    .header-extras { gap: 8px; }
+
+    .header-lang {
+        padding: 0 6px 0 8px;
+        gap: 4px;
+    }
+
+    .header-lang select {
+        font-size: 12px;
+        padding-right: 15px;
+        background-size: 11px;
     }
 }
 
