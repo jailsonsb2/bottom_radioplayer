@@ -162,6 +162,92 @@
         header.querySelectorAll(".site-nav a").forEach((link) => {
             link.onclick = () => setOpen(false);
         });
+
+        // --- o menu cabe na linha? ------------------------------------------
+        // Abaixo de 1150px a media query já resolve por largura de tela; aqui
+        // é o caso que ela não enxerga: acima disso o header ainda pode ficar
+        // sem espaço porque GANHOU um item. O botão de instalar chega segundos
+        // depois do primeiro desenho (quando o navegador dispara o
+        // beforeinstallprompt), o chip de clima se remove sozinho se o serviço
+        // não responder, e o menu muda de largura junto com o idioma — é
+        // conteúdo variável, não largura de janela.
+        //
+        // A medida é o topo do primeiro link comparado ao do último: se
+        // diferem, algum item caiu para a segunda fileira.
+        const nav = header.querySelector(".site-nav");
+        const extras = () => header.querySelector(".header-extras");
+
+        // Ligar/desligar a classe muda a altura do header, e isso acorda o
+        // ResizeObserver de novo. Sem esta trava a medição chamaria a si
+        // mesma — o navegador reclama de "ResizeObserver loop" e o header
+        // pisca.
+        let medindo = false;
+
+        function ajustarMenu() {
+            if (medindo) return;
+            if (!nav || !nav.children.length) return;
+            medindo = true;
+            try {
+                medir();
+            } finally {
+                // solta a trava só no quadro seguinte, depois de o layout
+                // novo já ter acordado (e sido ignorado por) o observador
+                requestAnimationFrame(() => { medindo = false; });
+            }
+        }
+
+        function medir() {
+            // No território da media query ela é a dona: com o menu já virado
+            // painel absoluto, medir aqui só devolveria "cabe" e ficaríamos
+            // ligando e desligando a classe para sempre.
+            if (window.matchMedia("(max-width: 1150px)").matches) {
+                header.classList.remove("is-crowded");
+                return;
+            }
+
+            // Mede sempre no estado expandido: com .is-crowded valendo, o menu
+            // está fora do fluxo e qualquer medida diria que sobra espaço.
+            // Tirar e repor na mesma execução não chega a pintar na tela.
+            const estava = header.classList.contains("is-crowded");
+            header.classList.remove("is-crowded");
+
+            const links = nav.children;
+            const quebrou = links[links.length - 1].offsetTop > links[0].offsetTop;
+
+            header.classList.toggle("is-crowded", quebrou);
+            if (estava && !quebrou) setOpen(false); // voltou a caber: fecha o painel
+        }
+
+        // A navegação seamless reexecuta este script: derruba os observadores
+        // da página anterior, que apontam para nós que já saíram do documento.
+        if (window.__headerObservers) {
+            window.__headerObservers.forEach((o) => o.disconnect());
+        }
+        const observadores = [];
+
+        if ("ResizeObserver" in window) {
+            // pega redimensionamento da janela e mudança de largura dos chips
+            // (o clima só sabe a temperatura depois que o fetch volta)
+            const ro = new ResizeObserver(() => ajustarMenu());
+            ro.observe(header);
+            observadores.push(ro);
+        } else {
+            window.addEventListener("resize", ajustarMenu);
+            // embrulhado para o disconnect() lá de cima também alcançar este
+            observadores.push({ disconnect: () => window.removeEventListener("resize", ajustarMenu) });
+        }
+
+        if ("MutationObserver" in window) {
+            // e a chegada tardia do botão de instalar, que é o caso que
+            // desconfigurava o header depois de tudo já estar no lugar
+            const mo = new MutationObserver(() => ajustarMenu());
+            const alvo = extras() || header.querySelector(".site-header-inner");
+            if (alvo) mo.observe(alvo, { childList: true, subtree: true });
+            observadores.push(mo);
+        }
+
+        window.__headerObservers = observadores;
+        ajustarMenu();
     }
 
     // --- seções: ordem (content.order) e visibilidade ----------------------

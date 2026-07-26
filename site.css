@@ -605,6 +605,56 @@ img { max-width: 100%; display: block; }
     }
 }
 
+/* --- cabeçalho apertado ACIMA de 1150px --------------------------------
+   O bloco acima resolve por largura de tela; este resolve por conteúdo, que
+   é o que realmente falta no header. Quem mora nesta fileira só se sabe em
+   tempo de execução: o chip de clima some sozinho se o wttr.in não
+   responder, o botão de instalar só aparece quando o navegador oferece
+   (e aparece DEPOIS do primeiro desenho — por isso "começa certo e
+   desconfigura"), o rótulo do botão de doação é texto livre e o menu muda
+   de largura a cada idioma. Nenhum breakpoint fixo acerta todas as
+   combinações.
+
+   Então o site.js mede e, quando os sete itens não cabem em uma linha,
+   marca .is-crowded aqui — e o menu vira o mesmo painel do hambúrguer que
+   o celular já usa. As declarações repetem as do bloco de cima de
+   propósito: aquele é por media query e continua valendo sozinho, sem
+   depender de script. */
+.site-header.is-crowded .nav-toggle { display: flex; }
+
+.site-header.is-crowded .site-nav {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    flex-direction: column;
+    gap: 2px;
+    padding: 8px 16px 14px;
+    background: var(--site-bg);
+    border-bottom: 1px solid var(--site-border);
+    box-shadow: 0 18px 30px rgba(0, 0, 0, 0.18);
+}
+
+.site-header.is-crowded.nav-open .site-nav { display: flex; }
+
+.site-header.is-crowded .site-nav a {
+    padding: 12px 14px;
+    font-size: 14px;
+    border-radius: 12px;
+}
+
+/* Os chips têm rótulo de tamanho variável ("São Paulo", "Apoiar no Ko-fi").
+   Sem isto, faltando espaço eles quebravam a própria frase em duas linhas e
+   cresciam em altura, empurrando o header inteiro. Preferimos que o texto
+   fique inteiro e a medição acima resolva a falta de espaço. */
+.header-weather,
+.header-donate,
+.header-lang {
+    white-space: nowrap;
+    flex: none;
+}
+
 /* No celular o menu já virou hambúrguer, mas a fileira do topo continua com
    marca + doar + idioma + tema + hambúrguer. O seletor de idioma trouxe mais
    um chip para essa fila, e o que sobrava para a marca ficou pequeno demais.
@@ -804,9 +854,13 @@ img { max-width: 100%; display: block; }
 
 /* --- notícias --- */
 
+/* min() na coluna mínima: sem ele, numa tela mais estreita que a própria
+   coluna o grid mantinha a largura pedida e a PÁGINA passava a rolar de lado
+   (aparecia em telas de 320px, onde sobram 272px depois das margens). Com
+   min(), a coluna nunca fica maior que o espaço que existe. */
 .news-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(min(280px, 100%), 1fr));
     gap: 20px;
 }
 
@@ -961,7 +1015,7 @@ body.news-modal-open { overflow: hidden; }
 
 .videos-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(min(300px, 100%), 1fr));
     gap: 20px;
 }
 
@@ -1090,7 +1144,7 @@ body.news-modal-open { overflow: hidden; }
 
 .gallery-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(min(220px, 100%), 1fr));
     gap: 14px;
 }
 
