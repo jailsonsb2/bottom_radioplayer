@@ -205,17 +205,30 @@
                 return;
             }
 
-            // Mede sempre no estado expandido: com .is-crowded valendo, o menu
-            // está fora do fluxo e qualquer medida diria que sobra espaço.
-            // Tirar e repor na mesma execução não chega a pintar na tela.
+            // Mede sempre do zero: com .is-crowded valendo, o menu está fora
+            // do fluxo e qualquer medida diria que sobra espaço. Tirar e repor
+            // na mesma execução não chega a pintar na tela.
             const estava = header.classList.contains("is-crowded");
-            header.classList.remove("is-crowded");
+            header.classList.remove("is-crowded", "nav-tight", "nav-tighter");
 
             const links = nav.children;
-            const quebrou = links[links.length - 1].offsetTop > links[0].offsetTop;
+            const quebrou = () => links[links.length - 1].offsetTop > links[0].offsetTop;
 
-            header.classList.toggle("is-crowded", quebrou);
-            if (estava && !quebrou) setOpen(false); // voltou a caber: fecha o painel
+            // Esconder os nomes é a ÚLTIMA saída: um menu escrito é melhor que
+            // três traços que a pessoa precisa abrir para saber o que tem
+            // dentro. Antes de chegar lá, o menu aperta em dois degraus — e
+            // cada um só entra se o anterior não tiver bastado. Sobrando
+            // espaço (é o caso do inglês, de rótulos curtos), nenhum entra e o
+            // menu fica com o espaçamento cheio de sempre.
+            const DEGRAUS = ["nav-tight", "nav-tighter"];
+            for (let i = 0; i < DEGRAUS.length && quebrou(); i++) {
+                header.classList.remove(...DEGRAUS);
+                header.classList.add(DEGRAUS[i]);
+            }
+
+            const desiste = quebrou();
+            header.classList.toggle("is-crowded", desiste);
+            if (estava && !desiste) setOpen(false); // voltou a caber: fecha o painel
         }
 
         // A navegação seamless reexecuta este script: derruba os observadores

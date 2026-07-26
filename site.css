@@ -580,21 +580,26 @@ img { max-width: 100%; display: block; }
     color: var(--site-text);
 }
 
-/* O seletor de idioma é mais um inquilino num cabeçalho que já estava cheio:
-   com ele, os sete itens do menu passavam de 1120px e "Sobre" caía para uma
-   segunda linha. Três pixels de cada lado em cada item devolvem os ~40px que
-   faltavam, sem mexer em tamanho de fonte nem em breakpoint.
+/* Dois degraus de aperto ANTES de esconder o menu. Um menu escrito é melhor
+   que três traços que a pessoa precisa abrir para saber o que tem dentro, e
+   o cabeçalho ganha e perde inquilinos em tempo de execução (o botão de
+   instalar, o chip de clima) — então quem decide qual degrau vale é o
+   site.js, medindo. Sobrando espaço, nenhum entra e o menu fica com o
+   espaçamento cheio.
 
-   O :has() é o que amarra isto ao seletor: quem não carrega o js/i18n.js não
-   tem .header-lang, não casa a regra e fica com o espaçamento de sempre. Em
-   navegador sem :has() a regra inteira é ignorada — volta a quebrar em duas
-   linhas, que era o comportamento antigo, não um layout novo quebrado. */
-.site-header-inner:has(.header-lang) .site-nav a {
+   O primeiro degrau devolve ~40px (três pixels de cada lado em cada um dos
+   sete itens, mais meio ponto de fonte); o segundo, outros ~35px. */
+.site-header.nav-tight .site-nav a {
     padding-left: 6px;
     padding-right: 6px;
-    /* meio ponto de fonte: some aos olhos e devolve os últimos ~20px de que o
-       espanhol e o italiano precisam ("Programación", "Palinsesto") */
     font-size: 12.5px;
+}
+
+.site-header.nav-tighter .site-nav a {
+    padding-left: 4px;
+    padding-right: 4px;
+    font-size: 12px;
+    letter-spacing: -0.01em;
 }
 
 /* seção em que o visitante está agora (o site.js marca conforme a rolagem).
